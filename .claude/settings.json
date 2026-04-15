@@ -177,5 +177,5 @@
   },
   "alwaysThinkingEnabled": true,
   "promptSuggestionEnabled": false,
-  "model": "opus"
+  "effortLevel": "medium"
 }

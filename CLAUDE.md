@@ -54,7 +54,7 @@ Create feature branch using the project format.
 
 ---
 
-## 🟢 PHASE 2: EXECUTION (Write Code)
+## 🟢 PHASE 2: EXECUTION (Write Code)   
 
 ### Code Guidelines
 
@@ -143,6 +143,7 @@ Create PR with:
 - **Title**: Conventional commit format (feat:, fix:, etc.)
 - **Body**: Include ticket number, summary, test plan
 - **Link**: Reference ticket (#<number>)
+- **Screenshots**: If there are any visual updates, include screenshots of the before and after.
 
 ```bash
 gh pr create --title "feat: <description>" --body "..."
@@ -182,7 +183,7 @@ Remove the "agent active" label from the ticket.
 
 ### 4.5 Final Steps
 
-Add ammoml as a reviewer.
+Add ammonl as a reviewer.
 
 ```bash
 # Add reviewer
