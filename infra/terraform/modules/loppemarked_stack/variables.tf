@@ -142,6 +142,12 @@ variable "amplify_domain_prefix" {
   }
 }
 
+variable "amplify_enable_custom_domain" {
+  description = "Whether to attach the custom domain to the Amplify app. Disable to fall back to the default *.amplifyapp.com domain."
+  type        = bool
+  default     = true
+}
+
 # ---------- Lambda ----------
 
 variable "lambda_memory_size" {
