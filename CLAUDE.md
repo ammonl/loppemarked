@@ -54,7 +54,7 @@ Create feature branch using the project format.
 
 ---
 
-## 🟢 PHASE 2: EXECUTION (Write Code)   
+## 🟢 PHASE 2: EXECUTION (Write Code)
 
 ### Code Guidelines
 
@@ -198,6 +198,18 @@ Leave a comment on the ticket, referencing the PR and provide a summary of the i
 - [ ] Ready for final review
 
 ---
+
+## Language & Spelling
+
+  Always use **American English** spelling and terminology in all written output — code comments, docstrings, log messages, commit messages, PR descriptions, documentation, and user-facing strings.
+
+  - Use `-ize` / `-ization`, not `-ise` / `-isation` (e.g., `initialize`, `organization`).
+  - Use `-or`, not `-our` (e.g., `color`, `behavior`, `favor`).
+  - Use `-er`, not `-re` (e.g., `center`, `meter`).
+  - Use single `l` in past tense where American English does (e.g., `canceled`, `traveled`, `modeled`).
+  - Prefer American vocabulary (e.g., `gray` not `grey`, `catalog` not `catalogue`).
+
+  This applies even when editing files that already contain British spellings — normalize to American English unless the surrounding identifier is a fixed external API name (e.g., a third-party library's `Colour` class) that cannot be changed.
 
 ## Command Style
 
