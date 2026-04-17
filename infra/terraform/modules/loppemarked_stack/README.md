@@ -11,7 +11,7 @@ the staging and production environment stacks.
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
-| `dns.tf`         | Route 53 hosted zone, SES verification/DKIM DNS records    |
+| `dns.tf`         | SES verification/DKIM DNS records (zone owned by `dns/`)   |
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key                  |
 
 ## Least-privilege IAM
@@ -35,15 +35,17 @@ and can be overridden via `ses_sender_email`. Reply-To defaults to
 
 ### DNS verification
 
-Route 53 hosted zones and DNS records for SES domain verification and DKIM
-are managed by Terraform. After the first `terraform apply`:
+Hosted zones are owned by the `infra/terraform/dns/` stack, not this module.
+Env stacks read `root_zone_id` / `staging_zone_id` from the DNS stack's
+remote state and pass one in as `route53_zone_id`; this module only writes
+SES verification and DKIM CNAME records into that zone.
 
-1. **Point your registrar's nameservers** to the Route 53 zone nameservers
-   (output: `route53_nameservers`).
-2. **Delegate the staging subdomain** by adding an NS record in the prod
-   Route 53 zone for `staging.un17hub.com` pointing to the staging zone's
-   nameservers.
-3. SES will verify the domain and enable DKIM signing automatically once DNS
+After the DNS stack's first apply:
+
+1. **Point your registrar's nameservers** to the apex zone's nameservers
+   (DNS stack output: `root_nameservers`). The staging subdomain is already
+   delegated in-zone by `aws_route53_record.staging_ns` in the DNS stack.
+2. SES will verify the domain and enable DKIM signing automatically once DNS
    propagates.
 
 ## Key variables
@@ -52,7 +54,8 @@ are managed by Terraform. After the first `terraform apply`:
 |-------------------------------|------------------------------------------------------|
 | `environment`                 | Deployment environment name (staging, prod)          |
 | `vpc_cidr`                    | CIDR block for the VPC                               |
-| `ses_sender_domain`           | Domain for SES identity and Route 53 zone            |
+| `ses_sender_domain`           | Domain for SES identity and Amplify custom domain    |
+| `route53_zone_id`             | Hosted zone ID for `ses_sender_domain` (from `dns/`) |
 | `ses_reply_to_email`          | Default Reply-To (defaults to `elise7284@gmail.com`) |
 | `db_instance_class`           | RDS instance class                                   |
 

@@ -84,12 +84,22 @@ variable "github_environment" {
 }
 
 variable "ses_sender_domain" {
-  description = "Domain name for SES sender identity and Route 53 hosted zone."
+  description = "Domain name for SES sender identity and Amplify custom domain. Must match the hosted zone identified by route53_zone_id."
   type        = string
 
   validation {
     condition     = can(regex("^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$", var.ses_sender_domain))
     error_message = "ses_sender_domain must be a valid domain name (e.g. example.com)."
+  }
+}
+
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone ID for ses_sender_domain. Zone is owned by the dns/ stack; this module only writes records into it."
+  type        = string
+
+  validation {
+    condition     = can(regex("^Z[A-Z0-9]+$", var.route53_zone_id))
+    error_message = "route53_zone_id must be a valid Route 53 zone ID (e.g. Z0699283E3XYGVO8MRFY)."
   }
 }
 

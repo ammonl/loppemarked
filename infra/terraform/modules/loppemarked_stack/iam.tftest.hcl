@@ -9,6 +9,7 @@ variables {
   private_subnet_cidrs = ["10.99.10.0/24", "10.99.11.0/24"]
 
   ses_sender_domain = "test.example.com"
+  route53_zone_id   = "Z00000000000000000000"
 }
 
 run "ses_policy_uses_scoped_arns" {

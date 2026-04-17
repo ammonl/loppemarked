@@ -97,16 +97,10 @@ output "ses_reply_to_email" {
 }
 
 # ---------- DNS ----------
-
-output "route53_zone_id" {
-  description = "Route 53 hosted zone ID for the sender domain."
-  value       = aws_route53_zone.main.zone_id
-}
-
-output "route53_nameservers" {
-  description = "Nameservers for the Route 53 hosted zone. Delegate these from your registrar."
-  value       = aws_route53_zone.main.name_servers
-}
+#
+# The hosted zone is owned by the dns/ stack. The zone id is passed into
+# this module via var.route53_zone_id; consumers should read it from the
+# dns/ stack's remote state rather than from a module output.
 
 # ---------- Amplify ----------
 

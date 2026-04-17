@@ -11,6 +11,10 @@ infra/terraform/
 ├── bootstrap/          # One-time state backend provisioning
 │   ├── main.tf
 │   └── variables.tf
+├── dns/                # Shared hosted zones + subdomain delegation
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
 ├── environments/
 │   ├── prod/main.tf    # Production stack (isolated state)
 │   └── staging/main.tf # Staging stack (isolated state)
@@ -38,8 +42,9 @@ Remote state uses an S3 bucket with DynamoDB locking.
 | DynamoDB table  | `loppemarked-2026-tflock`   |
 | Region          | `eu-north-1`               |
 
-State paths are isolated per environment:
+State paths are isolated per stack:
 
+- `dns/terraform.tfstate`
 - `environments/staging/terraform.tfstate`
 - `environments/prod/terraform.tfstate`
 
@@ -67,8 +72,44 @@ terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
-After the bootstrap resources exist, environment stacks can be initialized
-with their remote backend. No manual AWS Console steps are required.
+After the bootstrap resources exist, the shared `dns/` stack and the
+environment stacks can be initialized with their remote backend. No manual
+AWS Console steps are required.
+
+## DNS Stack (apply before environments)
+
+The `dns/` stack owns the Route 53 hosted zones shared between environments:
+
+| Resource                                    | Purpose                                        |
+| ------------------------------------------- | ---------------------------------------------- |
+| `aws_route53_zone.root` (`un17hub.com`)     | Apex zone — registrar nameservers point here   |
+| `aws_route53_zone.staging` (`staging.un17hub.com`) | Staging subdomain zone                  |
+| `aws_route53_record.staging_ns`             | NS delegation for staging in the apex zone     |
+
+Environment stacks consume zone IDs via `terraform_remote_state`:
+
+```hcl
+data "terraform_remote_state" "dns" {
+  backend = "s3"
+  config = {
+    bucket = "loppemarked-2026-tfstate"
+    key    = "dns/terraform.tfstate"
+    region = "eu-north-1"
+  }
+}
+```
+
+Apply the DNS stack first:
+
+```bash
+cd infra/terraform/dns
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+After apply, update the registrar to delegate the apex domain to the
+nameservers in the `root_nameservers` output.
 
 ### Importing an existing OIDC provider
 

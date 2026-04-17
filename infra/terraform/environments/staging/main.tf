@@ -34,6 +34,16 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+data "terraform_remote_state" "dns" {
+  backend = "s3"
+
+  config = {
+    bucket = "loppemarked-2026-tfstate"
+    key    = "dns/terraform.tfstate"
+    region = "eu-north-1"
+  }
+}
+
 module "loppemarked_stack" {
   source      = "../../modules/loppemarked_stack"
   environment = "staging"
@@ -55,6 +65,7 @@ module "loppemarked_stack" {
   lambda_reserved_concurrency = -1
 
   ses_sender_domain = "staging.un17hub.com"
+  route53_zone_id   = data.terraform_remote_state.dns.outputs.staging_zone_id
 
   alarm_email                     = "ammonl@hotmail.com"
   alarm_rds_connections_threshold = 50
@@ -131,11 +142,11 @@ output "ses_reply_to_email" {
 }
 
 output "route53_zone_id" {
-  value = module.loppemarked_stack.route53_zone_id
+  value = data.terraform_remote_state.dns.outputs.staging_zone_id
 }
 
 output "route53_nameservers" {
-  value = module.loppemarked_stack.route53_nameservers
+  value = data.terraform_remote_state.dns.outputs.staging_nameservers
 }
 
 output "amplify_app_id" {
