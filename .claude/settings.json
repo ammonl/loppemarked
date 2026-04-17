@@ -176,6 +176,6 @@
     "linear@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
-  "promptSuggestionEnabled": false,
-  "effortLevel": "medium"
+  "effortLevel": "medium",
+  "promptSuggestionEnabled": false
 }
