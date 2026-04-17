@@ -116,7 +116,7 @@ describe("handleBulkEmailPreview", () => {
     expect(body.previewHtml).toContain("<!DOCTYPE html>");
     expect(body.previewHtml).toContain('lang="en"');
     expect(body.previewHtml).toContain("<p>Hello</p>");
-    expect(body.previewHtml).toContain("UN17 Village Rooftop Gardens");
+    expect(body.previewHtml).toContain("UN17 Village Loppemarked");
   });
 });
 

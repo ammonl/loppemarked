@@ -1,6 +1,6 @@
 # infra
 
-Infrastructure as code for UN17 Village Rooftop Gardens.
+Infrastructure as code for UN17 Village Loppemarked.
 
 All persistent AWS resources must be defined under `infra/terraform`.
 

@@ -24,10 +24,10 @@ interface EmailContent {
 
 const translations = {
   da: {
-    subject: "Bekræftelse af din plantekasse-registrering – UN17 Village Taghaver",
+    subject: "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
     greeting: (name: string) => `Kære ${name},`,
     confirmationIntro:
-      "Tak for din tilmelding til UN17 Village Taghaver! Din registrering er nu bekræftet.",
+      "Tak for din tilmelding til UN17 Village Loppemarked! Din registrering er nu bekræftet.",
     switchNote: (oldBoxName: string, oldGreenhouse: string) =>
       `Bemærk: Din tidligere plantekasse "${oldBoxName}" i ${oldGreenhouse} er blevet frigivet, og din registrering er flyttet til den nye kasse nedenfor.`,
     boxDetailsTitle: "Din plantekasse",
@@ -48,14 +48,14 @@ const translations = {
     contactTitle: "Kontakt",
     contactText: "Hvis du har spørgsmål, er du velkommen til at kontakte os:",
     closing: "Vi glæder os til at se dig i drivhuset!",
-    teamSignature: "UN17 Village Taghaver-teamet",
+    teamSignature: "UN17 Village Loppemarked-teamet",
   },
   en: {
     subject:
-      "Confirmation of your planter box registration – UN17 Village Rooftop Gardens",
+      "Confirmation of your planter box registration – UN17 Village Loppemarked",
     greeting: (name: string) => `Dear ${name},`,
     confirmationIntro:
-      "Thank you for signing up for UN17 Village Rooftop Gardens! Your registration is now confirmed.",
+      "Thank you for signing up for UN17 Village Loppemarked! Your registration is now confirmed.",
     switchNote: (oldBoxName: string, oldGreenhouse: string) =>
       `Note: Your previous planter box "${oldBoxName}" in ${oldGreenhouse} has been released, and your registration has been moved to the new box below.`,
     boxDetailsTitle: "Your planter box",
@@ -77,7 +77,7 @@ const translations = {
     contactText:
       "If you have any questions, feel free to reach out to us:",
     closing: "We look forward to seeing you in the greenhouse!",
-    teamSignature: "The UN17 Village Rooftop Gardens Team",
+    teamSignature: "The UN17 Village Loppemarked Team",
   },
 } as const;
 
@@ -126,7 +126,7 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333;">
   <div style="max-width: 600px; margin: 0 auto; background: #fff;">
     <div style="background: #2e7d32; padding: 24px 32px;">
-      <h1 style="margin: 0; color: #fff; font-size: 22px;">UN17 Village Rooftop Gardens</h1>
+      <h1 style="margin: 0; color: #fff; font-size: 22px;">UN17 Village Loppemarked</h1>
     </div>
 
     <div style="padding: 32px;">
@@ -167,7 +167,7 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
     </div>
 
     <div style="background: #f5f5f5; padding: 16px 32px; font-size: 12px; color: #888; text-align: center;">
-      <p style="margin: 0;">UN17 Village Rooftop Gardens &ndash; UN17 Hub</p>
+      <p style="margin: 0;">UN17 Village Loppemarked &ndash; UN17 Hub</p>
     </div>
   </div>
 </body>

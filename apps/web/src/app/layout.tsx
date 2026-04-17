@@ -4,7 +4,7 @@ import { colors } from "@/styles/theme";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "UN17 Village Rooftop Gardens",
+  title: "UN17 Village Loppemarked",
   description: "Greenhouse planter box registration",
   icons: {
     icon: "/favicon.ico",

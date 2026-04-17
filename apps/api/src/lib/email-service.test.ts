@@ -91,7 +91,7 @@ describe("queueAndSendEmail", () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     const command = mockSend.mock.calls[0][0];
     expect(command.input.Destination.ToAddresses).toEqual(["test@example.com"]);
-    expect(command.input.Source).toBe("UN17 Village Taghaver <loppemarked@un17hub.com>");
+    expect(command.input.Source).toBe("UN17 Village Loppemarked <loppemarked@un17hub.com>");
     expect(command.input.Message.Subject.Data).toBe("Test Subject");
   });
 

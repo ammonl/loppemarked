@@ -2,7 +2,7 @@
 
 ## Overview
 
-This runbook covers RDS automated backup management and point-in-time restore procedures for the UN17 Village Rooftop Gardens PostgreSQL database.
+This runbook covers RDS automated backup management and point-in-time restore procedures for the UN17 Village Loppemarked PostgreSQL database.
 
 ## Backup Configuration
 

@@ -12,13 +12,13 @@ describe("buildConfirmationEmail", () => {
   it("returns Danish subject for da language", () => {
     const result = buildConfirmationEmail(baseData);
     expect(result.subject).toContain("Bekræftelse");
-    expect(result.subject).toContain("UN17 Village Taghaver");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("returns English subject for en language", () => {
     const result = buildConfirmationEmail({ ...baseData, language: "en" });
     expect(result.subject).toContain("Confirmation");
-    expect(result.subject).toContain("UN17 Village Rooftop Gardens");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("includes recipient name in greeting", () => {

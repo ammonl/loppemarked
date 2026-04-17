@@ -1,7 +1,7 @@
 import type { Language } from "@loppemarked/shared";
 
 const da = {
-  "common.appName": "UN17 Village Taghaver",
+  "common.appName": "UN17 Village Loppemarked",
   "common.language": "Sprog",
   "common.submit": "Indsend",
   "common.cancel": "Annuller",
@@ -145,7 +145,7 @@ const da = {
     "Du kan ikke selv afmelde dig via systemet. Kontakt arrangørerne via e-mail, hvis du ikke længere ønsker din plantekasse.",
 
   "email.confirmationSubject":
-    "Bekræftelse af din plantekasse-registrering – UN17 Village Taghaver",
+    "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
   "email.switchNote":
     "Din tidligere plantekasse er blevet frigivet, og din registrering er flyttet til den nye kasse.",
   "email.careGuidelines":
@@ -366,14 +366,14 @@ const da = {
 
   "about.title": "Om projektet",
   "about.description":
-    "UN17 Village Taghaver er et fællesskabsprojekt for beboere på UN17 Village. Vi driver plantekasser i to tagdrivhuse for at skabe grønne rum og styrke nabofællesskabet.",
+    "UN17 Village Loppemarked er et fællesskabsprojekt for beboere på UN17 Village. Vi driver plantekasser i to tagdrivhuse for at skabe grønne rum og styrke nabofællesskabet.",
   "about.contact": "Spørgsmål? Kontakt os:",
 };
 
 export type TranslationKey = keyof typeof da;
 
 const en: Record<TranslationKey, string> = {
-  "common.appName": "UN17 Village Rooftop Gardens",
+  "common.appName": "UN17 Village Loppemarked",
   "common.language": "Language",
   "common.submit": "Submit",
   "common.cancel": "Cancel",
@@ -517,7 +517,7 @@ const en: Record<TranslationKey, string> = {
     "You cannot unregister yourself through the system. Contact the organizers by email if you no longer want your planter box.",
 
   "email.confirmationSubject":
-    "Confirmation of your planter box registration – UN17 Village Rooftop Gardens",
+    "Confirmation of your planter box registration – UN17 Village Loppemarked",
   "email.switchNote":
     "Your previous planter box has been released and your registration has been moved to the new box.",
   "email.careGuidelines":
@@ -738,7 +738,7 @@ const en: Record<TranslationKey, string> = {
 
   "about.title": "About the project",
   "about.description":
-    "UN17 Village Rooftop Gardens is a community project for residents of UN17 Village. We run planter boxes in two rooftop greenhouses to create green spaces and strengthen the neighborhood community.",
+    "UN17 Village Loppemarked is a community project for residents of UN17 Village. We run planter boxes in two rooftop greenhouses to create green spaces and strengthen the neighborhood community.",
   "about.contact": "Questions? Get in touch:",
 };
 

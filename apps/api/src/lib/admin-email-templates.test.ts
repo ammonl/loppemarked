@@ -14,13 +14,13 @@ describe("buildAdminNotification — add", () => {
   it("returns Danish subject for da language", () => {
     const result = buildAdminNotification(baseInput);
     expect(result.subject).toContain("Bekræftelse");
-    expect(result.subject).toContain("UN17 Village Taghaver");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("returns English subject for en language", () => {
     const result = buildAdminNotification({ ...baseInput, language: "en" });
     expect(result.subject).toContain("Confirmation");
-    expect(result.subject).toContain("UN17 Village Rooftop Gardens");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("includes recipient name in greeting", () => {
@@ -91,13 +91,13 @@ describe("buildAdminNotification — move", () => {
   it("returns Danish move subject", () => {
     const result = buildAdminNotification(moveInput);
     expect(result.subject).toContain("Ændring");
-    expect(result.subject).toContain("UN17 Village Taghaver");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("returns English move subject", () => {
     const result = buildAdminNotification({ ...moveInput, language: "en" });
     expect(result.subject).toContain("Change");
-    expect(result.subject).toContain("UN17 Village Rooftop Gardens");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("includes old and new box names", () => {
@@ -136,13 +136,13 @@ describe("buildAdminNotification — remove", () => {
   it("returns Danish remove subject", () => {
     const result = buildAdminNotification(removeInput);
     expect(result.subject).toContain("fjernet");
-    expect(result.subject).toContain("UN17 Village Taghaver");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("returns English remove subject", () => {
     const result = buildAdminNotification({ ...removeInput, language: "en" });
     expect(result.subject).toContain("removed");
-    expect(result.subject).toContain("UN17 Village Rooftop Gardens");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("includes removed box info", () => {
@@ -166,9 +166,9 @@ describe("buildAdminNotification — remove", () => {
     expect(result.bodyHtml).toContain("elise7284@gmail.com");
   });
 
-  it("includes UN17 Village Rooftop Gardens header", () => {
+  it("includes UN17 Village Loppemarked header", () => {
     const result = buildAdminNotification(removeInput);
-    expect(result.bodyHtml).toContain("UN17 Village Rooftop Gardens");
+    expect(result.bodyHtml).toContain("UN17 Village Loppemarked");
     expect(result.bodyHtml).toContain("#2e7d32");
   });
 });
@@ -187,7 +187,7 @@ describe("buildBulkEmailTemplate", () => {
     expect(result).toContain("Kære beboer,");
     expect(result).toContain("Skriv dit budskab her...");
     expect(result).toContain("Med venlig hilsen,");
-    expect(result).toContain("UN17 Village Taghaver-teamet");
+    expect(result).toContain("UN17 Village Loppemarked-teamet");
   });
 
   it("returns English template", () => {
@@ -195,7 +195,7 @@ describe("buildBulkEmailTemplate", () => {
     expect(result).toContain("Dear resident,");
     expect(result).toContain("Write your message here...");
     expect(result).toContain("Best regards,");
-    expect(result).toContain("The UN17 Village Rooftop Gardens Team");
+    expect(result).toContain("The UN17 Village Loppemarked Team");
   });
 
   it("returns valid HTML with paragraph tags", () => {
@@ -222,7 +222,7 @@ describe("wrapEmailHtml", () => {
 
   it("includes green header with project name", () => {
     const result = wrapEmailHtml("en", "Test", "<p>Body</p>");
-    expect(result).toContain("UN17 Village Rooftop Gardens");
+    expect(result).toContain("UN17 Village Loppemarked");
     expect(result).toContain("#2e7d32");
   });
 

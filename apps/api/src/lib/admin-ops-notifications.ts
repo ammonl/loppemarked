@@ -81,7 +81,7 @@ export function buildOpsNotificationEmail(eventWithEmail: AdminEventWithEmail | 
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;color:#333;">
   <div style="max-width:600px;margin:0 auto;background:#fff;">
     <div style="background:#2e7d32;padding:24px 32px;">
-      <h1 style="margin:0;color:#fff;font-size:20px;">UN17 Village Rooftop Gardens — Admin Notification</h1>
+      <h1 style="margin:0;color:#fff;font-size:20px;">UN17 Village Loppemarked — Admin Notification</h1>
     </div>
     <div style="padding:32px;">
       <p style="margin-top:0;font-size:15px;">${bodyText}</p>

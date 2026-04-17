@@ -1,6 +1,6 @@
 # docs
 
-Project documentation for UN17 Village Rooftop Gardens.
+Project documentation for UN17 Village Loppemarked.
 
 ## Contents
 

@@ -1,9 +1,9 @@
-# UN17 Village Rooftop Gardens Product + Technical Specification
+# UN17 Village Loppemarked Product + Technical Specification
 
 ## 1. Overview
 
 ### 1.1 Product
-- Product name: UN17 Village Rooftop Gardens
+- Product name: UN17 Village Loppemarked
 - URL: `loppemarked.un17hub.com`
 - Season: 2026
 - Purpose: allow eligible UN17 residents to register for rooftop planter boxes in two greenhouses (Kronen and Søen), with bilingual Danish/English UX and admin management.

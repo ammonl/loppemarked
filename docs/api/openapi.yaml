@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
-  title: UN17 Village Rooftop Gardens API
+  title: UN17 Village Loppemarked API
   version: 0.1.0
   description: >
-    Contract-first API skeleton for UN17 Village Rooftop Gardens registration and admin operations.
+    Contract-first API skeleton for UN17 Village Loppemarked registration and admin operations.
 servers:
   - url: https://loppemarked.un17hub.com
 tags:
