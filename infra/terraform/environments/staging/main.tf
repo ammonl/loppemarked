@@ -60,7 +60,7 @@ module "loppemarked_stack" {
   alarm_rds_connections_threshold = 50
 
   amplify_branch_name             = "main"
-  amplify_enable_auto_build       = false
+  amplify_enable_auto_build       = true
   amplify_domain_prefix           = "loppemarked"
   amplify_enable_preview_branches = true
   amplify_preview_branch_patterns = ["**"]
