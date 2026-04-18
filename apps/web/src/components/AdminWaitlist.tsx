@@ -21,7 +21,6 @@ interface WaitlistEntry {
   door: string | null;
   apartment_key: string;
   language: string;
-  greenhouse_preference: string;
   status: string;
   created_at: string;
 }

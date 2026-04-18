@@ -39,8 +39,6 @@ interface BoxRegistration {
 
 interface Box {
   id: number;
-  name: string;
-  greenhouse: string;
   state: BoxState;
   registration: BoxRegistration | null;
 }

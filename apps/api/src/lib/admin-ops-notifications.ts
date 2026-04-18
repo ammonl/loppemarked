@@ -1,4 +1,4 @@
-import { BOX_CATALOG } from "@loppemarked/shared";
+import { formatTableLabel } from "@loppemarked/shared";
 import type { Kysely, Transaction } from "kysely";
 import type { Database } from "../db/types.js";
 import { queueAndSendEmail } from "./email-service.js";
@@ -14,10 +14,8 @@ export type AdminOpsEvent =
   | { type: "admin_registration_remove"; actingAdminId: string; userName: string; boxId: number }
   | { type: "admin_waitlist_assign"; actingAdminId: string; userName: string; boxId: number };
 
-function boxLabel(boxId: number): string {
-  const box = BOX_CATALOG.find((b) => b.id === boxId);
-  if (box) return `${box.name} (${box.greenhouse})`;
-  return `Box ${boxId}`;
+function tableLabel(boxId: number): string {
+  return formatTableLabel(boxId);
 }
 
 function escapeHtml(text: string): string {
@@ -42,36 +40,36 @@ export function buildOpsNotificationEmail(eventWithEmail: AdminEventWithEmail | 
 
   switch (event.type) {
     case "user_registration":
-      subject = `New registration: ${event.userName} → ${boxLabel(event.boxId)}`;
-      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) registered for box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `New booking: ${event.userName} → ${tableLabel(event.boxId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) booked <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
     case "user_switch":
-      subject = `Box switch: ${event.userName} moved from ${boxLabel(event.oldBoxId)} to ${boxLabel(event.newBoxId)}`;
-      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) switched from box <strong>${escapeHtml(boxLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(boxLabel(event.newBoxId))}</strong>.`;
+      subject = `Table switch: ${event.userName} moved from ${tableLabel(event.oldBoxId)} to ${tableLabel(event.newBoxId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) switched from <strong>${escapeHtml(tableLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(tableLabel(event.newBoxId))}</strong>.`;
       break;
     case "admin_box_reserve":
-      subject = `Box reserved: ${boxLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> reserved box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `Table reserved: ${tableLabel(event.boxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> reserved <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
     case "admin_box_release":
-      subject = `Box released: ${boxLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> released box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `Table released: ${tableLabel(event.boxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> released <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
     case "admin_registration_create":
-      subject = `Registration added: ${event.userName} → ${boxLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> registered <strong>${escapeHtml(event.userName)}</strong> for box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `Booking added: ${event.userName} → ${tableLabel(event.boxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> booked <strong>${escapeHtml(event.userName)}</strong> for <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
     case "admin_registration_move":
-      subject = `Registration moved: ${event.userName} from ${boxLabel(event.oldBoxId)} to ${boxLabel(event.newBoxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> moved <strong>${escapeHtml(event.userName)}</strong> from box <strong>${escapeHtml(boxLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(boxLabel(event.newBoxId))}</strong>.`;
+      subject = `Booking moved: ${event.userName} from ${tableLabel(event.oldBoxId)} to ${tableLabel(event.newBoxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> moved <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(tableLabel(event.newBoxId))}</strong>.`;
       break;
     case "admin_registration_remove":
-      subject = `Registration removed: ${event.userName} from ${boxLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> removed <strong>${escapeHtml(event.userName)}</strong> from box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `Booking removed: ${event.userName} from ${tableLabel(event.boxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> removed <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
     case "admin_waitlist_assign":
-      subject = `Waitlist assigned: ${event.userName} → ${boxLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> assigned <strong>${escapeHtml(event.userName)}</strong> from the waitlist to box <strong>${escapeHtml(boxLabel(event.boxId))}</strong>.`;
+      subject = `Waitlist assigned: ${event.userName} → ${tableLabel(event.boxId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> assigned <strong>${escapeHtml(event.userName)}</strong> from the waitlist to <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
       break;
   }
 

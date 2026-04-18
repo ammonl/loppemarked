@@ -12,9 +12,7 @@ interface RecipientInfo {
   recipients: { email: string; name: string; language: string }[];
 }
 
-const AUDIENCE_OPTIONS: { value: Audience; labelKey: string }[] = [
-  { value: "all", labelKey: "admin.messaging.audienceAll" },
-];
+const DEFAULT_AUDIENCE: Audience = "all";
 
 function makeTabStyle(tab: Tab, activeTab: Tab): React.CSSProperties {
   const isActive = tab === activeTab;
@@ -254,7 +252,7 @@ function EditorSection({
 
 export function AdminMessaging() {
   const { t, language } = useLanguage();
-  const [audience, setAudience] = useState<Audience>("all");
+  const audience: Audience = DEFAULT_AUDIENCE;
   const [recipientInfo, setRecipientInfo] = useState<RecipientInfo | null>(null);
   const [loadingRecipients, setLoadingRecipients] = useState(false);
   const [bilingual, setBilingual] = useState(false);
@@ -356,12 +354,6 @@ export function AdminMessaging() {
     }
     loadTemplates();
   }, []);
-
-  function handleAudienceChange(aud: Audience) {
-    setAudience(aud);
-    setSuccess("");
-    setError("");
-  }
 
   function resetToTemplate() {
     setBodyHtml(defaultBodyRef.current);
@@ -471,9 +463,8 @@ export function AdminMessaging() {
           marginBottom: "1rem",
         }}
       >
-        <label
+        <div
           style={{
-            display: "block",
             fontSize: "0.85rem",
             fontWeight: 600,
             marginBottom: "0.5rem",
@@ -481,25 +472,11 @@ export function AdminMessaging() {
           }}
         >
           {t("admin.messaging.audience")}
-        </label>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-          {AUDIENCE_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}
-            >
-              <input
-                type="radio"
-                name="audience"
-                value={opt.value}
-                checked={audience === opt.value}
-                onChange={() => handleAudienceChange(opt.value)}
-              />
-              <span style={{ fontSize: "0.85rem" }}>{t(opt.labelKey as Parameters<typeof t>[0])}</span>
-            </label>
-          ))}
         </div>
+
+        <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: colors.inkBrown }}>
+          {t("admin.messaging.audienceAll")}
+        </p>
 
         <div
           style={{

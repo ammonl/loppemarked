@@ -93,13 +93,6 @@ const da = {
   "waitlist.alreadyOnWaitlist":
     "Din lejlighed er allerede på ventelisten. Din plads i køen er bevaret.",
   "waitlist.success": "Du er nu på ventelisten!",
-  "waitlist.otherAvailable":
-    "Der er stadig ledige plantekasser i {greenhouse}.",
-  "waitlist.goToOther": "Gå til {greenhouse}",
-  "waitlist.greenhousePreference": "Drivhuspræference",
-  "waitlist.preferenceKronen": "Kun Kronen drivhus",
-  "waitlist.preferenceSøen": "Kun Søen drivhus",
-  "waitlist.preferenceAny": "Begge drivhuse (ingen præference)",
 
   "audit.title": "Hændelseslog",
   "audit.timestamp": "Tidsstempel",
@@ -514,13 +507,6 @@ const en: Record<TranslationKey, string> = {
   "waitlist.alreadyOnWaitlist":
     "Your apartment is already on the waitlist. Your position in the queue has been preserved.",
   "waitlist.success": "You are now on the waitlist!",
-  "waitlist.otherAvailable":
-    "There are still available planter boxes in {greenhouse}.",
-  "waitlist.goToOther": "Go to {greenhouse}",
-  "waitlist.greenhousePreference": "Greenhouse preference",
-  "waitlist.preferenceKronen": "Kronen greenhouse only",
-  "waitlist.preferenceSøen": "Søen greenhouse only",
-  "waitlist.preferenceAny": "Either greenhouse (no preference)",
 
   "audit.title": "Audit Log",
   "audit.timestamp": "Timestamp",
