@@ -7,12 +7,72 @@
   position: relative;
 }
 
-.flea-landing__hero {
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: 2rem;
-  align-items: center;
-  padding: 1.5rem 0 2rem;
+/* Layered hero scene: raster layers back, live-DOM overlay front. */
+.hero-scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+}
+
+.hero-scene__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-scene__layer img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-scene__layer--bg { z-index: 1; }
+.hero-scene__layer--mid { z-index: 2; }
+.hero-scene__layer--fg { z-index: 3; }
+
+.hero-scene__overlay {
+  position: relative;
+  z-index: 4;
+}
+
+/* Readability scrim: sits above the raster layers and below the overlay's
+   real content so copy, corkboard, and CTA stay legible against whatever
+   photorealistic art later lands in the layer slots. */
+.hero-scene__overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(253, 251, 247, 0.85) 0%,
+    rgba(253, 251, 247, 0.7) 45%,
+    rgba(253, 251, 247, 0.92) 100%
+  );
+}
+
+/* Landing-specific scene framing: soft card with cream gradient fallback so
+   the overlay stays legible even when no raster layer is loaded yet. */
+.flea-landing__scene {
+  border-radius: 18px;
+  background: linear-gradient(180deg, #F0E3C9 0%, #FDFBF7 70%);
+  box-shadow: 0 12px 34px rgba(91, 70, 54, 0.14);
+  min-height: clamp(480px, 62vh, 720px);
+}
+
+.flea-landing__overlay {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 2.25rem 1.75rem 1.75rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.flea-landing__copy {
+  max-width: 38rem;
 }
 
 .flea-landing__eyebrow {
@@ -39,38 +99,13 @@
   font-size: 1.05rem;
   line-height: 1.65;
   color: #5B4636;
-  margin: 0 0 1.25rem;
+  margin: 0;
   max-width: 36rem;
 }
 
-.flea-hero-illustration {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  max-width: 420px;
-  width: 100%;
-  justify-self: center;
-  filter: drop-shadow(0 8px 18px rgba(91, 70, 54, 0.14));
-}
-
-.flea-vignettes {
-  display: flex;
-  gap: 0.65rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-}
-
-.flea-vignette {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(91, 70, 54, 0.18);
-}
-
 .flea-corkboard {
-  margin: 1rem auto 2rem;
+  margin: 0 auto;
+  width: 100%;
   max-width: 860px;
 }
 
@@ -148,7 +183,7 @@
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin: 0.5rem auto 1rem;
+  margin: 0.5rem auto 0;
   position: relative;
   flex-wrap: wrap;
 }
@@ -210,11 +245,18 @@
 }
 
 @media (max-width: 760px) {
-  .flea-landing__hero {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .flea-landing__scene {
+    min-height: clamp(420px, 72vh, 620px);
+  }
+
+  .flea-landing__overlay {
+    padding: 1.5rem 1rem 1.25rem;
+    gap: 1.25rem;
     text-align: center;
-    padding: 1rem 0 1.5rem;
+  }
+
+  .flea-landing__copy {
+    margin: 0 auto;
   }
 
   .flea-landing__body {
@@ -222,18 +264,10 @@
     margin-right: auto;
   }
 
-  .flea-vignettes {
-    justify-content: center;
-  }
-
   .flea-corkboard__surface {
     grid-template-columns: 1fr;
     gap: 1.5rem;
     padding: 1.5rem 1rem;
-  }
-
-  .flea-hero-illustration {
-    max-width: 300px;
   }
 
   .flea-landing__cta {
