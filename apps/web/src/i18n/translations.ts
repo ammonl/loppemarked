@@ -24,6 +24,23 @@ const da = {
   "greenhouse.occupied": "Optaget",
   "greenhouse.reserved": "Reserveret",
 
+  "landing.heroTitle": "FORÅRETS LOPPEMARKED I FÆLLEDHUSET",
+  "landing.heroBody":
+    "Tilmeld dig vores hyggelige loppemarked UN17 Village. Book dit loppebord og giv dine ting nyt liv i fællesskabets rammer. Så de to.",
+  "landing.corkboardTitle": "Opslagstavlen",
+  "landing.eventDateLabel": "DATO",
+  "landing.eventDateValue": "Søndag d. 24. Maj, 2026.",
+  "landing.eventPlaceLabel": "STED",
+  "landing.eventPlaceValue": "Fælledhuset, UN17 Village.",
+  "landing.eventTimeLabel": "TID",
+  "landing.eventTimeValue": "12:00 - 14:30. (Opstilling kl. 11:00).",
+  "landing.primaryCta": "Træd ind i Fælledhuset",
+  "landing.vignetteKnitwearLabel": "Strik & uld",
+  "landing.vignetteCameraLabel": "Minder & vinyl",
+  "landing.vignetteJewelryLabel": "Smykkeskrin",
+  "landing.vignetteBlanketLabel": "Tæpper & tekstiler",
+  "landing.priceTagLabel": "Loppefund",
+
   "map.viewMap": "Se kort",
   "map.back": "Tilbage til drivhuse",
   "map.legend": "Forklaring",
@@ -364,10 +381,12 @@ const da = {
     "Har du brug for hjælp eller har spørgsmål, kan du kontakte fællesskabskoordinatorerne.",
   "guidelines.contactTitle": "Kontaktpersoner",
 
-  "about.title": "Om projektet",
+  "about.title": "Om loppemarkedet",
   "about.description":
-    "UN17 Village Loppemarked er et fællesskabsprojekt for beboere på UN17 Village. Vi driver plantekasser i to tagdrivhuse for at skabe grønne rum og styrke nabofællesskabet.",
+    "UN17 Village Loppemarked er et nabofællesskabets loppemarked i Fælledhuset. Vi mødes om loppeborde, gode fund og hyggelige stunder på tværs af lejlighederne.",
   "about.contact": "Spørgsmål? Kontakt os:",
+  "about.landingContactName": "Ammon Larson",
+  "about.landingContactEmail": "ammonl@hotmail.com",
 };
 
 export type TranslationKey = keyof typeof da;
@@ -395,6 +414,23 @@ const en: Record<TranslationKey, string> = {
   "greenhouse.available": "Available",
   "greenhouse.occupied": "Occupied",
   "greenhouse.reserved": "Reserved",
+
+  "landing.heroTitle": "SPRING FLEA MARKET AT FÆLLEDHUSET",
+  "landing.heroBody":
+    "Sign up for our cozy UN17 Village flea market. Book your table and give your things a new life within the frames of community. So the two.",
+  "landing.corkboardTitle": "The noticeboard",
+  "landing.eventDateLabel": "DATE",
+  "landing.eventDateValue": "Sunday 24 May, 2026.",
+  "landing.eventPlaceLabel": "PLACE",
+  "landing.eventPlaceValue": "Fælledhuset, UN17 Village.",
+  "landing.eventTimeLabel": "TIME",
+  "landing.eventTimeValue": "12:00 - 14:30. (Setup from 11:00).",
+  "landing.primaryCta": "Træd ind i Fælledhuset",
+  "landing.vignetteKnitwearLabel": "Knits & wool",
+  "landing.vignetteCameraLabel": "Memories & vinyl",
+  "landing.vignetteJewelryLabel": "Jewelry box",
+  "landing.vignetteBlanketLabel": "Blankets & textiles",
+  "landing.priceTagLabel": "Flea find",
 
   "map.viewMap": "View map",
   "map.back": "Back to greenhouses",
@@ -736,10 +772,12 @@ const en: Record<TranslationKey, string> = {
     "If you need assistance or have questions, reach out to the community coordinators.",
   "guidelines.contactTitle": "Contact",
 
-  "about.title": "About the project",
+  "about.title": "About the flea market",
   "about.description":
-    "UN17 Village Loppemarked is a community project for residents of UN17 Village. We run planter boxes in two rooftop greenhouses to create green spaces and strengthen the neighborhood community.",
+    "UN17 Village Loppemarked is a neighborly flea market hosted in Fælledhuset. We gather around shared tables, good finds, and cozy moments across the apartments.",
   "about.contact": "Questions? Get in touch:",
+  "about.landingContactName": "Ammon Larson",
+  "about.landingContactEmail": "ammonl@hotmail.com",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {

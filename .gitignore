@@ -41,6 +41,7 @@ TODO.md
 # Test results
 playwright-report
 test-results
+.playwright-mcp
 
 # AWS / Serverless / IaC
 .aws-sam/
