@@ -1,5 +1,6 @@
 "use client";
 
+import { getTableById } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { colors, fonts, alertWarning } from "@/styles/theme";
 
@@ -26,6 +27,13 @@ export function SwitchConfirmationDialog({
   confirming = false,
 }: SwitchConfirmationDialogProps) {
   const { t } = useLanguage();
+  const existingTable = getTableById(switchDetails.existingBoxId);
+  const newTable = getTableById(switchDetails.newBoxId);
+  const formatTable = (boxId: number, sizeMeters?: number, priceDkk?: number) => {
+    const title = t("table.detailsTitle").replace("{number}", String(boxId));
+    if (sizeMeters === undefined || priceDkk === undefined) return title;
+    return `${title} (${sizeMeters} ${t("table.meters")}, ${priceDkk} ${t("table.priceSuffix")})`;
+  };
 
   return (
     <div
@@ -76,10 +84,11 @@ export function SwitchConfirmationDialog({
             {t("registration.switchCurrentBox")}
           </div>
           <div style={{ fontWeight: 600 }}>
-            {switchDetails.existingBoxName}
-          </div>
-          <div style={{ fontSize: "0.85rem", color: colors.warmBrown }}>
-            {switchDetails.existingGreenhouse}
+            {formatTable(
+              switchDetails.existingBoxId,
+              existingTable?.sizeMeters,
+              existingTable?.priceDkk,
+            )}
           </div>
         </div>
 
@@ -97,10 +106,11 @@ export function SwitchConfirmationDialog({
             {t("registration.switchNewBox")}
           </div>
           <div style={{ fontWeight: 600 }}>
-            {switchDetails.newBoxName}
-          </div>
-          <div style={{ fontSize: "0.85rem", color: colors.warmBrown }}>
-            {switchDetails.newGreenhouse}
+            {formatTable(
+              switchDetails.newBoxId,
+              newTable?.sizeMeters,
+              newTable?.priceDkk,
+            )}
           </div>
         </div>
       </div>

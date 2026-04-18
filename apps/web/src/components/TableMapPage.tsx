@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
 import { getTableById } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
@@ -232,6 +232,22 @@ function DetailPanel({
 }: DetailPanelProps) {
   const { t } = useLanguage();
   const open = panelMode !== "closed" && selectedBoxId !== null;
+  const panelRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Move focus into the dialog when it opens, and close on Escape.
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, panelMode, onClose]);
 
   if (!open || selectedBoxId === null) {
     return (
@@ -260,10 +276,12 @@ function DetailPanel({
         onClick={onClose}
       />
       <aside
+        ref={panelRef}
         className="flea-table-detail flea-table-detail--open"
         role="dialog"
         aria-modal="true"
         aria-labelledby="table-detail-title"
+        tabIndex={-1}
         style={openPanelStyle}
       >
         <header
@@ -286,6 +304,7 @@ function DetailPanel({
             {t("table.detailsTitle").replace("{number}", String(headerNumber))}
           </h3>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label={t("table.closePanel")}

@@ -9,13 +9,16 @@ vi.mock("@/i18n/LanguageProvider", () => ({
     language: "en",
     t: (key: string) => {
       const translations: Record<string, string> = {
-        "registration.switchTitle": "Confirm box switch",
-        "registration.switchCurrentBox": "Your current box",
-        "registration.switchNewBox": "New box",
+        "registration.switchTitle": "Confirm table switch",
+        "registration.switchCurrentBox": "Your current table",
+        "registration.switchNewBox": "New table",
         "registration.switchExplainer":
-          "Each apartment may only have one active planter box. If you continue, your current box will be released and you will be registered for the new box. This action cannot be undone.",
-        "registration.switchKeep": "Keep current box",
+          "Each apartment may only book one flea-market table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
+        "registration.switchKeep": "Keep current table",
         "registration.switchConfirm": "Confirm switch",
+        "table.detailsTitle": "Table #{number}",
+        "table.meters": "meters",
+        "table.priceSuffix": "DKK",
         "common.loading": "Loading...",
       };
       return translations[key] ?? key;
@@ -35,7 +38,7 @@ const defaultSwitchDetails: SwitchDetails = {
 afterEach(cleanup);
 
 describe("SwitchConfirmationDialog", () => {
-  it("renders dialog with current and new box details", () => {
+  it("renders dialog with current and new table details by number", () => {
     render(
       <SwitchConfirmationDialog
         switchDetails={defaultSwitchDetails}
@@ -44,13 +47,15 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText("Confirm box switch")).toBeDefined();
+    expect(screen.getByText("Confirm table switch")).toBeDefined();
     expect(screen.getByTestId("current-box")).toBeDefined();
     expect(screen.getByTestId("new-box")).toBeDefined();
-    expect(screen.getByText(/Bed 5/)).toBeDefined();
-    expect(screen.getByText(/Kronen/)).toBeDefined();
-    expect(screen.getByText(/Bed 20/)).toBeDefined();
-    expect(screen.getByText(/Søen/)).toBeDefined();
+    expect(screen.getByText(/Table #5/)).toBeDefined();
+    expect(screen.getByText(/Table #20/)).toBeDefined();
+    // Greenhouse name/box name should not leak through any more.
+    expect(screen.queryByText(/Kronen/)).toBeNull();
+    expect(screen.queryByText(/Søen/)).toBeNull();
+    expect(screen.queryByText(/Bed 5/)).toBeNull();
   });
 
   it("renders the explainer text", () => {
@@ -88,7 +93,7 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    await user.click(screen.getByText("Keep current box"));
+    await user.click(screen.getByText("Keep current table"));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
@@ -125,7 +130,7 @@ describe("SwitchConfirmationDialog", () => {
     }
   });
 
-  it("shows box names in the display", () => {
+  it("shows table numbers and size/price in the display", () => {
     render(
       <SwitchConfirmationDialog
         switchDetails={defaultSwitchDetails}
@@ -134,7 +139,9 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText("Bed 5")).toBeDefined();
-    expect(screen.getByText("Bed 20")).toBeDefined();
+    // Table 5 is a standard 2m/50 DKK table in TABLE_CATALOG.
+    expect(screen.getByText(/Table #5.*2 meters.*50 DKK/)).toBeDefined();
+    // Table 20 is also a standard 2m/50 DKK table.
+    expect(screen.getByText(/Table #20.*2 meters.*50 DKK/)).toBeDefined();
   });
 });

@@ -87,7 +87,7 @@ const da = {
 
   "waitlist.title": "Venteliste",
   "waitlist.description":
-    "Alle plantekasser er i øjeblikket optaget. Du kan skrive dig op på ventelisten, og vi kontakter dig, når en plantekasse bliver ledig.",
+    "Alle loppeborde er i øjeblikket booket. Skriv dig op på ventelisten, og vi kontakter dig, når et bord bliver ledigt.",
   "waitlist.joinButton": "Skriv dig op på ventelisten",
   "waitlist.positionLabel": "Din plads på ventelisten",
   "waitlist.alreadyOnWaitlist":
@@ -452,7 +452,7 @@ const en: Record<TranslationKey, string> = {
   "landing.eventPlaceValue": "Fælledhuset, UN17 Village.",
   "landing.eventTimeLabel": "TIME",
   "landing.eventTimeValue": "12:00 - 14:30. (Setup from 11:00).",
-  "landing.primaryCta": "Træd ind i Fælledhuset",
+  "landing.primaryCta": "Step into Fælledhuset",
   "landing.vignetteKnitwearLabel": "Knits & wool",
   "landing.vignetteCameraLabel": "Memories & vinyl",
   "landing.vignetteJewelryLabel": "Jewelry box",
@@ -466,7 +466,7 @@ const en: Record<TranslationKey, string> = {
   "map.state.occupied": "Occupied",
   "map.state.reserved": "Reserved",
 
-  "table.pageTitle": "Book Dit Loppebord - Fælledhuset Hallen",
+  "table.pageTitle": "Book Your Flea-Market Table — Fælledhuset Hall",
   "table.pageIntro":
     "Pick an available flea-market table on the Fælledhuset hall map. Tap a table to see its size, price, and reserve it.",
   "table.state.ledigt": "Available",
@@ -484,7 +484,7 @@ const en: Record<TranslationKey, string> = {
   "table.closePanel": "Close",
   "table.bookNow": "Book Now",
   "table.ariaTile": "Table {number} – {state}",
-  "table.allBookedTitle": "Hov! Alle loppeborde er allerede booket af dine naboer!",
+  "table.allBookedTitle": "Oh no! Every flea-market table has already been booked by your neighbors!",
   "table.allBookedBody":
     "Join the waitlist and we'll let you know if a table opens up.",
   "table.joinWaitlistCta": "Join Waitlist",
@@ -505,7 +505,7 @@ const en: Record<TranslationKey, string> = {
 
   "waitlist.title": "Waitlist",
   "waitlist.description":
-    "All planter boxes are currently taken. You can join the waitlist and we will contact you when a box becomes available.",
+    "All flea-market tables are currently booked. Join the waitlist and we'll contact you when a table opens up.",
   "waitlist.joinButton": "Join the waitlist",
   "waitlist.positionLabel": "Your position on the waitlist",
   "waitlist.alreadyOnWaitlist":
