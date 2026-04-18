@@ -11,6 +11,7 @@ import {
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
   SEED_ADMIN_EMAILS,
+  EVENT_CONTACT,
   getTableById,
   formatTableLabel,
 } from "./constants.js";
@@ -92,6 +93,15 @@ describe("seed data", () => {
     expect(SEED_ADMIN_EMAILS).toEqual([
       "ammonl@hotmail.com",
     ]);
+  });
+});
+
+describe("EVENT_CONTACT", () => {
+  it("exposes Ammon Larson as the primary event contact", () => {
+    expect(EVENT_CONTACT).toEqual({
+      name: "Ammon Larson",
+      email: "ammonl@hotmail.com",
+    });
   });
 });
 

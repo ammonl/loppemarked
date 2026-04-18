@@ -73,7 +73,7 @@ const da = {
   "table.mapAriaLabel": "Interaktivt kort over Fælledhusets loppemarked",
   "table.floorPlanEntrance": "Indgang",
   "table.floorPlanStage": "Scene",
-  "table.supportContact": "Spørgsmål? Skriv til Ammon Larson på ammonl@hotmail.com",
+  "table.supportContact": "Spørgsmål? Skriv til {contact}",
 
   "address.searchPlaceholder": "Søg din adresse...",
   "address.searchHint":
@@ -152,7 +152,7 @@ const da = {
   "registration.switchKeep": "Behold nuværende bord",
   "registration.success": "Du er nu tilmeldt!",
   "registration.unregisterInfo":
-    "Du kan ikke selv afmelde dig. Kontakt Ammon Larson på ammonl@hotmail.com, hvis du ikke længere ønsker dit loppebord.",
+    "Du kan ikke selv afmelde dig. Kontakt {contact}, hvis du ikke længere ønsker dit loppebord.",
 
   "validation.emailRequired": "E-mail er påkrævet",
   "validation.emailInvalid": "Ugyldig e-mailadresse",
@@ -179,7 +179,7 @@ const da = {
   "policy.oneApartmentRule":
     "Hver lejlighed kan kun booke ét loppebord. Hvis din lejlighed allerede har en booking, vil en ny tilmelding erstatte den eksisterende.",
   "policy.noSelfUnregister":
-    "Du kan ikke selv afmelde dig via systemet. Kontakt Ammon Larson på ammonl@hotmail.com, hvis du ikke længere ønsker dit loppebord.",
+    "Du kan ikke selv afmelde dig via systemet. Kontakt {contact}, hvis du ikke længere ønsker dit loppebord.",
 
   "email.confirmationSubject":
     "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
@@ -408,8 +408,6 @@ const da = {
   "about.description":
     "UN17 Village Loppemarked er et nabofællesskabets loppemarked i Fælledhuset. Vi mødes om loppeborde, gode fund og hyggelige stunder på tværs af lejlighederne.",
   "about.contact": "Spørgsmål? Kontakt os:",
-  "about.landingContactName": "Ammon Larson",
-  "about.landingContactEmail": "ammonl@hotmail.com",
 };
 
 export type TranslationKey = keyof typeof da;
@@ -487,7 +485,7 @@ const en: Record<TranslationKey, string> = {
   "table.mapAriaLabel": "Interactive map of the Fælledhuset flea market hall",
   "table.floorPlanEntrance": "Entrance",
   "table.floorPlanStage": "Stage",
-  "table.supportContact": "Questions? Email Ammon Larson at ammonl@hotmail.com",
+  "table.supportContact": "Questions? Email {contact}",
 
   "address.searchPlaceholder": "Search your address...",
   "address.searchHint":
@@ -566,7 +564,7 @@ const en: Record<TranslationKey, string> = {
   "registration.switchKeep": "Keep current table",
   "registration.success": "You are now booked!",
   "registration.unregisterInfo":
-    "You cannot unregister yourself. Contact Ammon Larson at ammonl@hotmail.com if you no longer want your flea-market table.",
+    "You cannot unregister yourself. Contact {contact} if you no longer want your flea-market table.",
 
   "validation.emailRequired": "Email is required",
   "validation.emailInvalid": "Invalid email address",
@@ -593,7 +591,7 @@ const en: Record<TranslationKey, string> = {
   "policy.oneApartmentRule":
     "Each apartment may only book one flea-market table. If your apartment already has a booking, a new booking will replace the existing one.",
   "policy.noSelfUnregister":
-    "You cannot unregister yourself through the system. Contact Ammon Larson at ammonl@hotmail.com if you no longer want your flea-market table.",
+    "You cannot unregister yourself through the system. Contact {contact} if you no longer want your flea-market table.",
 
   "email.confirmationSubject":
     "Confirmation of your planter box registration – UN17 Village Loppemarked",
@@ -822,8 +820,6 @@ const en: Record<TranslationKey, string> = {
   "about.description":
     "UN17 Village Loppemarked is a neighborly flea market hosted in Fælledhuset. We gather around shared tables, good finds, and cozy moments across the apartments.",
   "about.contact": "Questions? Get in touch:",
-  "about.landingContactName": "Ammon Larson",
-  "about.landingContactEmail": "ammonl@hotmail.com",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {

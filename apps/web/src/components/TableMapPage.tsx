@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
 import { getTableById } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { renderWithContact } from "@/i18n/contactLink";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LoadingSplash } from "./LoadingSplash";
 import { RegistrationForm } from "./RegistrationForm";
@@ -203,7 +204,7 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
           fontFamily: fonts.body,
         }}
       >
-        {t("table.supportContact")}
+        {renderWithContact(t("table.supportContact"), { color: colors.warmBrown, fontWeight: 600 })}
       </p>
 
       <style>{mobilePanelStyles}</style>

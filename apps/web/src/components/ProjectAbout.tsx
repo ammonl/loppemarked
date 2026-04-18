@@ -1,10 +1,9 @@
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { EventContactLink } from "@/i18n/contactLink";
 import { colors, fonts } from "@/styles/theme";
 
 export function ProjectAbout() {
   const { t } = useLanguage();
-  const contactName = t("about.landingContactName");
-  const contactEmail = t("about.landingContactEmail");
 
   return (
     <footer
@@ -64,12 +63,9 @@ export function ProjectAbout() {
         {t("about.contact")}
       </p>
       <p style={{ margin: 0, fontSize: "0.9rem", fontFamily: fonts.marker }}>
-        <a
-          href={`mailto:${contactEmail}`}
+        <EventContactLink
           style={{ color: colors.fleaSageDark, textDecoration: "none", fontWeight: 600 }}
-        >
-          {contactName} ({contactEmail})
-        </a>
+        />
       </p>
     </footer>
   );
