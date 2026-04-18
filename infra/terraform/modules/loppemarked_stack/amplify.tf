@@ -93,7 +93,8 @@ resource "aws_amplify_domain_association" "main" {
   app_id      = aws_amplify_app.web.id
   domain_name = var.ses_sender_domain
 
-  wait_for_verification = false
+  wait_for_verification  = false
+  enable_auto_sub_domain = true
 
   sub_domain {
     branch_name = aws_amplify_branch.main.branch_name
