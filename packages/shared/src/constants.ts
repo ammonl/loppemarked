@@ -155,6 +155,17 @@ export const ORGANIZER_CONTACTS = [
   { name: "Lena Filthaut", email: "lena.filthaut@yahoo.com" },
 ] as const;
 
+/**
+ * Primary event contact shown across public and admin surfaces.
+ *
+ * Rendered UI must present this as a single `mailto:` link whose visible
+ * text is the `name`; the `email` only appears inside the `href`.
+ */
+export const EVENT_CONTACT = {
+  name: "Ammon Larson",
+  email: "ammonl@hotmail.com",
+} as const;
+
 /** WhatsApp group link */
 export const WHATSAPP_GROUP_URL =
   "https://chat.whatsapp.com/FqYOqLLsz98HmDcdsr8a3i" as const;

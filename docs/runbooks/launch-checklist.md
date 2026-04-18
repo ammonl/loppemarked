@@ -5,7 +5,7 @@
 Pre-launch verification and production cutover plan for UN17 Village Loppemarked. Complete all sections before the registration opening date.
 
 **Opening date:** 2026-04-01 at 10:00 Europe/Copenhagen
-**Primary contact:** Ammon Larson (ammonl@hotmail.com)
+**Primary contact:** [Ammon Larson](mailto:ammonl@hotmail.com)
 
 ## 1. Staging Sign-Off
 
