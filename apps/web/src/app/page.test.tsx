@@ -389,8 +389,8 @@ vi.mock("@/components/LandingPage", () => ({
     </div>
   ),
 }));
-vi.mock("@/components/GreenhouseMapPage", () => ({
-  GreenhouseMapPage: () => <div data-testid="greenhouse-map-page" />,
+vi.mock("@/components/TableMapPage", () => ({
+  TableMapPage: () => <div data-testid="table-map-page" />,
 }));
 vi.mock("@/components/WaitlistForm", () => ({
   WaitlistForm: () => <div data-testid="waitlist-form" />,
@@ -493,7 +493,7 @@ describe("Home page render gating", () => {
       fireEvent.click(screen.getByTestId("enter-cta"));
     });
 
-    expect(screen.getByTestId("greenhouse-map-page")).toBeDefined();
+    expect(screen.getByTestId("table-map-page")).toBeDefined();
     expect(screen.queryByTestId("landing-page")).toBeNull();
   });
 
@@ -512,7 +512,7 @@ describe("Home page render gating", () => {
       fireEvent.click(screen.getByTestId("enter-cta"));
     });
 
-    expect(screen.getByTestId("greenhouse-map-page")).toBeDefined();
+    expect(screen.getByTestId("table-map-page")).toBeDefined();
 
     const homeButton = screen.getByText("common.appName");
     await act(async () => {
@@ -520,6 +520,6 @@ describe("Home page render gating", () => {
     });
 
     expect(screen.getByTestId("landing-page")).toBeDefined();
-    expect(screen.queryByTestId("greenhouse-map-page")).toBeNull();
+    expect(screen.queryByTestId("table-map-page")).toBeNull();
   });
 });

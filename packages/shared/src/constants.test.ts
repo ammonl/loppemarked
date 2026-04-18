@@ -4,11 +4,14 @@ import {
   GREENHOUSES,
   KRONEN_BOX_RANGE,
   SOEN_BOX_RANGE,
+  TABLE_CATALOG,
+  TABLE_MAP_VIEWBOX,
   TOTAL_BOX_COUNT,
   FLOOR_DOOR_REQUIRED_NUMBERS,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
   SEED_ADMIN_EMAILS,
+  getTableById,
 } from "./constants.js";
 
 describe("GREENHOUSES", () => {
@@ -88,5 +91,43 @@ describe("seed data", () => {
     expect(SEED_ADMIN_EMAILS).toEqual([
       "ammonl@hotmail.com",
     ]);
+  });
+});
+
+describe("TABLE_CATALOG", () => {
+  it("has one entry per planter box", () => {
+    expect(TABLE_CATALOG).toHaveLength(TOTAL_BOX_COUNT);
+  });
+
+  it("numbers tables 1-29 matching id", () => {
+    TABLE_CATALOG.forEach((t, i) => {
+      expect(t.id).toBe(i + 1);
+      expect(t.number).toBe(i + 1);
+    });
+  });
+
+  it("positions every table within the hall viewBox", () => {
+    const { width, height } = TABLE_MAP_VIEWBOX;
+    for (const table of TABLE_CATALOG) {
+      expect(table.x).toBeGreaterThanOrEqual(0);
+      expect(table.y).toBeGreaterThanOrEqual(0);
+      expect(table.x + table.width).toBeLessThanOrEqual(width);
+      expect(table.y + table.height).toBeLessThanOrEqual(height);
+    }
+  });
+
+  it("assigns positive sizes and prices", () => {
+    for (const table of TABLE_CATALOG) {
+      expect(table.sizeMeters).toBeGreaterThan(0);
+      expect(table.priceDkk).toBeGreaterThan(0);
+      expect(table.width).toBeGreaterThan(0);
+      expect(table.height).toBeGreaterThan(0);
+    }
+  });
+
+  it("resolves by id via getTableById", () => {
+    expect(getTableById(1)?.number).toBe(1);
+    expect(getTableById(29)?.number).toBe(29);
+    expect(getTableById(999)).toBeUndefined();
   });
 });

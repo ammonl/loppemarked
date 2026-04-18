@@ -48,6 +48,76 @@ export const BOX_CATALOG: readonly BoxCatalogEntry[] = [
 /** Total planter box count */
 export const TOTAL_BOX_COUNT = 29;
 
+/**
+ * Metadata for a numbered flea-market table.
+ *
+ * The `id` matches the underlying `planter_boxes.id` (1-29) so the public
+ * flea-market page can reuse the existing box/greenhouse API surface while
+ * presenting tables by number, location, size, and price.
+ *
+ * Coordinates are in the `TABLE_MAP_VIEWBOX` system (top-left origin).
+ */
+export interface TableCatalogEntry {
+  id: number;
+  number: number;
+  sizeMeters: number;
+  priceDkk: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** SVG viewBox for the Fælledhuset hall map (width × height units). */
+export const TABLE_MAP_VIEWBOX = { width: 120, height: 80 } as const;
+
+const STANDARD_TABLE_SIZE_METERS = 2;
+const STANDARD_TABLE_PRICE_DKK = 50;
+const PREMIUM_TABLE_SIZE_METERS = 3;
+const PREMIUM_TABLE_PRICE_DKK = 75;
+
+/**
+ * Fælledhuset hall table layout. Tables 1–22 line the perimeter
+ * walls; tables 23–26 form the long center island (premium 3-meter
+ * tables); tables 27–29 form a smaller second center aisle.
+ */
+export const TABLE_CATALOG: readonly TableCatalogEntry[] = [
+  { id: 1, number: 1, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 20, y: 12, width: 10, height: 5 },
+  { id: 2, number: 2, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 32, y: 12, width: 10, height: 5 },
+  { id: 3, number: 3, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 44, y: 12, width: 10, height: 5 },
+  { id: 4, number: 4, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 56, y: 12, width: 10, height: 5 },
+  { id: 5, number: 5, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 68, y: 12, width: 10, height: 5 },
+  { id: 6, number: 6, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 80, y: 12, width: 10, height: 5 },
+  { id: 7, number: 7, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 92, y: 12, width: 10, height: 5 },
+  { id: 8, number: 8, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 103, y: 22, width: 5, height: 10 },
+  { id: 9, number: 9, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 103, y: 34, width: 5, height: 10 },
+  { id: 10, number: 10, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 103, y: 46, width: 5, height: 10 },
+  { id: 11, number: 11, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 103, y: 58, width: 5, height: 10 },
+  { id: 12, number: 12, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 92, y: 63, width: 10, height: 5 },
+  { id: 13, number: 13, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 80, y: 63, width: 10, height: 5 },
+  { id: 14, number: 14, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 68, y: 63, width: 10, height: 5 },
+  { id: 15, number: 15, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 56, y: 63, width: 10, height: 5 },
+  { id: 16, number: 16, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 44, y: 63, width: 10, height: 5 },
+  { id: 17, number: 17, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 32, y: 63, width: 10, height: 5 },
+  { id: 18, number: 18, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 20, y: 63, width: 10, height: 5 },
+  { id: 19, number: 19, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 12, y: 58, width: 5, height: 10 },
+  { id: 20, number: 20, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 12, y: 46, width: 5, height: 10 },
+  { id: 21, number: 21, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 12, y: 34, width: 5, height: 10 },
+  { id: 22, number: 22, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 12, y: 22, width: 5, height: 10 },
+  { id: 23, number: 23, sizeMeters: PREMIUM_TABLE_SIZE_METERS, priceDkk: PREMIUM_TABLE_PRICE_DKK, x: 22, y: 28, width: 15, height: 6 },
+  { id: 24, number: 24, sizeMeters: PREMIUM_TABLE_SIZE_METERS, priceDkk: PREMIUM_TABLE_PRICE_DKK, x: 39, y: 28, width: 15, height: 6 },
+  { id: 25, number: 25, sizeMeters: PREMIUM_TABLE_SIZE_METERS, priceDkk: PREMIUM_TABLE_PRICE_DKK, x: 66, y: 28, width: 15, height: 6 },
+  { id: 26, number: 26, sizeMeters: PREMIUM_TABLE_SIZE_METERS, priceDkk: PREMIUM_TABLE_PRICE_DKK, x: 83, y: 28, width: 15, height: 6 },
+  { id: 27, number: 27, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 30, y: 46, width: 10, height: 5 },
+  { id: 28, number: 28, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 55, y: 46, width: 10, height: 5 },
+  { id: 29, number: 29, sizeMeters: STANDARD_TABLE_SIZE_METERS, priceDkk: STANDARD_TABLE_PRICE_DKK, x: 80, y: 46, width: 10, height: 5 },
+] as const;
+
+/** Lookup helper for a table by its id (= box id). */
+export function getTableById(id: number): TableCatalogEntry | undefined {
+  return TABLE_CATALOG.find((t) => t.id === id);
+}
+
 /** Kronen box ID range */
 export const KRONEN_BOX_RANGE = { start: 1, end: 14 } as const;
 

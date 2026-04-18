@@ -42,11 +42,38 @@ const da = {
   "landing.priceTagLabel": "Loppefund",
 
   "map.viewMap": "Se kort",
-  "map.back": "Tilbage til drivhuse",
+  "map.back": "Tilbage til forsiden",
   "map.legend": "Forklaring",
   "map.state.available": "Ledig",
   "map.state.occupied": "Optaget",
   "map.state.reserved": "Reserveret",
+
+  "table.pageTitle": "Book Dit Loppebord - Fælledhuset Hallen",
+  "table.pageIntro":
+    "Vælg et ledigt loppebord på planen over Fælledhusets hal. Tryk på et bord for at se størrelse og pris og for at reservere det.",
+  "table.state.ledigt": "Ledigt",
+  "table.state.reserveret": "Reserveret",
+  "table.state.valgt": "Valgt",
+  "table.totalLabel": "Loppeborde i alt",
+  "table.availableLabel": "Ledige",
+  "table.reservedLabel": "Reserverede",
+  "table.meters": "meter",
+  "table.priceSuffix": "DKK",
+  "table.detailsTitle": "Bord #{number}",
+  "table.detailsSize": "Størrelse",
+  "table.detailsPrice": "Pris",
+  "table.selectHint": "Tryk på et ledigt bord for at se detaljer.",
+  "table.closePanel": "Luk",
+  "table.bookNow": "Book Nu",
+  "table.ariaTile": "Bord {number} – {state}",
+  "table.allBookedTitle": "Hov! Alle loppeborde er allerede booket af dine naboer!",
+  "table.allBookedBody":
+    "Tilmeld dig ventelisten så vi kan give dig besked, hvis en plads åbner sig.",
+  "table.joinWaitlistCta": "Tilmeld Venteliste",
+  "table.mapAriaLabel": "Interaktivt kort over Fælledhusets loppemarked",
+  "table.floorPlanEntrance": "Indgang",
+  "table.floorPlanStage": "Scene",
+  "table.supportContact": "Spørgsmål? Skriv til Ammon Larson på ammonl@hotmail.com",
 
   "address.searchPlaceholder": "Søg din adresse...",
   "address.searchHint":
@@ -113,26 +140,26 @@ const da = {
   "audit.action.notification_sent": "Notifikation sendt",
   "audit.action.notification_skipped": "Notifikation sprunget over",
 
-  "registration.formTitle": "Tilmeld plantekasse",
+  "registration.formTitle": "Book dit loppebord",
   "registration.nameLabel": "Navn",
   "registration.emailLabel": "E-mail",
   "registration.streetLabel": "Gade",
   "registration.houseNumberLabel": "Husnummer",
   "registration.floorLabel": "Etage",
   "registration.doorLabel": "Dør",
-  "registration.boxLabel": "Plantekasse",
+  "registration.boxLabel": "Loppebord",
   "registration.switchWarning":
-    "Din lejlighed har allerede en aktiv tilmelding. Hvis du fortsætter, skifter du til den nye kasse, og din nuværende kasse frigives.",
+    "Din lejlighed har allerede et aktivt bord. Hvis du fortsætter, skifter du til det nye bord, og dit nuværende bord frigives.",
   "registration.switchConfirm": "Bekræft skifte",
-  "registration.switchTitle": "Bekræft kasseskifte",
-  "registration.switchCurrentBox": "Din nuværende kasse",
-  "registration.switchNewBox": "Ny kasse",
+  "registration.switchTitle": "Bekræft bordskifte",
+  "registration.switchCurrentBox": "Dit nuværende bord",
+  "registration.switchNewBox": "Nyt bord",
   "registration.switchExplainer":
-    "Hver lejlighed kan kun have én aktiv plantekasse. Hvis du fortsætter, vil din nuværende kasse blive frigivet, og du vil blive tilmeldt den nye kasse. Denne handling kan ikke fortrydes.",
-  "registration.switchKeep": "Behold nuværende kasse",
+    "Hver lejlighed kan kun booke ét loppebord. Hvis du fortsætter, vil dit nuværende bord blive frigivet, og du vil blive tilmeldt det nye bord. Denne handling kan ikke fortrydes.",
+  "registration.switchKeep": "Behold nuværende bord",
   "registration.success": "Du er nu tilmeldt!",
   "registration.unregisterInfo":
-    "Du kan ikke selv afmelde dig. Kontakt arrangørerne via e-mail, hvis du ikke længere ønsker din plantekasse.",
+    "Du kan ikke selv afmelde dig. Kontakt Ammon Larson på ammonl@hotmail.com, hvis du ikke længere ønsker dit loppebord.",
 
   "validation.emailRequired": "E-mail er påkrævet",
   "validation.emailInvalid": "Ugyldig e-mailadresse",
@@ -140,13 +167,13 @@ const da = {
   "validation.streetInvalid": "Gaden skal være Else Alfelts Vej",
   "validation.houseNumberInvalid": "Husnummer skal være mellem 122 og 202",
   "validation.floorDoorRequired": "Etage er påkrævet for denne adresse",
-  "validation.boxIdInvalid": "Ugyldig plantekasse",
+  "validation.boxIdInvalid": "Ugyldigt loppebord",
 
   "consent.title": "Databeskyttelse og samtykke",
   "consent.dataCollected":
     "Vi indsamler dit navn, din e-mailadresse, din lejlighedsadresse samt tilmeldings- og ventelisteoplysninger.",
   "consent.purpose":
-    "Dine oplysninger bruges udelukkende til administration af plantekassesæsonen 2026 og kommunikation om ændringer i din tilmelding.",
+    "Dine oplysninger bruges udelukkende til administration af loppemarkedet 2026 og kommunikation om ændringer i din tilmelding.",
   "consent.retention":
     "Driftsdata og revisionshistorik opbevares med henblik på administrativ sporbarhed.",
   "consent.contact":
@@ -157,9 +184,9 @@ const da = {
     "Du skal acceptere vilkårene for databeskyttelse for at fortsætte.",
 
   "policy.oneApartmentRule":
-    "Hver lejlighed kan kun have én aktiv plantekasse. Hvis din lejlighed allerede har en tilmelding, vil en ny tilmelding erstatte den eksisterende.",
+    "Hver lejlighed kan kun booke ét loppebord. Hvis din lejlighed allerede har en booking, vil en ny tilmelding erstatte den eksisterende.",
   "policy.noSelfUnregister":
-    "Du kan ikke selv afmelde dig via systemet. Kontakt arrangørerne via e-mail, hvis du ikke længere ønsker din plantekasse.",
+    "Du kan ikke selv afmelde dig via systemet. Kontakt Ammon Larson på ammonl@hotmail.com, hvis du ikke længere ønsker dit loppebord.",
 
   "email.confirmationSubject":
     "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
@@ -433,11 +460,38 @@ const en: Record<TranslationKey, string> = {
   "landing.priceTagLabel": "Flea find",
 
   "map.viewMap": "View map",
-  "map.back": "Back to greenhouses",
+  "map.back": "Back to landing",
   "map.legend": "Legend",
   "map.state.available": "Available",
   "map.state.occupied": "Occupied",
   "map.state.reserved": "Reserved",
+
+  "table.pageTitle": "Book Dit Loppebord - Fælledhuset Hallen",
+  "table.pageIntro":
+    "Pick an available flea-market table on the Fælledhuset hall map. Tap a table to see its size, price, and reserve it.",
+  "table.state.ledigt": "Available",
+  "table.state.reserveret": "Reserved",
+  "table.state.valgt": "Selected",
+  "table.totalLabel": "Total tables",
+  "table.availableLabel": "Available",
+  "table.reservedLabel": "Reserved",
+  "table.meters": "meters",
+  "table.priceSuffix": "DKK",
+  "table.detailsTitle": "Table #{number}",
+  "table.detailsSize": "Size",
+  "table.detailsPrice": "Price",
+  "table.selectHint": "Tap an available table to see details.",
+  "table.closePanel": "Close",
+  "table.bookNow": "Book Now",
+  "table.ariaTile": "Table {number} – {state}",
+  "table.allBookedTitle": "Hov! Alle loppeborde er allerede booket af dine naboer!",
+  "table.allBookedBody":
+    "Join the waitlist and we'll let you know if a table opens up.",
+  "table.joinWaitlistCta": "Join Waitlist",
+  "table.mapAriaLabel": "Interactive map of the Fælledhuset flea market hall",
+  "table.floorPlanEntrance": "Entrance",
+  "table.floorPlanStage": "Stage",
+  "table.supportContact": "Questions? Email Ammon Larson at ammonl@hotmail.com",
 
   "address.searchPlaceholder": "Search your address...",
   "address.searchHint":
@@ -504,26 +558,26 @@ const en: Record<TranslationKey, string> = {
   "audit.action.notification_sent": "Notification Sent",
   "audit.action.notification_skipped": "Notification Skipped",
 
-  "registration.formTitle": "Register for a planter box",
+  "registration.formTitle": "Book your flea-market table",
   "registration.nameLabel": "Name",
   "registration.emailLabel": "Email",
   "registration.streetLabel": "Street",
   "registration.houseNumberLabel": "House number",
   "registration.floorLabel": "Floor",
   "registration.doorLabel": "Door",
-  "registration.boxLabel": "Planter box",
+  "registration.boxLabel": "Flea-market table",
   "registration.switchWarning":
-    "Your apartment already has an active registration. If you continue, you will switch to the new box and your current box will be released.",
+    "Your apartment already has an active booking. If you continue, you will switch to the new table and your current table will be released.",
   "registration.switchConfirm": "Confirm switch",
-  "registration.switchTitle": "Confirm box switch",
-  "registration.switchCurrentBox": "Your current box",
-  "registration.switchNewBox": "New box",
+  "registration.switchTitle": "Confirm table switch",
+  "registration.switchCurrentBox": "Your current table",
+  "registration.switchNewBox": "New table",
   "registration.switchExplainer":
-    "Each apartment may only have one active planter box. If you continue, your current box will be released and you will be registered for the new box. This action cannot be undone.",
-  "registration.switchKeep": "Keep current box",
-  "registration.success": "You are now registered!",
+    "Each apartment may only book one flea-market table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
+  "registration.switchKeep": "Keep current table",
+  "registration.success": "You are now booked!",
   "registration.unregisterInfo":
-    "You cannot unregister yourself. Contact the organizers by email if you no longer want your planter box.",
+    "You cannot unregister yourself. Contact Ammon Larson at ammonl@hotmail.com if you no longer want your flea-market table.",
 
   "validation.emailRequired": "Email is required",
   "validation.emailInvalid": "Invalid email address",
@@ -531,13 +585,13 @@ const en: Record<TranslationKey, string> = {
   "validation.streetInvalid": "Street must be Else Alfelts Vej",
   "validation.houseNumberInvalid": "House number must be between 122 and 202",
   "validation.floorDoorRequired": "Floor is required for this address",
-  "validation.boxIdInvalid": "Invalid planter box",
+  "validation.boxIdInvalid": "Invalid flea-market table",
 
   "consent.title": "Data protection and consent",
   "consent.dataCollected":
     "We collect your name, email address, apartment address, and registration and waitlist records.",
   "consent.purpose":
-    "Your information is used solely for administration of the 2026 planter box season and communication regarding changes to your registration.",
+    "Your information is used solely for administration of the 2026 flea market and communication regarding changes to your booking.",
   "consent.retention":
     "Operational data and audit history are retained for administrative traceability.",
   "consent.contact":
@@ -548,9 +602,9 @@ const en: Record<TranslationKey, string> = {
     "You must accept the data protection terms to continue.",
 
   "policy.oneApartmentRule":
-    "Each apartment may only have one active planter box. If your apartment already has a registration, a new registration will replace the existing one.",
+    "Each apartment may only book one flea-market table. If your apartment already has a booking, a new booking will replace the existing one.",
   "policy.noSelfUnregister":
-    "You cannot unregister yourself through the system. Contact the organizers by email if you no longer want your planter box.",
+    "You cannot unregister yourself through the system. Contact Ammon Larson at ammonl@hotmail.com if you no longer want your flea-market table.",
 
   "email.confirmationSubject":
     "Confirmation of your planter box registration – UN17 Village Loppemarked",

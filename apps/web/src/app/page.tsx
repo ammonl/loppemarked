@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEFAULT_OPENING_DATETIME, GREENHOUSES, type Greenhouse } from "@loppemarked/shared";
+import { DEFAULT_OPENING_DATETIME } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { PreOpenPage } from "@/components/PreOpenPage";
 import { LandingPage } from "@/components/LandingPage";
-import { GreenhouseMapPage } from "@/components/GreenhouseMapPage";
+import { TableMapPage } from "@/components/TableMapPage";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { AdminPage } from "@/components/AdminPage";
 import { LoadingSplash } from "@/components/LoadingSplash";
@@ -28,7 +28,7 @@ interface PublicStatus {
 export default function Home() {
   const { t, ready } = useLanguage();
   const [view, setView] = useHistoryState<View>("home.view", "public");
-  const [selectedGreenhouse, setSelectedGreenhouse] = useHistoryState<Greenhouse | null>("home.greenhouse", null);
+  const [showTableMap, setShowTableMap] = useHistoryState<boolean>("home.tableMap", false);
   const [showWaitlistForm, setShowWaitlistForm] = useHistoryState<boolean>("home.waitlistForm", false);
   const [status, setStatus] = useState<PublicStatus | null>(null);
   const [statusResolved, setStatusResolved] = useState(false);
@@ -81,15 +81,13 @@ export default function Home() {
     if (preOpen) {
       return <PreOpenPage openingDatetime={openingDatetime} />;
     }
-    if (selectedGreenhouse) {
+    if (showTableMap) {
       return (
-        <GreenhouseMapPage
-          greenhouse={selectedGreenhouse}
+        <TableMapPage
           onBack={() => {
-            setSelectedGreenhouse(null);
+            setShowTableMap(false);
             fetchStatus();
           }}
-          onSelectGreenhouse={setSelectedGreenhouse}
         />
       );
     }
@@ -100,7 +98,7 @@ export default function Home() {
         />
       );
     }
-    return <LandingPage onEnter={() => setSelectedGreenhouse(GREENHOUSES[0])} />;
+    return <LandingPage onEnter={() => setShowTableMap(true)} />;
   }
 
   if (!ready || !statusResolved) {
@@ -130,7 +128,7 @@ export default function Home() {
           type="button"
           onClick={() => {
             setView("public");
-            setSelectedGreenhouse(null);
+            setShowTableMap(false);
             setShowWaitlistForm(false);
           }}
           style={{

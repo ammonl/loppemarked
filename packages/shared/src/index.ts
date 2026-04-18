@@ -26,6 +26,9 @@ export {
   TOTAL_BOX_COUNT,
   KRONEN_BOX_RANGE,
   SOEN_BOX_RANGE,
+  TABLE_CATALOG,
+  TABLE_MAP_VIEWBOX,
+  getTableById,
   DEFAULT_OPENING_DATETIME,
   OPENING_TIMEZONE,
   EMAIL_FROM,
@@ -44,7 +47,7 @@ export {
   SEED_ADMIN_EMAILS,
 } from "./constants.js";
 
-export type { Greenhouse, BoxCatalogEntry, GreenhousePreference } from "./constants.js";
+export type { Greenhouse, BoxCatalogEntry, GreenhousePreference, TableCatalogEntry } from "./constants.js";
 
 export type {
   SystemSettings,

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import {
-  BOX_CATALOG,
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
   ORGANIZER_CONTACTS,
+  getTableById,
   isFloorDoorRequired,
   validateRegistrationInput,
   type Language,
@@ -21,11 +20,13 @@ interface RegistrationFormProps {
   onCancel: () => void;
   onBoxUnavailable?: () => void;
   onSuccess?: () => void;
+  /** When true, renders without the back button (e.g. inside a detail panel). */
+  embedded?: boolean;
 }
 
-export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess }: RegistrationFormProps) {
+export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess, embedded }: RegistrationFormProps) {
   const { language, t } = useLanguage();
-  const box = BOX_CATALOG.find((b) => b.id === boxId);
+  const table = getTableById(boxId);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -194,52 +195,55 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess 
   }
 
   return (
-    <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
-      <button
-        type="button"
-        onClick={onCancel}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          padding: "0.25rem 0",
-          marginBottom: "1rem",
-          fontFamily: fonts.body,
-        }}
-      >
-        &larr; {t("common.cancel")}
-      </button>
+    <section
+      style={{
+        maxWidth: embedded ? "100%" : 560,
+        margin: "0 auto",
+        padding: embedded ? 0 : "2rem 1rem",
+        fontFamily: fonts.body,
+        color: colors.inkBrown,
+      }}
+    >
+      {!embedded && (
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "0.9rem",
+            color: colors.warmBrown,
+            padding: "0.25rem 0",
+            marginBottom: "1rem",
+            fontFamily: fonts.body,
+          }}
+        >
+          &larr; {t("common.cancel")}
+        </button>
+      )}
 
-      <h2 style={{ textAlign: "center", margin: "0 0 1.5rem", fontFamily: fonts.heading, color: colors.warmBrown }}>{t("registration.formTitle")}</h2>
-      {box && (
-        <div style={{ textAlign: "center", margin: "0.5rem 0 1.5rem" }}>
-          <div style={{
-            display: "inline-block",
-            borderRadius: 12,
-            border: `2px solid ${colors.borderTan}`,
-            boxShadow: `
-              1px 1px 0 ${colors.borderTan},
-              -1px -1px 0 ${colors.borderTan},
-              2px 0 0 ${colors.parchment},
-              -2px 0 0 ${colors.parchment},
-              0 2px 0 ${colors.parchment},
-              0 -2px 0 ${colors.parchment}
-            `,
-            padding: 8,
-            background: colors.white,
-          }}>
-            <Image
-              src={`/${box.name.toLowerCase().replace(/ /g, "_")}_lg.png`}
-              alt={box.name}
-              width={240}
-              height={240}
-              style={{ objectFit: "contain", borderRadius: 8, display: "block" }}
-            />
-          </div>
-          <p style={{ color: colors.warmBrown, margin: "0.5rem 0 0.75rem", fontSize: "1.75rem", fontWeight: 300, fontFamily: fonts.heading }}>
-            <strong>{box.name}</strong> ({box.greenhouse})
+      {!embedded && (
+        <h2 style={{ textAlign: "center", margin: "0 0 1.25rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
+          {t("registration.formTitle")}
+        </h2>
+      )}
+      {table && (
+        <div
+          style={{
+            textAlign: embedded ? "left" : "center",
+            margin: embedded ? "0 0 1rem" : "0 0 1.25rem",
+            background: colors.fleaNotePaper,
+            border: `1px solid ${colors.fleaCork}`,
+            borderRadius: 10,
+            padding: "0.85rem 1rem",
+          }}
+        >
+          <p style={{ margin: 0, fontFamily: fonts.display, fontSize: "1.5rem", color: colors.fleaTerracottaDark }}>
+            {t("table.detailsTitle").replace("{number}", String(table.number))}
+          </p>
+          <p style={{ margin: "0.15rem 0 0", fontSize: "0.95rem", color: colors.warmBrown }}>
+            {table.sizeMeters} {t("table.meters")} · {table.priceDkk} {t("table.priceSuffix")}
           </p>
         </div>
       )}
@@ -248,36 +252,6 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess 
         <p style={{ margin: "0 0 0.5rem" }}>{t("policy.oneApartmentRule")}</p>
         <p style={{ margin: 0 }}>{t("policy.noSelfUnregister")}</p>
       </div>
-
-      <details style={infoCardStyle}>
-        <summary style={{ fontWeight: 600, cursor: "pointer", color: colors.warmBrown }}>
-          {t("guidelines.title")}
-        </summary>
-
-        <p style={guidelinesSectionHeadingStyle}>{t("guidelines.rulesTitle")}</p>
-        <ul style={guidelinesListStyle}>
-          <li>{t("guidelines.plantingDeadline")}</li>
-          <li>{t("guidelines.forfeit")}</li>
-          <li>{t("guidelines.ruleWatering")}</li>
-          <li>{t("guidelines.ruleOrganic")}</li>
-          <li>{t("guidelines.ruleNoHarvest")}</li>
-        </ul>
-
-        <p style={guidelinesSectionHeadingStyle}>{t("guidelines.supportTitle")}</p>
-        <ul style={guidelinesListStyle}>
-          <li>{t("guidelines.supportTools")}</li>
-          <li>{t("guidelines.supportContact")}</li>
-        </ul>
-
-        <p style={guidelinesSectionHeadingStyle}>{t("guidelines.contactTitle")}</p>
-        <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
-          {ORGANIZER_CONTACTS.map((c) => (
-            <li key={c.email}>
-              <a href={`mailto:${c.email}`} style={{ color: colors.sage }}>{c.name}</a>
-            </li>
-          ))}
-        </ul>
-      </details>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "1rem" }}>
@@ -379,7 +353,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess 
             boxShadow: shadows.soft,
           }}
         >
-          {submitting ? t("common.loading") : t("common.submit")}
+          {submitting ? t("common.loading") : t("table.bookNow")}
         </button>
       </form>
     </section>
@@ -403,17 +377,6 @@ const infoCardStyle: React.CSSProperties = {
   marginBottom: "1.25rem",
   fontSize: "0.9rem",
   lineHeight: 1.5,
-};
-
-const guidelinesSectionHeadingStyle: React.CSSProperties = {
-  fontWeight: 600,
-  margin: "0.75rem 0 0.25rem",
-  color: colors.warmBrown,
-};
-
-const guidelinesListStyle: React.CSSProperties = {
-  margin: "0 0 0.5rem",
-  paddingLeft: "1.25rem",
 };
 
 const inputStyle: React.CSSProperties = {
