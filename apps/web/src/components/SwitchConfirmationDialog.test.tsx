@@ -18,7 +18,6 @@ vi.mock("@/i18n/LanguageProvider", () => ({
         "registration.switchConfirm": "Confirm switch",
         "table.detailsTitle": "Table #{number}",
         "table.meters": "meters",
-        "table.priceSuffix": "DKK",
         "common.loading": "Loading...",
       };
       return translations[key] ?? key;
@@ -130,7 +129,7 @@ describe("SwitchConfirmationDialog", () => {
     }
   });
 
-  it("shows table numbers and size/price in the display", () => {
+  it("shows table numbers and size in the display", () => {
     render(
       <SwitchConfirmationDialog
         switchDetails={defaultSwitchDetails}
@@ -139,9 +138,19 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    // Table 5 is a standard 2m/50 DKK table in TABLE_CATALOG.
-    expect(screen.getByText(/Table #5.*2 meters.*50 DKK/)).toBeDefined();
-    // Table 20 is also a standard 2m/50 DKK table.
-    expect(screen.getByText(/Table #20.*2 meters.*50 DKK/)).toBeDefined();
+    expect(screen.getByText(/Table #5.*2 meters/)).toBeDefined();
+    expect(screen.getByText(/Table #20.*2 meters/)).toBeDefined();
+  });
+
+  it("does not show price/DKK in the display", () => {
+    render(
+      <SwitchConfirmationDialog
+        switchDetails={defaultSwitchDetails}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText(/DKK/)).toBeNull();
   });
 });

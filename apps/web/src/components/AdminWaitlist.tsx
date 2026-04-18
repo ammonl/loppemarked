@@ -32,7 +32,7 @@ interface DuplicateExisting {
   email: string;
 }
 
-function formatTableOption(table: { id: number; number: number; sizeMeters: number; priceDkk: number }): string {
+function formatTableOption(table: { id: number; number: number; sizeMeters: number }): string {
   return formatTableLabel(table.id, { includeDetails: true });
 }
 

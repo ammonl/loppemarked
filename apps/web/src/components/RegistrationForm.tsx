@@ -243,7 +243,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
             {t("table.detailsTitle").replace("{number}", String(table.number))}
           </p>
           <p style={{ margin: "0.15rem 0 0", fontSize: "0.95rem", color: colors.warmBrown }}>
-            {table.sizeMeters} {t("table.meters")} · {table.priceDkk} {t("table.priceSuffix")}
+            {table.sizeMeters} {t("table.meters")}
           </p>
         </div>
       )}

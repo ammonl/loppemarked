@@ -28,11 +28,17 @@ describe("buildAdminNotification — add", () => {
     expect(result.bodyHtml).toContain("Anna Jensen");
   });
 
-  it("includes table number, size, and price", () => {
+  it("includes table number and size", () => {
     const result = buildAdminNotification(baseInput);
     expect(result.bodyHtml).toContain("#3");
     expect(result.bodyHtml).toContain("2 m");
-    expect(result.bodyHtml).toContain("50 DKK");
+  });
+
+  it("does not include price or DKK", () => {
+    const result = buildAdminNotification(baseInput);
+    expect(result.bodyHtml).not.toContain("DKK");
+    expect(result.bodyHtml).not.toContain("Pris");
+    expect(result.bodyHtml).not.toContain("Price");
   });
 
   it("sets correct recipient email", () => {
@@ -112,10 +118,10 @@ describe("buildAdminNotification — move", () => {
     expect(result.bodyHtml).toContain("#1976d2");
   });
 
-  it("includes new table details table with number and price", () => {
+  it("includes new table details table with number and size", () => {
     const result = buildAdminNotification(moveInput);
     expect(result.bodyHtml).toContain("#20");
-    expect(result.bodyHtml).toContain("50 DKK");
+    expect(result.bodyHtml).toContain("2 m");
   });
 
   it("includes contact info", () => {

@@ -40,7 +40,6 @@ const translations = {
     tableDetailsTitle: "Dit loppebord",
     tableLabel: "Bord",
     sizeLabel: "Størrelse",
-    priceLabel: "Pris",
 
     contactTitle: "Kontakt",
     contactText: "Hvis du har spørgsmål, er du velkommen til at kontakte os:",
@@ -64,7 +63,6 @@ const translations = {
     tableDetailsTitle: "Your flea-market table",
     tableLabel: "Table",
     sizeLabel: "Size",
-    priceLabel: "Price",
 
     contactTitle: "Contact",
     contactText: "If you have any questions, feel free to reach out to us:",
@@ -89,7 +87,6 @@ function buildTableDetailsHtml(
   const table = getTableById(boxId);
   const tableNumber = table?.number ?? boxId;
   const size = table ? `${table.sizeMeters} m` : "\u2014";
-  const price = table ? `${table.priceDkk} DKK` : "\u2014";
 
   return `
       <h2 style="color: #2e7d32; font-size: 18px; border-bottom: 2px solid #e8f5e9; padding-bottom: 8px;">${escapeHtml(t.tableDetailsTitle)}</h2>
@@ -101,10 +98,6 @@ function buildTableDetailsHtml(
         <tr>
           <td style="padding: 8px 12px; background: #f5f5f5; font-weight: bold;">${escapeHtml(t.sizeLabel)}</td>
           <td style="padding: 8px 12px;">${escapeHtml(size)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 12px; background: #f5f5f5; font-weight: bold;">${escapeHtml(t.priceLabel)}</td>
-          <td style="padding: 8px 12px;">${escapeHtml(price)}</td>
         </tr>
       </table>`;
 }

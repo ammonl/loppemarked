@@ -46,7 +46,6 @@ interface Box {
 interface BoxRow extends Box {
   tableNumber: number;
   sizeMeters: number;
-  priceDkk: number;
   tableLabel: string;
   _searchText: string;
 }
@@ -81,13 +80,11 @@ function enrichBox(b: Box): BoxRow {
   const table = getTableById(b.id);
   const tableNumber = table?.number ?? b.id;
   const sizeMeters = table?.sizeMeters ?? 0;
-  const priceDkk = table?.priceDkk ?? 0;
   const tableLabel = formatTableLabel(b.id);
   return {
     ...b,
     tableNumber,
     sizeMeters,
-    priceDkk,
     tableLabel,
     _searchText: [
       tableLabel,
@@ -581,8 +578,6 @@ export function AdminBoxes() {
           </h3>
           <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", color: colors.warmBrown }}>
             <strong>{t("admin.tables.size")}:</strong> {activeDialog.box.sizeMeters} {t("admin.tables.meters")}
-            {" · "}
-            <strong>{t("admin.tables.price")}:</strong> {activeDialog.box.priceDkk} {t("admin.tables.currency")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div>
@@ -703,17 +698,15 @@ export function AdminBoxes() {
       <div style={{ maxWidth: "80%", marginLeft: "auto", marginRight: "auto", overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", marginBottom: "0.5rem", tableLayout: "fixed" }}>
           <colgroup>
+            <col style={{ width: "22%" }} />
             <col style={{ width: "18%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "18%" }} />
-            <col style={{ width: "36%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "38%" }} />
           </colgroup>
           <thead>
             <tr>
               <SortableHeader label={t("admin.tables.number")} sortKey="tableNumber" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
               <SortableHeader label={t("admin.tables.size")} sortKey="sizeMeters" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
-              <SortableHeader label={t("admin.tables.price")} sortKey="priceDkk" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
               <SortableHeader label={t("admin.tables.state")} sortKey="state" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
               <th style={tableHeaderStyle}>{t("admin.tables.actions")}</th>
             </tr>
@@ -733,9 +726,6 @@ export function AdminBoxes() {
                   </td>
                   <td style={tableCellStyle}>
                     {box.sizeMeters} {t("admin.tables.meters")}
-                  </td>
-                  <td style={tableCellStyle}>
-                    {box.priceDkk} {t("admin.tables.currency")}
                   </td>
                   <td style={tableCellStyle}>
                     <span

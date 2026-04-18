@@ -370,9 +370,6 @@ function TableSummary({ boxId }: { boxId: number }) {
       <p style={{ margin: 0 }}>
         <strong>{t("table.detailsSize")}:</strong> {table.sizeMeters} {t("table.meters")}
       </p>
-      <p style={{ margin: "0.25rem 0 0" }}>
-        <strong>{t("table.detailsPrice")}:</strong> {table.priceDkk} {t("table.priceSuffix")}
-      </p>
     </div>
   );
 }

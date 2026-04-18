@@ -69,7 +69,7 @@ export function LandingPage({ onEnter }: LandingPageProps) {
           <KeyIcon />
           <span>{t("landing.primaryCta")}</span>
         </button>
-        <PriceTag label={t("landing.priceTagLabel")} />
+        <FleaTag label={t("landing.fleaTagLabel")} />
       </div>
     </section>
   );
@@ -116,11 +116,11 @@ function Corkboard({ title, notes }: { title: string; notes: CorkboardNote[] }) 
   );
 }
 
-function PriceTag({ label }: { label: string }) {
+function FleaTag({ label }: { label: string }) {
   return (
-    <div className="flea-price-tag" aria-hidden>
-      <span className="flea-price-tag__hole" />
-      <span className="flea-price-tag__text">{label}</span>
+    <div className="flea-tag" aria-hidden>
+      <span className="flea-tag__hole" />
+      <span className="flea-tag__text">{label}</span>
     </div>
   );
 }

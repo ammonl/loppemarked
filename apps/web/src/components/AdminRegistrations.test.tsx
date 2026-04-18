@@ -116,7 +116,7 @@ describe("AdminRegistrations", () => {
       expect(screen.getByText("admin.registrations.noRegistrations")).toBeDefined();
     });
 
-    it("shows table size and price columns for each booking", async () => {
+    it("shows table size column for each booking without price", async () => {
       vi.stubGlobal("fetch", mockFetch([{ ok: true, body: registrations }]));
 
       await act(async () => {
@@ -124,9 +124,9 @@ describe("AdminRegistrations", () => {
       });
 
       expect(screen.getByText("admin.registrations.tableSize")).toBeDefined();
-      expect(screen.getByText("admin.registrations.tablePrice")).toBeDefined();
+      expect(screen.queryByText("admin.registrations.tablePrice")).toBeNull();
       expect(screen.getByText("2 m")).toBeDefined();
-      expect(screen.getByText("50 DKK")).toBeDefined();
+      expect(screen.queryByText(/DKK/)).toBeNull();
     });
 
     it("shows move and remove buttons for active registrations only", async () => {
@@ -408,9 +408,9 @@ describe("AdminRegistrations", () => {
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
       expect(options[0].value).toBe("");
-      expect(options[1].textContent).toBe("Table #1 · 2 m · 50 DKK");
+      expect(options[1].textContent).toBe("Table #1 · 2 m");
       expect(options[1].value).toBe("1");
-      expect(options[23].textContent).toBe("Table #23 · 3 m · 75 DKK");
+      expect(options[23].textContent).toBe("Table #23 · 3 m");
       expect(options[23].value).toBe("23");
       expect(options).toHaveLength(30);
     });
@@ -584,7 +584,7 @@ describe("AdminRegistrations", () => {
 
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
-      expect(options[23].textContent).toBe("Table #23 · 3 m · 75 DKK");
+      expect(options[23].textContent).toBe("Table #23 · 3 m");
     });
 
     it("does not disable the current table in move dialog", async () => {

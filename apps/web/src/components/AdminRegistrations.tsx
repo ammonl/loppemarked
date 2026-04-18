@@ -66,7 +66,7 @@ const requiredLabelStyle: React.CSSProperties = {
   color: colors.warmBrown,
 };
 
-function formatTableOption(table: { id: number; number: number; sizeMeters: number; priceDkk: number }): string {
+function formatTableOption(table: { id: number; number: number; sizeMeters: number }): string {
   return `${formatTableLabel(table.id, { includeDetails: true })}`;
 }
 
@@ -198,7 +198,6 @@ export function AdminRegistrations() {
           ...r,
           table_number: table?.number ?? r.box_id,
           table_size: table?.sizeMeters ?? 0,
-          table_price: table?.priceDkk ?? 0,
         };
       }),
     [registrations],
@@ -745,7 +744,6 @@ export function AdminRegistrations() {
                 <SortableHeader label={t("admin.registrations.email")} sortKey="email" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.table")} sortKey="table_number" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.tableSize")} sortKey="table_size" sort={sort} onToggle={toggleSort} />
-                <SortableHeader label={t("admin.registrations.tablePrice")} sortKey="table_price" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.apartment")} sortKey="apartment_key" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.status")} sortKey="status" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.date")} sortKey="created_at" sort={sort} onToggle={toggleSort} />
@@ -759,7 +757,6 @@ export function AdminRegistrations() {
                   <td style={{ padding: "0.5rem" }}>{reg.email}</td>
                   <td style={{ padding: "0.5rem" }}>#{reg.table_number}</td>
                   <td style={{ padding: "0.5rem" }}>{reg.table_size} m</td>
-                  <td style={{ padding: "0.5rem" }}>{reg.table_price} DKK</td>
                   <td style={{ padding: "0.5rem", fontSize: "0.8rem" }}>{formatAddress(reg.street, reg.house_number, reg.floor, reg.door)}</td>
                   <td style={{ padding: "0.5rem" }}>
                     <span

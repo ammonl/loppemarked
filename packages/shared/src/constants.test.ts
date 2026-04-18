@@ -117,10 +117,9 @@ describe("TABLE_CATALOG", () => {
     }
   });
 
-  it("assigns positive sizes and prices", () => {
+  it("assigns positive sizes", () => {
     for (const table of TABLE_CATALOG) {
       expect(table.sizeMeters).toBeGreaterThan(0);
-      expect(table.priceDkk).toBeGreaterThan(0);
       expect(table.width).toBeGreaterThan(0);
       expect(table.height).toBeGreaterThan(0);
     }
@@ -139,9 +138,9 @@ describe("formatTableLabel", () => {
     expect(formatTableLabel(29)).toBe("Table #29");
   });
 
-  it("renders size and price when details requested", () => {
-    expect(formatTableLabel(1, { includeDetails: true })).toBe("Table #1 · 2 m · 50 DKK");
-    expect(formatTableLabel(23, { includeDetails: true })).toBe("Table #23 · 3 m · 75 DKK");
+  it("renders size when details requested", () => {
+    expect(formatTableLabel(1, { includeDetails: true })).toBe("Table #1 · 2 m");
+    expect(formatTableLabel(23, { includeDetails: true })).toBe("Table #23 · 3 m");
   });
 
   it("falls back to the raw id for unknown tables", () => {

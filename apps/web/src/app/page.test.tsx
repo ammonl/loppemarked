@@ -278,7 +278,6 @@ describe("translations", () => {
       "admin.tables.title",
       "admin.tables.number",
       "admin.tables.size",
-      "admin.tables.price",
       "admin.tables.state",
     ];
     for (const lang of LANGUAGES) {

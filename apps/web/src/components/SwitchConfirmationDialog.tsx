@@ -29,10 +29,10 @@ export function SwitchConfirmationDialog({
   const { t } = useLanguage();
   const existingTable = getTableById(switchDetails.existingBoxId);
   const newTable = getTableById(switchDetails.newBoxId);
-  const formatTable = (boxId: number, sizeMeters?: number, priceDkk?: number) => {
+  const formatTable = (boxId: number, sizeMeters?: number) => {
     const title = t("table.detailsTitle").replace("{number}", String(boxId));
-    if (sizeMeters === undefined || priceDkk === undefined) return title;
-    return `${title} (${sizeMeters} ${t("table.meters")}, ${priceDkk} ${t("table.priceSuffix")})`;
+    if (sizeMeters === undefined) return title;
+    return `${title} (${sizeMeters} ${t("table.meters")})`;
   };
 
   return (
@@ -87,7 +87,6 @@ export function SwitchConfirmationDialog({
             {formatTable(
               switchDetails.existingBoxId,
               existingTable?.sizeMeters,
-              existingTable?.priceDkk,
             )}
           </div>
         </div>
@@ -109,7 +108,6 @@ export function SwitchConfirmationDialog({
             {formatTable(
               switchDetails.newBoxId,
               newTable?.sizeMeters,
-              newTable?.priceDkk,
             )}
           </div>
         </div>
