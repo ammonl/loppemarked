@@ -57,4 +57,30 @@ describe("LandingPage", () => {
     expect(markup.includes("drivhus")).toBe(false);
     expect(markup.includes("plantekasse")).toBe(false);
   });
+
+  it("renders a layered hero scene with a background layer", () => {
+    render(<LandingPage onEnter={() => {}} />);
+
+    const scene = screen.getByTestId("hero-scene");
+    expect(scene).toBeDefined();
+    expect(screen.getByTestId("hero-scene-layer-bg")).toBeDefined();
+  });
+
+  it("places the text, corkboard, and CTA inside the live-DOM overlay", () => {
+    render(<LandingPage onEnter={() => {}} />);
+
+    const overlay = screen.getByTestId("flea-landing-overlay");
+    expect(overlay.contains(screen.getByText("landing.heroTitle"))).toBe(true);
+    expect(overlay.contains(screen.getByRole("group", { name: "landing.corkboardTitle" }))).toBe(true);
+    expect(overlay.contains(screen.getByRole("button", { name: /landing\.primaryCta/ }))).toBe(true);
+  });
+
+  it("no longer renders the flat inline-SVG hero illustration or icon vignettes", () => {
+    render(<LandingPage onEnter={() => {}} />);
+
+    const section = screen.getByRole("group", { name: "landing.corkboardTitle" }).closest("section");
+    expect(section?.querySelector(".flea-hero-illustration")).toBeNull();
+    expect(section?.querySelector(".flea-vignettes")).toBeNull();
+    expect(section?.querySelector(".flea-vignette")).toBeNull();
+  });
 });

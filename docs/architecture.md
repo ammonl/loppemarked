@@ -90,6 +90,32 @@ Language detection follows this priority:
 
 The `LanguageProvider` React context makes the current language and `t()` translation function available to all components. Translation strings are defined in `translations.ts` with key contracts in `@loppemarked/shared`.
 
+### Landing-Page Layered Hero
+
+The public landing page renders its hero as a layered composition rather than a single inline SVG. This keeps the page rendering strategy compatible with photorealistic, composited flea-market imagery and lets final assets land without structural rewrites.
+
+The architecture has two pieces:
+
+- `components/HeroScene.tsx` — a generic primitive that stacks up to three raster `<img>` layers (`background`, `midground`, `foreground`) behind a live-DOM overlay slot. Each layer is optional and accepts either a `src` or a `placeholder` node. Layers use absolute positioning with ascending `z-index`; the overlay sits on top and receives real DOM children (text, corkboard, CTA) so interactive content stays accessible and translatable.
+- `components/landing/sceneConfig.ts` — a data file that names the landing hero's asset slots. Swapping or adding an asset is a config edit, not a component change.
+
+```mermaid
+graph TB
+    subgraph "HeroScene"
+        BG[background layer<br/>raster &lt;img&gt;]
+        MID[midground layer<br/>raster &lt;img&gt;]
+        FG[foreground layer<br/>raster &lt;img&gt;]
+        OVL[overlay slot<br/>live DOM]
+    end
+    CFG[sceneConfig.ts] --> BG
+    CFG --> MID
+    CFG --> FG
+    LAND[LandingPage.tsx] --> HeroScene
+    LAND -->|children| OVL
+```
+
+The overlay currently hosts the eyebrow, H1, body copy, corkboard, and primary CTA. Because the overlay is plain DOM, i18n, hover states, and focus management all work as usual.
+
 ## Backend Architecture
 
 The API is a Node.js/TypeScript application using Kysely as a type-safe PostgreSQL query builder.
