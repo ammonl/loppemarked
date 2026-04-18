@@ -36,6 +36,23 @@
   z-index: 4;
 }
 
+/* Readability scrim: sits above the raster layers and below the overlay's
+   real content so copy, corkboard, and CTA stay legible against whatever
+   photorealistic art later lands in the layer slots. */
+.hero-scene__overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(253, 251, 247, 0.85) 0%,
+    rgba(253, 251, 247, 0.7) 45%,
+    rgba(253, 251, 247, 0.92) 100%
+  );
+}
+
 /* Landing-specific scene framing: soft card with cream gradient fallback so
    the overlay stays legible even when no raster layer is loaded yet. */
 .flea-landing__scene {

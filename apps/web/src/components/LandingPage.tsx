@@ -17,7 +17,6 @@ export function LandingPage({ onEnter }: LandingPageProps) {
     <section className="flea-landing" aria-labelledby="flea-landing-title">
       <HeroScene
         className="flea-landing__scene"
-        ariaLabel={t("landing.heroTitle")}
         background={landingSceneAssets.background}
         midground={landingSceneAssets.midground}
         foreground={landingSceneAssets.foreground}
