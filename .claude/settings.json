@@ -120,6 +120,7 @@
       "WebFetch(domain:interhuman.ai)",
       "WebFetch(domain:linear.app)",
       "mcp__claude_ai_Linear__*",
+      "mcp__chrome__*",
       "mcp__context7*",
       "mcp__ide*",
       "mcp__linear*",
