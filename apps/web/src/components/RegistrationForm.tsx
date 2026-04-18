@@ -12,6 +12,7 @@ import {
   type Language,
 } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { renderWithContact } from "@/i18n/contactLink";
 import { colors, fonts, shadows, alertError } from "@/styles/theme";
 import { SwitchConfirmationDialog, type SwitchDetails } from "./SwitchConfirmationDialog";
 
@@ -170,7 +171,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
       <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
         <h2 style={{ color: colors.sageDark, fontFamily: fonts.heading }}>{t("registration.success")}</h2>
         <p style={{ marginTop: "1rem" }}>
-          {t("registration.unregisterInfo")}
+          {renderWithContact(t("registration.unregisterInfo"), { color: colors.sageDark, fontWeight: 600 })}
         </p>
         <button
           type="button"
@@ -250,7 +251,9 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
 
       <div style={infoCardStyle}>
         <p style={{ margin: "0 0 0.5rem" }}>{t("policy.oneApartmentRule")}</p>
-        <p style={{ margin: 0 }}>{t("policy.noSelfUnregister")}</p>
+        <p style={{ margin: 0 }}>
+          {renderWithContact(t("policy.noSelfUnregister"), { color: colors.sageDark, fontWeight: 600 })}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit}>
