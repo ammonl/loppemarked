@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEFAULT_OPENING_DATETIME, type Greenhouse, type GreenhouseSummary } from "@loppemarked/shared";
+import { DEFAULT_OPENING_DATETIME, GREENHOUSES, type Greenhouse } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -33,9 +33,6 @@ export default function Home() {
   const [showWaitlistForm, setShowWaitlistForm] = useHistoryState<boolean>("home.waitlistForm", false);
   const [status, setStatus] = useState<PublicStatus | null>(null);
   const [statusResolved, setStatusResolved] = useState(false);
-  const [greenhouses, setGreenhouses] = useState<GreenhouseSummary[]>([]);
-  const [greenhousesLoaded, setGreenhousesLoaded] = useState(false);
-  const [landingRefreshKey, setLandingRefreshKey] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStatus = useCallback(async () => {
@@ -51,35 +48,14 @@ export default function Home() {
     }
   }, []);
 
-  const fetchGreenhouses = useCallback(async () => {
-    try {
-      const res = await fetch("/public/greenhouses");
-      if (res.ok) {
-        setGreenhouses(await res.json());
-      }
-    } catch {
-      /* API unreachable — cards will show fallback data */
-    } finally {
-      setGreenhousesLoaded(true);
-    }
-  }, []);
-
   useEffect(() => {
     fetchStatus();
-    fetchGreenhouses();
-  }, [fetchStatus, fetchGreenhouses]);
+  }, [fetchStatus]);
 
   // Server-authoritative gate: trust the server's isOpen flag.
   // When API is unreachable (status === null), default to pre-open (safe/deny).
   const preOpen = status ? !status.isOpen : true;
   const openingDatetime = status?.openingDatetime ?? DEFAULT_OPENING_DATETIME;
-
-  // Re-fetch greenhouses when returning from a greenhouse map view.
-  useEffect(() => {
-    if (landingRefreshKey > 0) {
-      fetchGreenhouses();
-    }
-  }, [landingRefreshKey, fetchGreenhouses]);
 
   // Poll /public/status while in pre-open so the page auto-transitions
   // at the correct server-determined time without requiring a manual refresh.
@@ -113,7 +89,6 @@ export default function Home() {
           onBack={() => {
             setSelectedGreenhouse(null);
             fetchStatus();
-            setLandingRefreshKey((k) => k + 1);
           }}
           onSelectGreenhouse={setSelectedGreenhouse}
         />
@@ -126,29 +101,29 @@ export default function Home() {
         />
       );
     }
-    return (
-      <LandingPage
-        greenhouses={greenhouses}
-        onSelectGreenhouse={setSelectedGreenhouse}
-        hasAvailableBoxes={status?.hasAvailableBoxes ?? true}
-        onJoinWaitlist={() => setShowWaitlistForm(true)}
-      />
-    );
+    return <LandingPage onEnter={() => setSelectedGreenhouse(GREENHOUSES[0])} />;
   }
 
-  if (!ready || !statusResolved || !greenhousesLoaded) {
+  if (!ready || !statusResolved) {
     return <LoadingSplash />;
   }
 
+  const publicView = view === "public";
+  const mainBackground = publicView ? colors.fleaCream : colors.backgroundLight;
+
   return (
-    <main style={{ fontFamily: fonts.body, color: colors.inkBrown, background: colors.backgroundLight, minHeight: "100vh" }}>
+    <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: mainBackground, minHeight: "100vh" }}>
       <header
         style={{
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
           padding: "1rem 1.5rem",
-          borderBottom: `1px solid ${colors.borderTan}`,
+          borderBottom: `1px solid ${publicView ? colors.fleaSand : colors.borderTan}`,
+          background: publicView ? colors.fleaCream : "transparent",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
         }}
       >
         <div />
@@ -165,17 +140,49 @@ export default function Home() {
             cursor: "pointer",
             padding: 0,
             margin: 0,
-            fontSize: "1.25rem",
-            fontFamily: fonts.heading,
-            color: colors.inkBrown,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.4rem",
+            color: publicView ? colors.fleaTerracottaDark : colors.inkBrown,
+            fontFamily: publicView ? fonts.display : fonts.heading,
+            fontSize: publicView ? "1.9rem" : "1.25rem",
+            lineHeight: 1,
           }}
+          aria-label={t("common.appName")}
         >
-          <h1 style={{ fontSize: "inherit", margin: 0, fontFamily: "inherit", color: "inherit", fontWeight: 700 }}>
+          {publicView && (
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden fill="none">
+              <path
+                d="M12 20s-6-4.5-6-9a4 4 0 0 1 6-3.4A4 4 0 0 1 18 11c0 4.5-6 9-6 9z"
+                fill={colors.fleaTerracotta}
+                stroke={colors.fleaTerracottaDark}
+                strokeWidth="1.1"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 10c.4-1.5 1.6-2.4 3-2.4"
+                stroke={colors.fleaSageDark}
+                strokeWidth="1.1"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </svg>
+          )}
+          <h1
+            style={{
+              fontSize: "inherit",
+              margin: 0,
+              fontFamily: "inherit",
+              color: "inherit",
+              fontWeight: 700,
+              letterSpacing: publicView ? "0.04em" : "normal",
+            }}
+          >
             {t("common.appName")}
           </h1>
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", justifyContent: "flex-end" }}>
-          {view === "public" && (
+          {publicView && (
             <button
               type="button"
               onClick={() => setView("admin")}
@@ -186,7 +193,7 @@ export default function Home() {
                 fontSize: "0.8rem",
                 color: colors.warmBrown,
                 opacity: 0.4,
-                fontFamily: fonts.body,
+                fontFamily: fonts.sans,
               }}
             >
               {t("admin.link")}
@@ -197,7 +204,7 @@ export default function Home() {
       </header>
 
       {renderContent()}
-      {view === "public" && <ProjectAbout />}
+      {publicView && <ProjectAbout />}
     </main>
   );
 }

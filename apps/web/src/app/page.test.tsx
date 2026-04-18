@@ -381,10 +381,10 @@ vi.mock("@/components/PreOpenPage", () => ({
   PreOpenPage: () => <div data-testid="pre-open-page" />,
 }));
 vi.mock("@/components/LandingPage", () => ({
-  LandingPage: ({ hasAvailableBoxes, onJoinWaitlist }: { hasAvailableBoxes?: boolean; onJoinWaitlist?: () => void }) => (
+  LandingPage: ({ onEnter }: { onEnter?: () => void }) => (
     <div data-testid="landing-page">
-      {!hasAvailableBoxes && onJoinWaitlist && (
-        <button data-testid="join-waitlist-btn" onClick={onJoinWaitlist}>Join waitlist</button>
+      {onEnter && (
+        <button data-testid="enter-cta" onClick={onEnter}>Enter</button>
       )}
     </div>
   ),
@@ -410,10 +410,7 @@ describe("Home page render gating", () => {
 
   it("shows loading splash while status is being fetched (not pre-open page)", async () => {
     let resolveStatus!: (value: Response) => void;
-    vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
-      if (url === "/public/greenhouses") {
-        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
-      }
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => {
       return new Promise((r) => { resolveStatus = r; });
     }));
 
@@ -479,55 +476,7 @@ describe("Home page render gating", () => {
     expect(screen.queryByTestId("loading-splash")).toBeNull();
   });
 
-  it("shows waitlist form when join-waitlist button is clicked from landing page", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: false }), { status: 200 }),
-    ));
-
-    const Home = (await import("./page")).default;
-
-    await act(async () => {
-      render(<Home />);
-    });
-
-    expect(screen.getByTestId("landing-page")).toBeDefined();
-    expect(screen.getByTestId("join-waitlist-btn")).toBeDefined();
-
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("join-waitlist-btn"));
-    });
-
-    expect(screen.getByTestId("waitlist-form")).toBeDefined();
-    expect(screen.queryByTestId("landing-page")).toBeNull();
-  });
-
-  it("returns to landing page when header home button is clicked from waitlist form", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: false }), { status: 200 }),
-    ));
-
-    const Home = (await import("./page")).default;
-
-    await act(async () => {
-      render(<Home />);
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("join-waitlist-btn"));
-    });
-
-    expect(screen.getByTestId("waitlist-form")).toBeDefined();
-
-    const homeButton = screen.getByText("common.appName");
-    await act(async () => {
-      fireEvent.click(homeButton);
-    });
-
-    expect(screen.getByTestId("landing-page")).toBeDefined();
-    expect(screen.queryByTestId("waitlist-form")).toBeNull();
-  });
-
-  it("does not show join-waitlist button when boxes are available", async () => {
+  it("routes into the registration flow when the landing CTA is clicked", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
     ));
@@ -539,6 +488,38 @@ describe("Home page render gating", () => {
     });
 
     expect(screen.getByTestId("landing-page")).toBeDefined();
-    expect(screen.queryByTestId("join-waitlist-btn")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("enter-cta"));
+    });
+
+    expect(screen.getByTestId("greenhouse-map-page")).toBeDefined();
+    expect(screen.queryByTestId("landing-page")).toBeNull();
+  });
+
+  it("returns to landing page from the registration flow when header home button is clicked", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
+    ));
+
+    const Home = (await import("./page")).default;
+
+    await act(async () => {
+      render(<Home />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("enter-cta"));
+    });
+
+    expect(screen.getByTestId("greenhouse-map-page")).toBeDefined();
+
+    const homeButton = screen.getByText("common.appName");
+    await act(async () => {
+      fireEvent.click(homeButton);
+    });
+
+    expect(screen.getByTestId("landing-page")).toBeDefined();
+    expect(screen.queryByTestId("greenhouse-map-page")).toBeNull();
   });
 });

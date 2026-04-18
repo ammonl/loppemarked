@@ -25,11 +25,26 @@ export const colors = {
   warningText: "#7A6A30",
   overlayWhite: "rgba(255, 255, 255, 0.92)",
   overlayBorder: "rgba(200, 200, 195, 0.4)",
+
+  fleaTerracotta: "#C6705D",
+  fleaTerracottaDark: "#A85544",
+  fleaSand: "#E5D3B3",
+  fleaSandLight: "#F0E3C9",
+  fleaSage: "#8DA88D",
+  fleaSageDark: "#6F8A6F",
+  fleaCream: "#FDFBF7",
+  fleaCork: "#C89F76",
+  fleaCorkDark: "#A07A55",
+  fleaNotePaper: "#FBF4E1",
+  fleaPenInk: "#5B4636",
 };
 
 export const fonts = {
   heading: "'Inter', system-ui, sans-serif",
   body: "'Inter', system-ui, sans-serif",
+  display: "'Amatic SC', 'Caveat', cursive",
+  marker: "'Caveat', 'Amatic SC', cursive",
+  sans: "'Montserrat', 'Inter', system-ui, sans-serif",
 };
 
 export const shadows = {
