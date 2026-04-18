@@ -75,6 +75,7 @@ resource "aws_amplify_branch" "main" {
   enable_pull_request_preview = var.amplify_enable_preview_branches
 
   framework = "Next.js - SSR"
+  stage     = "PRODUCTION"
 
   environment_variables = {
     NEXT_PUBLIC_ENV = var.environment
