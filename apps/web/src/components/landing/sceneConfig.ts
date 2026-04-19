@@ -22,10 +22,6 @@ export const landingSceneAssets: LandingSceneAssets = {
         media: LANDING_MOBILE_MEDIA_QUERY,
         type: "image/webp",
       },
-      {
-        srcSet: "/landing/landing-hero-desktop.webp",
-        type: "image/webp",
-      },
     ],
     alt: "",
     objectFit: "cover",

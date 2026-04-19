@@ -76,7 +76,9 @@ interface SceneLayerProps {
 
 function SceneLayer({ asset, variant }: SceneLayerProps) {
   if (!asset) return null;
-  const loading = variant === "bg" ? "eager" : "lazy";
+  // All hero layers render above the fold, so anything with a raster loads eagerly;
+  // lazy-loading here would just delay the LCP.
+  const loading = "eager";
   const imgStyle: CSSProperties = {
     objectFit: asset.objectFit ?? "cover",
     objectPosition: asset.objectPosition,
@@ -104,7 +106,7 @@ function SceneLayer({ asset, variant }: SceneLayerProps) {
         <picture>
           {asset.sources.map((source, i) => (
             <source
-              key={`${source.media ?? "default"}-${i}`}
+              key={i}
               srcSet={source.srcSet}
               media={source.media}
               type={source.type}

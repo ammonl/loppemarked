@@ -66,7 +66,6 @@ describe("HeroScene", () => {
           src: "/bg-desktop.webp",
           sources: [
             { srcSet: "/bg-mobile.webp", media: "(max-width: 760px)", type: "image/webp" },
-            { srcSet: "/bg-desktop.webp", type: "image/webp" },
           ],
           alt: "",
         }}
@@ -75,11 +74,9 @@ describe("HeroScene", () => {
 
     const bgLayer = screen.getByTestId("hero-scene-layer-bg");
     const sources = bgLayer.querySelectorAll("source");
-    expect(sources.length).toBe(2);
+    expect(sources.length).toBe(1);
     expect(sources[0].getAttribute("media")).toBe("(max-width: 760px)");
-    expect(sources[0].getAttribute("srcSet") ?? sources[0].getAttribute("srcset")).toBe(
-      "/bg-mobile.webp"
-    );
+    expect(sources[0].getAttribute("srcset")).toBe("/bg-mobile.webp");
     expect(bgLayer.querySelector("img")?.getAttribute("src")).toBe("/bg-desktop.webp");
   });
 });
