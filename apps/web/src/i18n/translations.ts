@@ -39,7 +39,6 @@ const da = {
   "landing.vignetteCameraLabel": "Minder & vinyl",
   "landing.vignetteJewelryLabel": "Smykkeskrin",
   "landing.vignetteBlanketLabel": "Tæpper & tekstiler",
-  "landing.fleaTagLabel": "Loppefund",
 
   "map.viewMap": "Se kort",
   "map.back": "Tilbage til forsiden",
@@ -446,7 +445,6 @@ const en: Record<TranslationKey, string> = {
   "landing.vignetteCameraLabel": "Memories & vinyl",
   "landing.vignetteJewelryLabel": "Jewelry box",
   "landing.vignetteBlanketLabel": "Blankets & textiles",
-  "landing.fleaTagLabel": "Flea find",
 
   "map.viewMap": "View map",
   "map.back": "Back to landing",
