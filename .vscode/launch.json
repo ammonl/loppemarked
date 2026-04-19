@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Web Server & Open Chrome",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev --workspace=@loppemarked/web",
+      "serverReadyAction": {
+        "pattern": "- Local:\\s+(https?://[^\\s]+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
+    },
+    {
+      "name": "Start API Server",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev --workspace=@loppemarked/api",
+      "preLaunchTask": "Setup Database Schema"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Start Full Stack (API + Web)",
+      "configurations": [
+        "Start API Server",
+        "Start Web Server & Open Chrome"
+      ],
+      "stopAll": true
+    }
+  ]
+}

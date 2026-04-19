@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "bundle": "esbuild src/lambda.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/lambda/index.mjs --external:pg-native --external:@aws-sdk/* --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\" && cp src/certs/rds-global-bundle.pem dist/lambda/rds-global-bundle.pem",
-    "db:setup": "tsx src/db/setup.ts",
-    "dev": "tsx watch src/dev-server.ts",
+    "db:setup": "tsx --env-file-if-exists=.env src/db/setup.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/dev-server.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint src"

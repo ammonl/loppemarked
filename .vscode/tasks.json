@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Database",
+      "type": "shell",
+      "command": "docker start loppemarked-db || docker run -d --name loppemarked-db -e POSTGRES_DB=loppemarked -e POSTGRES_USER=loppemarked -e POSTGRES_PASSWORD=changeme123 -p 5433:5432 postgres:16",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Setup Database Schema",
+      "type": "shell",
+      "command": "sleep 2 && npm run db:setup --workspace=@loppemarked/api",
+      "dependsOn": "Start Database",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    }
+  ]
+}
