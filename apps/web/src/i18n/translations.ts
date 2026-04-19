@@ -431,7 +431,7 @@ const en: Record<TranslationKey, string> = {
   "greenhouse.occupied": "Occupied",
   "greenhouse.reserved": "Reserved",
 
-  "landing.heroTitle": "SPRING FLEA MARKET AT FÆLLEDHUSET",
+  "landing.heroTitle": "SPRING LOPPEMARKED IN FÆLLEDHUSET",
   "landing.heroBody":
     "Sign up for our cozy UN17 Village flea market. Book your table and give your things a new life within the frames of community. So the two.",
   "landing.corkboardTitle": "The noticeboard",

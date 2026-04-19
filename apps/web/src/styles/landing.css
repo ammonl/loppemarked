@@ -72,7 +72,7 @@
 }
 
 .flea-landing__copy {
-  max-width: 38rem;
+  width: 100%;
 }
 
 .flea-landing__eyebrow {
@@ -92,6 +92,7 @@
   color: #A85544;
   margin: 0 0 1rem;
   font-weight: 700;
+  text-align: center;
 }
 
 .flea-landing__body {
