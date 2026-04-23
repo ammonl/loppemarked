@@ -48,7 +48,7 @@ export function LandingPage({ onEnter }: LandingPageProps) {
 
 function KeyIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="8" cy="15" r="4" />
       <path d="M10.8 12.2 21 2" />
       <path d="M17 6l3 3" />
