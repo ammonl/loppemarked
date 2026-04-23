@@ -1422,6 +1422,20 @@ function makeMockDbForCancellation(opts: {
                 }),
               };
             }
+            if (tbl === "planter_boxes") {
+              return {
+                select: vi.fn().mockReturnValue({
+                  where: vi.fn().mockReturnValue({
+                    forUpdate: vi.fn().mockReturnValue({
+                      executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: opts.regRow?.box_id,
+                        state: "occupied",
+                      }),
+                    }),
+                  }),
+                }),
+              };
+            }
             return {};
           }),
           insertInto: vi.fn().mockImplementation(() => ({
@@ -1440,6 +1454,18 @@ describe("handleCancellationInfo", () => {
   it("throws badRequest when token is missing", async () => {
     try {
       await handleCancellationInfo(makeCtx({ params: {} }));
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      expect((err as AppError).statusCode).toBe(400);
+    }
+  });
+
+  it("throws badRequest on malformed percent-encoding instead of crashing", async () => {
+    try {
+      await handleCancellationInfo(
+        makeCtx({ params: { token: "%" } }),
+      );
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);

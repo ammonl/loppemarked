@@ -150,7 +150,6 @@ const da = {
     "Du kan selv afmelde dit bord via linket i din bekræftelsesmail. Du kan også kontakte {contact} for hjælp.",
 
   "cancel.title": "Afmeld din bordbooking",
-  "cancel.loading": "Indlæser din booking...",
   "cancel.linkInvalidTitle": "Linket er ikke gyldigt",
   "cancel.linkInvalidBody":
     "Dette afmeldingslink er enten udløbet, allerede brugt eller ugyldigt. Tjek din bekræftelsesmail eller kontakt {contact} for hjælp.",
@@ -585,7 +584,6 @@ const en: Record<TranslationKey, string> = {
     "You can cancel your own booking using the link in your confirmation email. You can also contact {contact} for help.",
 
   "cancel.title": "Cancel your table booking",
-  "cancel.loading": "Loading your booking...",
   "cancel.linkInvalidTitle": "This link is no longer valid",
   "cancel.linkInvalidBody":
     "The cancellation link has expired, been used, or is invalid. Check your confirmation email or contact {contact} for help.",

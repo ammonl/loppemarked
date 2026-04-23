@@ -6,7 +6,7 @@ import type { RequestContext, RouteResponse } from "../../router.js";
 export async function handleAdminBoxes(ctx: RequestContext): Promise<RouteResponse> {
   const boxes = await ctx.db
     .selectFrom("planter_boxes")
-    .select(["id", "name", "greenhouse_name", "state"])
+    .select(["id", "name", "greenhouse_name", "state", "reserved_label"])
     .orderBy("id", "asc")
     .execute();
 
@@ -25,6 +25,7 @@ export async function handleAdminBoxes(ctx: RequestContext): Promise<RouteRespon
       name: b.name,
       greenhouse: b.greenhouse_name,
       state: b.state,
+      reservedLabel: b.reserved_label,
       registration: reg
         ? { id: reg.id, name: reg.name, email: reg.email, language: reg.language }
         : null,

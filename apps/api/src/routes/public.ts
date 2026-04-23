@@ -601,7 +601,7 @@ export async function handleWaitlistPosition(ctx: RequestContext): Promise<Route
  * for unknown/expired/consumed tokens so callers cannot enumerate state.
  */
 export async function handleCancellationInfo(ctx: RequestContext): Promise<RouteResponse> {
-  const token = decodeURIComponent(ctx.params["token"] ?? "");
+  const token = safeDecodeToken(ctx.params["token"]);
   if (!token) {
     throw badRequest("Cancellation token is required");
   }
@@ -656,7 +656,7 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
  * admins choose whether to release it publicly.
  */
 export async function handleCancellationConfirm(ctx: RequestContext): Promise<RouteResponse> {
-  const token = decodeURIComponent(ctx.params["token"] ?? "");
+  const token = safeDecodeToken(ctx.params["token"]);
   if (!token) {
     throw badRequest("Cancellation token is required");
   }
@@ -682,6 +682,15 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
     if (!reg || reg.status !== "active") {
       return { type: "no_active_registration" as const, boxId: reg?.box_id };
     }
+
+    // Lock the box row so concurrent admin moves/reserves can't race with
+    // the cancellation and leave the table in an inconsistent state.
+    await trx
+      .selectFrom("planter_boxes")
+      .select(["id", "state"])
+      .where("id", "=", reg.box_id)
+      .forUpdate()
+      .executeTakeFirst();
 
     await trx
       .updateTable("registrations")
@@ -759,6 +768,20 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
       tableLabel: formatTableLabel(outcome.boxId),
     },
   };
+}
+
+/**
+ * Safely decode a URL path segment that carries the cancellation token.
+ * `decodeURIComponent` throws `URIError` on malformed percent-encoding, so we
+ * catch that and return null — callers treat null the same as "no token".
+ */
+function safeDecodeToken(raw: string | undefined): string {
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return "";
+  }
 }
 
 /**
