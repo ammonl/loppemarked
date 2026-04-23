@@ -12,12 +12,14 @@ describe("buildConfirmationEmail", () => {
   it("returns Danish subject for da language", () => {
     const result = buildConfirmationEmail(baseData);
     expect(result.subject).toContain("Bekræftelse");
+    expect(result.subject).toContain("bordbooking");
     expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
   it("returns English subject for en language", () => {
     const result = buildConfirmationEmail({ ...baseData, language: "en" });
     expect(result.subject).toContain("Confirmation");
+    expect(result.subject).toContain("table booking");
     expect(result.subject).toContain("UN17 Village Loppemarked");
   });
 
@@ -26,34 +28,61 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("Anna Jensen");
   });
 
-  it("includes box details", () => {
+  it("renders the booked table number instead of a planter box", () => {
     const result = buildConfirmationEmail(baseData);
-    expect(result.bodyHtml).toContain("Stellaria");
-    expect(result.bodyHtml).toContain("Kronen");
+    expect(result.bodyHtml).toContain("#3");
+    expect(result.bodyHtml.toLowerCase()).not.toContain("planter box");
+    expect(result.bodyHtml.toLowerCase()).not.toContain("plantekasse");
+    expect(result.bodyHtml.toLowerCase()).not.toContain("greenhouse");
+    expect(result.bodyHtml.toLowerCase()).not.toContain("drivhus");
   });
 
-  it("includes greenhouse map with highlighted box", () => {
+  it("includes Fælledhuset as the location", () => {
     const result = buildConfirmationEmail(baseData);
-    expect(result.bodyHtml).toContain("<table");
-    expect(result.bodyHtml).toContain("#2e7d32");
+    expect(result.bodyHtml).toContain("Fælledhuset");
   });
 
-  it("includes care guidelines", () => {
+  it("renders the table size", () => {
     const daResult = buildConfirmationEmail(baseData);
-    expect(daResult.bodyHtml).toContain("økologisk");
+    expect(daResult.bodyHtml).toContain("2 meter");
+
+    const premium = buildConfirmationEmail({ ...baseData, boxId: 23, language: "en" });
+    expect(premium.bodyHtml).toContain("3 meters");
+    expect(premium.bodyHtml).toContain("#23");
+  });
+
+  it("uses brand green and salmon colors", () => {
+    const result = buildConfirmationEmail(baseData);
+    expect(result.bodyHtml).toContain("#8DA88D");
+    expect(result.bodyHtml).toContain("#C6705D");
+  });
+
+  it("includes loppemarked setup/sales guidelines", () => {
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("prismærkning");
+    expect(daResult.bodyHtml).toContain("strøm");
 
     const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
-    expect(enResult.bodyHtml).toContain("organic");
+    expect(enResult.bodyHtml).toContain("pricing");
+    expect(enResult.bodyHtml).toContain("electricity");
   });
 
-  it("includes WhatsApp link", () => {
-    const result = buildConfirmationEmail(baseData);
-    expect(result.bodyHtml).toContain("chat.whatsapp.com");
+  it("does not include a community or WhatsApp section", () => {
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml.toLowerCase()).not.toContain("whatsapp");
+    expect(daResult.bodyHtml).not.toContain("Fællesskab");
+
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml.toLowerCase()).not.toContain("whatsapp");
+    expect(enResult.bodyHtml.toLowerCase()).not.toContain("community");
   });
 
-  it("includes organizer contact info", () => {
+  it("renders Ammon Larson as the sole contact", () => {
     const result = buildConfirmationEmail(baseData);
-    expect(result.bodyHtml).toContain("elise7284@gmail.com");
+    expect(result.bodyHtml).toContain("Ammon Larson");
+    expect(result.bodyHtml).toContain("mailto:ammonl@hotmail.com");
+    expect(result.bodyHtml).not.toContain("elise7284@gmail.com");
+    expect(result.bodyHtml).not.toContain("lena.filthaut@yahoo.com");
   });
 
   it("uses correct from and replyTo addresses", () => {
@@ -64,7 +93,9 @@ describe("buildConfirmationEmail", () => {
 
   it("does not include switch note when no switch occurred", () => {
     const result = buildConfirmationEmail(baseData);
-    expect(result.bodyHtml).not.toContain("ff9800");
+    expect(result.bodyHtml).not.toContain("#FBEEEA");
+    expect(result.bodyHtml).not.toContain("Bemærk");
+    expect(result.bodyHtml).not.toContain("previous booking");
   });
 
   it("includes switch note when switchedFromBoxId is provided", () => {
@@ -72,15 +103,20 @@ describe("buildConfirmationEmail", () => {
       ...baseData,
       switchedFromBoxId: 7,
     });
-    expect(result.bodyHtml).toContain("ff9800");
-    expect(result.bodyHtml).toContain("Alder");
-    expect(result.bodyHtml).toContain("Kronen");
+    expect(result.bodyHtml).toContain("#7");
+    expect(result.bodyHtml).toContain("#3");
+    expect(result.bodyHtml).toContain("Bemærk");
   });
 
-  it("renders Søen greenhouse for box 15+", () => {
-    const result = buildConfirmationEmail({ ...baseData, boxId: 20 });
-    expect(result.bodyHtml).toContain("Søen");
-    expect(result.bodyHtml).toContain("Great tit");
+  it("includes English switch note when switchedFromBoxId is provided", () => {
+    const result = buildConfirmationEmail({
+      ...baseData,
+      language: "en",
+      switchedFromBoxId: 7,
+    });
+    expect(result.bodyHtml).toContain("#7");
+    expect(result.bodyHtml).toContain("#3");
+    expect(result.bodyHtml).toContain("previous booking");
   });
 
   it("sets html lang attribute to match language", () => {
@@ -108,20 +144,9 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("O&#39;Brien");
   });
 
-  it("handles unknown box ID gracefully", () => {
+  it("handles unknown table ID gracefully", () => {
     const result = buildConfirmationEmail({ ...baseData, boxId: 999 });
-    expect(result.bodyHtml).toContain("Box 999");
-    expect(result.bodyHtml).toContain("Unknown");
-  });
-
-  it("includes Søen switch note for Søen-to-Søen switch", () => {
-    const result = buildConfirmationEmail({
-      ...baseData,
-      boxId: 20,
-      switchedFromBoxId: 25,
-    });
-    expect(result.bodyHtml).toContain("ff9800");
-    expect(result.bodyHtml).toContain("Gray goose");
-    expect(result.bodyHtml).toContain("Søen");
+    expect(result.bodyHtml).toContain("#999");
+    expect(result.bodyHtml).toContain("—");
   });
 });
