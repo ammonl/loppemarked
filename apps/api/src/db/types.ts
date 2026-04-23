@@ -12,6 +12,7 @@ export interface Database {
   waitlist_entries: WaitlistEntryTable;
   emails: EmailTable;
   audit_events: AuditEventTable;
+  registration_cancellation_tokens: RegistrationCancellationTokenTable;
 }
 
 export interface GreenhouseTable {
@@ -116,6 +117,15 @@ export interface EmailTable {
   created_at: ColumnType<Date, string | undefined, never>;
 }
 
+export interface RegistrationCancellationTokenTable {
+  id: Generated<string>;
+  token_hash: string;
+  registration_id: string;
+  expires_at: ColumnType<Date, string, string>;
+  consumed_at: ColumnType<Date | null, string | null | undefined, string | null>;
+  created_at: ColumnType<Date, string | undefined, never>;
+}
+
 export interface AuditEventTable {
   id: Generated<string>;
   timestamp: ColumnType<Date, string | undefined, never>;
@@ -143,3 +153,4 @@ export type Registration = Selectable<RegistrationTable>;
 export type WaitlistEntry = Selectable<WaitlistEntryTable>;
 export type Email = Selectable<EmailTable>;
 export type AuditEvent = Selectable<AuditEventTable>;
+export type RegistrationCancellationToken = Selectable<RegistrationCancellationTokenTable>;

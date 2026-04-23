@@ -151,6 +151,23 @@ describe("buildOpsNotificationEmail", () => {
     expect(result.bodyHtml).toContain("Table #7");
   });
 
+  it("builds user cancellation email flagging admin review hold", () => {
+    const result = buildOpsNotificationEmail({
+      event: {
+        type: "user_cancellation",
+        userName: "Alice",
+        userEmail: "alice@test.com",
+        boxId: 4,
+      },
+    });
+
+    expect(result.subject).toContain("cancelled");
+    expect(result.subject).toContain("Table #4");
+    expect(result.bodyHtml).toContain("alice@test.com");
+    expect(result.bodyHtml.toLowerCase()).toContain("reserved");
+    expect(result.bodyHtml.toLowerCase()).toContain("review");
+  });
+
   it("uses fallback label for unknown table IDs", () => {
     const result = buildOpsNotificationEmail({
       event: {

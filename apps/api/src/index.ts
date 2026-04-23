@@ -38,6 +38,8 @@ import {
 import { handleListWaitlist } from "./routes/admin/waitlist.js";
 import { handleHealth } from "./routes/health.js";
 import {
+  handleCancellationConfirm,
+  handleCancellationInfo,
   handleJoinWaitlist,
   handlePublicBoxes,
   handlePublicGreenhouses,
@@ -65,6 +67,8 @@ export function createRouter(): Router {
   router.post("/public/register", handlePublicRegister);
   router.post("/public/waitlist", handleJoinWaitlist);
   router.get("/public/waitlist/position/:apartmentKey", handleWaitlistPosition);
+  router.get("/public/cancel/:token", handleCancellationInfo);
+  router.post("/public/cancel/:token", handleCancellationConfirm);
 
   router.post("/admin/auth/login", handleLogin);
   router.get("/admin/auth/me", requireAdmin(handleMe));

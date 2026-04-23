@@ -198,6 +198,12 @@ export const ADMIN_DEFAULT_LANGUAGE: Language = "en";
 /** Default box state for reserved label */
 export const RESERVED_LABEL_DEFAULT = "Admin Hold" as const;
 
+/** Reserved label applied when a resident self-cancels (admin decides release). */
+export const RESERVED_LABEL_AWAITING_REVIEW = "Awaiting Admin Review" as const;
+
+/** Default validity window for resident self-cancellation magic links (60 days). */
+export const CANCELLATION_TOKEN_TTL_DAYS = 60 as const;
+
 /** Initial admin seed emails */
 export const SEED_ADMIN_EMAILS = [
   "ammonl@hotmail.com",

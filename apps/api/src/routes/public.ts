@@ -1,18 +1,28 @@
 import {
   BOX_CATALOG,
   GREENHOUSES,
+  RESERVED_LABEL_AWAITING_REVIEW,
+  formatTableLabel,
+  getTableById,
   isFloorDoorRequired,
   normalizeApartmentKey,
   validateAddress,
   validateRegistrationInput,
   validateWaitlistInput,
 } from "@loppemarked/shared";
-import type { RegistrationInput, WaitlistInput } from "@loppemarked/shared";
+import type { Language, RegistrationInput, WaitlistInput } from "@loppemarked/shared";
 import { logAuditEvent } from "../lib/audit.js";
 import { notifyAdmins } from "../lib/admin-ops-notifications.js";
+import {
+  buildCancellationUrl,
+  consumeCancellationToken,
+  createCancellationToken,
+  getPublicWebBaseUrl,
+  resolveCancellationToken,
+} from "../lib/cancellation-tokens.js";
 import { buildConfirmationEmail } from "../lib/email-templates.js";
 import { queueAndSendEmail } from "../lib/email-service.js";
-import { badRequest, conflict } from "../lib/errors.js";
+import { badRequest, conflict, notFound } from "../lib/errors.js";
 import type { RequestContext, RouteResponse } from "../router.js";
 
 export async function handlePublicStatus(ctx: RequestContext): Promise<RouteResponse> {
@@ -350,12 +360,25 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     };
   }
 
+  let cancellationUrl: string | undefined;
+  try {
+    const { token } = await createCancellationToken(ctx.db, {
+      registrationId: result.registrationId,
+    });
+    cancellationUrl = buildCancellationUrl(getPublicWebBaseUrl(), token);
+  } catch {
+    // A failure to mint the cancellation token should not fail the booking —
+    // the resident can still contact organizers to cancel manually.
+    cancellationUrl = undefined;
+  }
+
   const emailContent = buildConfirmationEmail({
     recipientName: body.name,
     recipientEmail: body.email,
     language: body.language,
     boxId: body.boxId,
     switchedFromBoxId: result.switchedFromBoxId,
+    cancellationUrl,
   });
 
   await queueAndSendEmail(ctx.db, {
@@ -569,4 +592,184 @@ export async function handleWaitlistPosition(ctx: RequestContext): Promise<Route
       joinedAt: new Date(entry.created_at).toISOString(),
     },
   };
+}
+
+/**
+ * Return a minimal summary of the booking tied to a resident cancellation
+ * token. Deliberately limited: table id/label, a masked first-name hint, and
+ * language. Does not consume the token. Single generic 404 message is used
+ * for unknown/expired/consumed tokens so callers cannot enumerate state.
+ */
+export async function handleCancellationInfo(ctx: RequestContext): Promise<RouteResponse> {
+  const token = decodeURIComponent(ctx.params["token"] ?? "");
+  if (!token) {
+    throw badRequest("Cancellation token is required");
+  }
+
+  const resolved = await resolveCancellationToken(ctx.db, token);
+  if (!resolved) {
+    throw notFound("This cancellation link is no longer valid.");
+  }
+
+  const reg = await ctx.db
+    .selectFrom("registrations")
+    .select(["id", "box_id", "name", "email", "language", "status"])
+    .where("id", "=", resolved.registrationId)
+    .executeTakeFirst();
+
+  if (!reg) {
+    throw notFound("This cancellation link is no longer valid.");
+  }
+
+  if (reg.status !== "active") {
+    return {
+      statusCode: 200,
+      body: {
+        alreadyCancelled: true,
+        boxId: reg.box_id,
+        tableLabel: formatTableLabel(reg.box_id),
+        language: reg.language,
+      },
+    };
+  }
+
+  const table = getTableById(reg.box_id);
+
+  return {
+    statusCode: 200,
+    body: {
+      alreadyCancelled: false,
+      boxId: reg.box_id,
+      tableLabel: formatTableLabel(reg.box_id),
+      tableNumber: table?.number ?? reg.box_id,
+      tableSizeMeters: table?.sizeMeters ?? null,
+      recipientNameHint: maskName(reg.name),
+      language: reg.language,
+      expiresAt: resolved.expiresAt.toISOString(),
+    },
+  };
+}
+
+/**
+ * Confirm a resident cancellation. Consumes the token, moves the registration
+ * to `removed`, and parks the table in `reserved` (awaiting admin review) so
+ * admins choose whether to release it publicly.
+ */
+export async function handleCancellationConfirm(ctx: RequestContext): Promise<RouteResponse> {
+  const token = decodeURIComponent(ctx.params["token"] ?? "");
+  if (!token) {
+    throw badRequest("Cancellation token is required");
+  }
+
+  const resolved = await resolveCancellationToken(ctx.db, token);
+  if (!resolved) {
+    throw notFound("This cancellation link is no longer valid.");
+  }
+
+  const outcome = await ctx.db.transaction().execute(async (trx) => {
+    const consumed = await consumeCancellationToken(trx, resolved.id);
+    if (!consumed) {
+      return { type: "invalid_token" as const };
+    }
+
+    const reg = await trx
+      .selectFrom("registrations")
+      .select(["id", "box_id", "name", "email", "language", "status"])
+      .where("id", "=", resolved.registrationId)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!reg || reg.status !== "active") {
+      return { type: "no_active_registration" as const, boxId: reg?.box_id };
+    }
+
+    await trx
+      .updateTable("registrations")
+      .set({ status: "removed", updated_at: new Date().toISOString() })
+      .where("id", "=", reg.id)
+      .execute();
+
+    await trx
+      .updateTable("planter_boxes")
+      .set({
+        state: "reserved",
+        reserved_label: RESERVED_LABEL_AWAITING_REVIEW,
+        updated_at: new Date().toISOString(),
+      })
+      .where("id", "=", reg.box_id)
+      .execute();
+
+    await logAuditEvent(trx, {
+      actor_type: "public",
+      actor_id: null,
+      action: "registration_self_cancel",
+      entity_type: "registration",
+      entity_id: reg.id,
+      before: { box_id: reg.box_id, status: "active" },
+      after: { status: "removed", source: "magic_link" },
+      reason: "Resident self-cancelled via email magic link",
+    });
+
+    await logAuditEvent(trx, {
+      actor_type: "public",
+      actor_id: null,
+      action: "box_state_change",
+      entity_type: "planter_box",
+      entity_id: String(reg.box_id),
+      before: { state: "occupied" },
+      after: { state: "reserved", reserved_label: RESERVED_LABEL_AWAITING_REVIEW },
+      reason: "Held for admin review after resident self-cancellation",
+    });
+
+    return {
+      type: "cancelled" as const,
+      boxId: reg.box_id,
+      recipientName: reg.name,
+      recipientEmail: reg.email,
+      language: reg.language as Language,
+    };
+  });
+
+  if (outcome.type === "invalid_token") {
+    throw notFound("This cancellation link is no longer valid.");
+  }
+
+  if (outcome.type === "no_active_registration") {
+    return {
+      statusCode: 200,
+      body: {
+        alreadyCancelled: true,
+        boxId: outcome.boxId ?? null,
+      },
+    };
+  }
+
+  await notifyAdmins(ctx.db, {
+    type: "user_cancellation",
+    userName: outcome.recipientName,
+    userEmail: outcome.recipientEmail,
+    boxId: outcome.boxId,
+  });
+
+  return {
+    statusCode: 200,
+    body: {
+      cancelled: true,
+      boxId: outcome.boxId,
+      tableLabel: formatTableLabel(outcome.boxId),
+    },
+  };
+}
+
+/**
+ * Mask a personal name so the cancellation preview can confirm identity
+ * without leaking the full name to anyone who intercepts the link.
+ * Keeps the first character of each space-separated part.
+ */
+function maskName(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => (part.length <= 1 ? part : `${part[0]}${"•".repeat(Math.min(part.length - 1, 4))}`))
+    .join(" ");
 }
