@@ -35,6 +35,20 @@
   z-index: 3;
 }
 
+.hero-scene__overlay--above {
+  z-index: 5;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hero-scene__overlay--above > * {
+  pointer-events: auto;
+}
+
 /* Foreground props sit in front of the overlay so they composite over the
    corkboard like real objects in front of the scene. Layers have
    pointer-events: none (see .hero-scene__layer) so interactive overlay
@@ -170,8 +184,6 @@
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin: 0.5rem auto 0;
-  position: relative;
   flex-wrap: wrap;
 }
 

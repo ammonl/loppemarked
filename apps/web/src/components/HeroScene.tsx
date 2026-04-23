@@ -31,6 +31,7 @@ export interface HeroSceneProps {
   midground?: SceneAsset;
   foreground?: SceneAsset;
   children?: ReactNode;
+  overlayAbove?: ReactNode;
   className?: string;
   ariaLabel?: string;
 }
@@ -48,6 +49,7 @@ export function HeroScene({
   midground,
   foreground,
   children,
+  overlayAbove,
   className,
   ariaLabel,
 }: HeroSceneProps) {
@@ -65,6 +67,14 @@ export function HeroScene({
       {children !== undefined && (
         <div className="hero-scene__overlay" data-testid="hero-scene-overlay">
           {children}
+        </div>
+      )}
+      {overlayAbove !== undefined && (
+        <div
+          className="hero-scene__overlay hero-scene__overlay--above"
+          data-testid="hero-scene-overlay-above"
+        >
+          {overlayAbove}
         </div>
       )}
     </div>

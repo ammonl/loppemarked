@@ -19,6 +19,19 @@ export function LandingPage({ onEnter }: LandingPageProps) {
         background={landingSceneAssets.background}
         midground={landingSceneAssets.midground}
         foreground={landingSceneAssets.foreground}
+        overlayAbove={
+          <div className="flea-landing__cta-wrap">
+            <button
+              type="button"
+              className="flea-landing__cta"
+              onClick={onEnter}
+              disabled={!onEnter}
+            >
+              <KeyIcon />
+              <span>{t("landing.primaryCta")}</span>
+            </button>
+          </div>
+        }
       >
         <div className="flea-landing__overlay" data-testid="flea-landing-overlay">
           <div className="flea-landing__copy">
@@ -48,18 +61,6 @@ export function LandingPage({ onEnter }: LandingPageProps) {
               },
             ]}
           />
-
-          <div className="flea-landing__cta-wrap">
-            <button
-              type="button"
-              className="flea-landing__cta"
-              onClick={onEnter}
-              disabled={!onEnter}
-            >
-              <KeyIcon />
-              <span>{t("landing.primaryCta")}</span>
-            </button>
-          </div>
         </div>
       </HeroScene>
     </section>
