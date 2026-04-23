@@ -142,10 +142,17 @@ interface PublicHeaderProps {
 function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
   const handleAboutClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    const target = typeof document !== "undefined" ? document.getElementById("about") : null;
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (typeof document === "undefined") return;
+    const target = document.getElementById("about");
+    if (!target) return;
+    // Respect users who opt out of motion animations.
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -163,7 +170,6 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
         position: "sticky",
         top: 0,
         zIndex: 10,
-        boxShadow: "0 1px 0 rgba(0, 0, 0, 0.12)",
       }}
     >
       <button
@@ -239,15 +245,19 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
           >
             {t("nav.about")}
           </a>
-          <button
-            type="button"
-            onClick={onAdmin}
-            style={publicNavLinkStyle}
-          >
-            {t("admin.link")}
-          </button>
         </nav>
         <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaGreenDivider }} />
+        <button
+          type="button"
+          onClick={onAdmin}
+          style={{
+            ...publicNavLinkStyle,
+            fontSize: "0.75rem",
+            opacity: 0.55,
+          }}
+        >
+          {t("admin.link")}
+        </button>
         <LanguageSelector variant="dark" />
       </div>
     </header>
