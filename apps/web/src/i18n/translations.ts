@@ -398,7 +398,7 @@ const da = {
 
   "about.title": "Om loppemarkedet",
   "about.description":
-    "UN17 Village Loppemarked er et nabofællesskabets loppemarked i Fælledhuset. Vi mødes om loppeborde, gode fund og hyggelige stunder på tværs af lejlighederne.",
+    "UN17 Village Loppemarked er et nabofællesskabets loppemarked i Fælledhuset. Vi mødes om loppeborde, gode fund og hyggelige stunder på tværs af UN17 Village.",
   "about.contact": "Spørgsmål? Kontakt os:",
 };
 
@@ -802,7 +802,7 @@ const en: Record<TranslationKey, string> = {
 
   "about.title": "About the flea market",
   "about.description":
-    "UN17 Village Loppemarked is a neighborly flea market hosted in Fælledhuset. We gather around shared tables, good finds, and cozy moments across the apartments.",
+    "UN17 Village Loppemarked is a neighborly flea market hosted in Fælledhuset. We gather around shared tables, good finds, and cozy moments throughout the village.",
   "about.contact": "Questions? Get in touch:",
 };
 
