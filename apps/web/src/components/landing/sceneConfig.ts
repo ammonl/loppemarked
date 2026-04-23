@@ -31,7 +31,13 @@ export const landingSceneAssets: LandingSceneAssets = {
   foreground: {
     src: "/landing/landing-props-foreground.webp",
     alt: "",
-    objectFit: "contain",
-    objectPosition: "center bottom",
+    style: {
+      position: "absolute",
+      bottom: 0,
+      left: 0, 
+      width: "100%",
+      height: "auto",
+      transform: "translateY(15%)",
+    },
   },
 };
