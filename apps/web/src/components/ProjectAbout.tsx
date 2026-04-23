@@ -7,11 +7,13 @@ export function ProjectAbout() {
 
   return (
     <footer
+      id="about"
       style={{
         maxWidth: 800,
         margin: "2rem auto 0",
         padding: "1.5rem 1rem 2rem",
         textAlign: "center",
+        scrollMarginTop: "5rem",
       }}
     >
       <div style={{

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_OPENING_DATETIME } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import type { TranslationKey } from "@/i18n/translations";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { PreOpenPage } from "@/components/PreOpenPage";
@@ -108,100 +109,221 @@ export default function Home() {
   const publicView = view === "public";
   const mainBackground = publicView ? colors.fleaCream : colors.backgroundLight;
 
+  const goHome = () => {
+    setView("public");
+    setShowTableMap(false);
+    setShowWaitlistForm(false);
+  };
+
   return (
     <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: mainBackground, minHeight: "100vh" }}>
-      <header
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr auto 1fr",
-          alignItems: "center",
-          padding: "1rem 1.5rem",
-          borderBottom: `1px solid ${publicView ? colors.fleaSand : colors.borderTan}`,
-          background: publicView ? colors.fleaCream : "transparent",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <div />
-        <button
-          type="button"
-          onClick={() => {
-            setView("public");
-            setShowTableMap(false);
-            setShowWaitlistForm(false);
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-            margin: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            color: publicView ? colors.fleaTerracottaDark : colors.inkBrown,
-            fontFamily: publicView ? fonts.display : fonts.heading,
-            fontSize: publicView ? "1.9rem" : "1.25rem",
-            lineHeight: 1,
-          }}
-          aria-label={t("common.appName")}
-        >
-          {publicView && (
-            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden fill="none">
-              <path
-                d="M12 20s-6-4.5-6-9a4 4 0 0 1 6-3.4A4 4 0 0 1 18 11c0 4.5-6 9-6 9z"
-                fill={colors.fleaTerracotta}
-                stroke={colors.fleaTerracottaDark}
-                strokeWidth="1.1"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 10c.4-1.5 1.6-2.4 3-2.4"
-                stroke={colors.fleaSageDark}
-                strokeWidth="1.1"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-          )}
-          <h1
-            style={{
-              fontSize: "inherit",
-              margin: 0,
-              fontFamily: "inherit",
-              color: "inherit",
-              fontWeight: 700,
-              letterSpacing: publicView ? "0.04em" : "normal",
-            }}
-          >
-            {t("common.appName")}
-          </h1>
-        </button>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", justifyContent: "flex-end" }}>
-          {publicView && (
-            <button
-              type="button"
-              onClick={() => setView("admin")}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                color: colors.warmBrown,
-                opacity: 0.4,
-                fontFamily: fonts.sans,
-              }}
-            >
-              {t("admin.link")}
-            </button>
-          )}
-          <LanguageSelector />
-        </div>
-      </header>
+      {publicView ? (
+        <PublicHeader
+          t={t}
+          onHome={goHome}
+          onAdmin={() => setView("admin")}
+        />
+      ) : (
+        <AdminHeader t={t} onHome={goHome} />
+      )}
 
       {renderContent()}
       {publicView && <ProjectAbout />}
     </main>
+  );
+}
+
+interface PublicHeaderProps {
+  t: (key: TranslationKey) => string;
+  onHome: () => void;
+  onAdmin: () => void;
+}
+
+function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
+  const handleAboutClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const target = typeof document !== "undefined" ? document.getElementById("about") : null;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  return (
+    <header
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "1rem",
+        padding: "0.85rem 1.5rem",
+        background: colors.fleaGreenDark,
+        borderBottom: `1px solid ${colors.fleaGreenDarker}`,
+        color: colors.fleaCream,
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        boxShadow: "0 1px 0 rgba(0, 0, 0, 0.12)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onHome}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          margin: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.55rem",
+          color: colors.fleaCream,
+          fontFamily: fonts.display,
+          fontSize: "1.75rem",
+          lineHeight: 1,
+        }}
+        aria-label={t("common.appName")}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden fill="none">
+          <path
+            d="M12 20s-6-4.5-6-9a4 4 0 0 1 6-3.4A4 4 0 0 1 18 11c0 4.5-6 9-6 9z"
+            fill={colors.fleaTerracotta}
+            stroke={colors.fleaSandLight}
+            strokeWidth="1.1"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12 10c.4-1.5 1.6-2.4 3-2.4"
+            stroke={colors.fleaSandLight}
+            strokeWidth="1.1"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+        <h1
+          style={{
+            fontSize: "inherit",
+            margin: 0,
+            fontFamily: "inherit",
+            color: "inherit",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {t("common.appName")}
+        </h1>
+      </button>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1.25rem",
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+        }}
+      >
+        <nav aria-label="Primary" style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+          <button
+            type="button"
+            onClick={onHome}
+            style={publicNavLinkStyle}
+          >
+            {t("nav.home")}
+          </button>
+          <a
+            href="#about"
+            onClick={handleAboutClick}
+            style={publicNavLinkStyle}
+          >
+            {t("nav.about")}
+          </a>
+          <button
+            type="button"
+            onClick={onAdmin}
+            style={publicNavLinkStyle}
+          >
+            {t("admin.link")}
+          </button>
+        </nav>
+        <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaGreenDivider }} />
+        <LanguageSelector variant="dark" />
+      </div>
+    </header>
+  );
+}
+
+const publicNavLinkStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  margin: 0,
+  cursor: "pointer",
+  fontFamily: fonts.sans,
+  fontSize: "0.9rem",
+  fontWeight: 500,
+  letterSpacing: "0.02em",
+  color: colors.fleaCream,
+  textDecoration: "none",
+  opacity: 0.9,
+};
+
+interface AdminHeaderProps {
+  t: (key: TranslationKey) => string;
+  onHome: () => void;
+}
+
+function AdminHeader({ t, onHome }: AdminHeaderProps) {
+  return (
+    <header
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        padding: "1rem 1.5rem",
+        borderBottom: `1px solid ${colors.borderTan}`,
+        background: "transparent",
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+      }}
+    >
+      <div />
+      <button
+        type="button"
+        onClick={onHome}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          margin: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.4rem",
+          color: colors.inkBrown,
+          fontFamily: fonts.heading,
+          fontSize: "1.25rem",
+          lineHeight: 1,
+        }}
+        aria-label={t("common.appName")}
+      >
+        <h1
+          style={{
+            fontSize: "inherit",
+            margin: 0,
+            fontFamily: "inherit",
+            color: "inherit",
+            fontWeight: 700,
+          }}
+        >
+          {t("common.appName")}
+        </h1>
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", justifyContent: "flex-end" }}>
+        <LanguageSelector />
+      </div>
+    </header>
   );
 }
