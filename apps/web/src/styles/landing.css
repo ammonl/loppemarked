@@ -74,10 +74,6 @@
   box-sizing: border-box;
 }
 
-.flea-landing__overlay .flea-corkboard {
-  margin-top: auto;
-}
-
 /* Frosted card keeps the eyebrow/title/body legible against the photorealistic
    hero without dimming the image itself. */
 .flea-landing__copy {
@@ -108,75 +104,6 @@
   margin: 0 auto;
   max-width: 36rem;
   text-align: center;
-}
-
-/* Corkboard sits directly on the hero — the wooden frame, cork surface, and
-   three pinned notes are all baked into the image. We only position label/
-   value text on top of each baked note. */
-.flea-corkboard {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  aspect-ratio: 2816 / 1536;
-  background-image: url("/landing/landing-corkboard.webp");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.flea-note {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
-  padding: 0.25rem 0.4rem;
-  box-sizing: border-box;
-  text-align: center;
-  color: #5B4636;
-}
-
-.flea-note--date {
-  left: 8%;
-  top: 18%;
-  width: 18%;
-  height: 38%;
-  transform: translateX(100px) rotate(-9deg);
-}
-
-.flea-note--place {
-  left: 30%;
-  top: 22%;
-  width: 30%;
-  height: 40%;
-  transform: rotate(3deg);
-}
-
-.flea-note--time {
-  left: 58%;
-  top: 50%;
-  width: 32%;
-  height: 22%;
-  transform: rotate(-5deg);
-}
-
-.flea-note__label {
-  font-family: "Caveat", "Amatic SC", cursive;
-  font-weight: 700;
-  font-size: clamp(0.75rem, 1.4vw, 1.05rem);
-  letter-spacing: 0.05em;
-  color: #A85544;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.flea-note__value {
-  font-family: "Caveat", "Amatic SC", cursive;
-  font-size: clamp(0.75rem, 1.4vw, 1.1rem);
-  line-height: 1.15;
-  color: #5B4636;
 }
 
 .flea-landing__cta-wrap {

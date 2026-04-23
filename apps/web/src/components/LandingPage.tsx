@@ -40,54 +40,9 @@ export function LandingPage({ onEnter }: LandingPageProps) {
             </h1>
             <p className="flea-landing__body">{t("landing.heroBody")}</p>
           </div>
-
-          <Corkboard
-            title={t("landing.corkboardTitle")}
-            notes={[
-              {
-                slot: "date",
-                label: t("landing.eventDateLabel"),
-                value: t("landing.eventDateValue"),
-              },
-              {
-                slot: "place",
-                label: t("landing.eventPlaceLabel"),
-                value: t("landing.eventPlaceValue"),
-              },
-              {
-                slot: "time",
-                label: t("landing.eventTimeLabel"),
-                value: t("landing.eventTimeValue"),
-              },
-            ]}
-          />
         </div>
       </HeroScene>
     </section>
-  );
-}
-
-type CorkboardSlot = "date" | "place" | "time";
-
-interface CorkboardNote {
-  slot: CorkboardSlot;
-  label: string;
-  value: string;
-}
-
-function Corkboard({ title, notes }: { title: string; notes: CorkboardNote[] }) {
-  return (
-    <div className="flea-corkboard" role="group" aria-label={title}>
-      {notes.map((note) => (
-        <article
-          key={note.slot}
-          className={`flea-note flea-note--${note.slot}`}
-        >
-          <div className="flea-note__label">{note.label}</div>
-          <div className="flea-note__value">{note.value}</div>
-        </article>
-      ))}
-    </div>
   );
 }
 

@@ -20,17 +20,6 @@ describe("LandingPage", () => {
     expect(screen.getByRole("button", { name: /landing\.primaryCta/ })).toBeDefined();
   });
 
-  it("renders corkboard with date, place, and time notes", () => {
-    render(<LandingPage onEnter={() => {}} />);
-
-    expect(screen.getByText("landing.eventDateLabel")).toBeDefined();
-    expect(screen.getByText("landing.eventDateValue")).toBeDefined();
-    expect(screen.getByText("landing.eventPlaceLabel")).toBeDefined();
-    expect(screen.getByText("landing.eventPlaceValue")).toBeDefined();
-    expect(screen.getByText("landing.eventTimeLabel")).toBeDefined();
-    expect(screen.getByText("landing.eventTimeValue")).toBeDefined();
-  });
-
   it("calls onEnter when CTA is clicked", () => {
     const handler = vi.fn();
     render(<LandingPage onEnter={handler} />);
@@ -50,7 +39,7 @@ describe("LandingPage", () => {
   it("does not reference greenhouses, planter boxes, or box names", () => {
     render(<LandingPage onEnter={() => {}} />);
 
-    const root = screen.getByRole("group", { name: "landing.corkboardTitle" }).closest("section");
+    const root = screen.getByTestId("flea-landing-overlay").closest("section");
     const markup = root?.outerHTML.toLowerCase() ?? "";
     expect(markup.includes("greenhouse")).toBe(false);
     expect(markup.includes("planter")).toBe(false);
@@ -66,19 +55,18 @@ describe("LandingPage", () => {
     expect(screen.getByTestId("hero-scene-layer-bg")).toBeDefined();
   });
 
-  it("places the text, corkboard, and CTA inside the live-DOM overlay", () => {
+  it("places the text inside the live-DOM overlay and the CTA above the hero", () => {
     render(<LandingPage onEnter={() => {}} />);
 
     const overlay = screen.getByTestId("flea-landing-overlay");
     expect(overlay.contains(screen.getByText("landing.heroTitle"))).toBe(true);
-    expect(overlay.contains(screen.getByRole("group", { name: "landing.corkboardTitle" }))).toBe(true);
-    expect(overlay.contains(screen.getByRole("button", { name: /landing\.primaryCta/ }))).toBe(true);
+    expect(screen.getByRole("button", { name: /landing\.primaryCta/ })).toBeDefined();
   });
 
   it("no longer renders the flat inline-SVG hero illustration or icon vignettes", () => {
     render(<LandingPage onEnter={() => {}} />);
 
-    const section = screen.getByRole("group", { name: "landing.corkboardTitle" }).closest("section");
+    const section = screen.getByTestId("flea-landing-overlay").closest("section");
     expect(section?.querySelector(".flea-hero-illustration")).toBeNull();
     expect(section?.querySelector(".flea-vignettes")).toBeNull();
     expect(section?.querySelector(".flea-vignette")).toBeNull();
