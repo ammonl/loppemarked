@@ -31,7 +31,6 @@ const BRAND = {
   cream: "#FDFBF7",
   pageBg: "#F5F1EA",
   ink: "#5B4636",
-  mutedInk: "#8A7560",
 } as const;
 
 interface TableSummary {

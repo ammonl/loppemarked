@@ -108,6 +108,17 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("Bemærk");
   });
 
+  it("includes English switch note when switchedFromBoxId is provided", () => {
+    const result = buildConfirmationEmail({
+      ...baseData,
+      language: "en",
+      switchedFromBoxId: 7,
+    });
+    expect(result.bodyHtml).toContain("#7");
+    expect(result.bodyHtml).toContain("#3");
+    expect(result.bodyHtml).toContain("previous booking");
+  });
+
   it("sets html lang attribute to match language", () => {
     const daResult = buildConfirmationEmail(baseData);
     expect(daResult.bodyHtml).toContain('lang="da"');
