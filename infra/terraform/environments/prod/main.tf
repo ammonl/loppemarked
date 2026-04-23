@@ -75,26 +75,6 @@ output "dashboard_name" {
   value = module.loppemarked_stack.dashboard_name
 }
 
-# ---------- Staging subdomain delegation ----------
-
-data "terraform_remote_state" "staging" {
-  backend = "s3"
-
-  config = {
-    bucket = "loppemarked-2026-tfstate"
-    key    = "environments/staging/terraform.tfstate"
-    region = "eu-north-1"
-  }
-}
-
-resource "aws_route53_record" "staging_ns" {
-  zone_id = module.loppemarked_stack.route53_zone_id
-  name    = "staging.un17hub.com"
-  type    = "NS"
-  ttl     = 300
-  records = data.terraform_remote_state.staging.outputs.route53_nameservers
-}
-
 output "naming_prefix" {
   value = module.loppemarked_stack.naming_prefix
 }
