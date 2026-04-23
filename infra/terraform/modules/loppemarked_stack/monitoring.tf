@@ -146,6 +146,10 @@ resource "aws_sns_topic" "alarms" {
   }
 }
 
+# Email subscriptions are fragile under Terraform: AWS removes unconfirmed
+# subscriptions after 3 days, and any recipient can one-click unsubscribe from
+# an alarm email. Either event makes this resource drift back to "create".
+# See `infra/terraform/README.md` for the drift-response runbook.
 resource "aws_sns_topic_subscription" "alarm_email" {
   count     = var.alarm_email != null ? 1 : 0
   topic_arn = aws_sns_topic.alarms.arn

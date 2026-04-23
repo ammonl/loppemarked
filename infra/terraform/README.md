@@ -212,3 +212,57 @@ with "Do not require this check to have run" so non-infra PRs are not blocked.
   succeeds (or is skipped when staging has no changes).
 - **No-change plans**: when `terraform plan` detects no changes, the detect
   job outputs `has_changes=false` and the apply job is skipped entirely.
+
+## Drift Detection and Response
+
+The `Drift Detection` workflow (`.github/workflows/drift-detection.yml`) runs
+`terraform plan` against every environment daily at 06:00 UTC. When a plan
+reports changes, the workflow opens an issue labeled `ops` + `drift` with the
+full plan output and a link to the workflow run.
+
+### General runbook
+
+1. Open the issue and read the plan output.
+2. Identify the resources involved and decide whether the diff is expected
+   (a legitimate config change that was not yet merged) or unexpected
+   (something changed in AWS out-of-band).
+3. Either:
+   - Merge the missing Terraform change so the next apply reconciles state,
+     or
+   - Run `terraform apply` against the environment to restore the declared
+     state (for unexpected drift).
+4. Close the drift issue with a short note describing the resolution.
+
+### Known drift: `aws_sns_topic_subscription.alarm_email`
+
+Drift on `module.loppemarked_stack.aws_sns_topic_subscription.alarm_email[0]`
+(plan shows "1 to add") is a known class of drift that should be treated as
+routine unless it starts recurring frequently.
+
+**Why it happens:** `aws_sns_topic_subscription` with `protocol = "email"`
+goes into `PendingConfirmation` until the recipient clicks the confirmation
+link. AWS automatically removes unconfirmed subscriptions after 3 days, and
+every alarm email also contains a one-click `Unsubscribe` link. In either
+case the subscription disappears server-side, refresh drops it from state,
+and the next plan wants to recreate it.
+
+**Runbook:**
+
+1. Apply the plan for the affected environment:
+
+   ```bash
+   cd infra/terraform/environments/<env>
+   terraform init
+   terraform plan -out=tfplan
+   terraform apply tfplan
+   ```
+
+2. Ask the recipient of `alarm_email` (see `environments/<env>/main.tf`) to
+   open the new `AWS Notification - Subscription Confirmation` email and
+   click `Confirm subscription`.
+3. Close the drift issue and reference the run that applied.
+
+**Escalate** if this subscription drifts more than once a week, or if
+drift appears on resources other than the email subscription — those cases
+may indicate a real misconfiguration rather than expected email lifecycle
+behavior.
