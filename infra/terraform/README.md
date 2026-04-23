@@ -258,8 +258,10 @@ and the next plan wants to recreate it.
    ```
 
 2. Ask the recipient of `alarm_email` (see `environments/<env>/main.tf`) to
-   open the new `AWS Notification - Subscription Confirmation` email and
-   click `Confirm subscription`.
+   open the **new** `AWS Notification - Subscription Confirmation` email
+   that arrives immediately after apply and click `Confirm subscription`.
+   The link from any previous confirmation email will no longer work — each
+   apply generates a fresh confirmation token.
 3. Close the drift issue and reference the run that applied.
 
 **Escalate** if this subscription drifts more than once a week, or if

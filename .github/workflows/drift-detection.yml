@@ -110,5 +110,7 @@ jobs:
                 '```',
                 '',
                 'Review the plan output and either apply the expected changes or investigate the drift.',
+                '',
+                'See `infra/terraform/README.md` → **Drift Detection and Response** for the runbook, including the known-drift playbook for `aws_sns_topic_subscription.alarm_email`.',
               ].join('\n'),
             });
