@@ -171,6 +171,7 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
         padding: "0.75rem 1.5rem",
         background: colors.fleaCream,
         borderBottom: `1px solid ${colors.fleaSand}`,
+        boxShadow: "0 1px 6px rgba(91, 70, 54, 0.06)",
         color: colors.fleaPenInk,
         position: "sticky",
         top: 0,
@@ -192,22 +193,7 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
         }}
         aria-label={t("common.appName")}
       >
-        <BrandLogo variant="header" reactToBookingSuccess title={t("common.appName")} />
-        <span
-          style={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            padding: 0,
-            margin: -1,
-            overflow: "hidden",
-            clip: "rect(0, 0, 0, 0)",
-            whiteSpace: "nowrap",
-            border: 0,
-          }}
-        >
-          {t("common.appName")}
-        </span>
+        <BrandLogo variant="header" reactToBookingSuccess decorative />
       </button>
 
       <div

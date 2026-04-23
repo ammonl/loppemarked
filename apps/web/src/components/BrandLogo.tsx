@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { colors, fonts } from "@/styles/theme";
 import { onBookingSuccess } from "@/utils/brandEvents";
+import "@/styles/brandLogo.css";
 
 type LogoVariant = "header" | "footer" | "mark";
 
@@ -10,10 +11,12 @@ interface BrandLogoProps {
   variant?: LogoVariant;
   /** Color override for the wordmark + doodle strokes. */
   color?: string;
-  /** Optional title announced to assistive tech. */
+  /** Optional title announced to assistive tech. Ignored when `decorative`. */
   title?: string;
   /** If true, subscribes to the global booking-success event and wiggles. */
   reactToBookingSuccess?: boolean;
+  /** When true, the logo is hidden from assistive tech (use when the parent labels itself). */
+  decorative?: boolean;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -28,18 +31,33 @@ export function BrandLogo({
   color,
   title = "UN17 Village",
   reactToBookingSuccess,
+  decorative,
   style,
   className,
 }: BrandLogoProps) {
   const [wiggle, setWiggle] = useState(false);
+  const wiggleTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!reactToBookingSuccess) return;
-    return onBookingSuccess(() => {
+    const unsubscribe = onBookingSuccess(() => {
+      if (wiggleTimerRef.current !== null) {
+        window.clearTimeout(wiggleTimerRef.current);
+      }
       setWiggle(false);
       requestAnimationFrame(() => setWiggle(true));
-      window.setTimeout(() => setWiggle(false), 1400);
+      wiggleTimerRef.current = window.setTimeout(() => {
+        setWiggle(false);
+        wiggleTimerRef.current = null;
+      }, 1400);
     });
+    return () => {
+      unsubscribe();
+      if (wiggleTimerRef.current !== null) {
+        window.clearTimeout(wiggleTimerRef.current);
+        wiggleTimerRef.current = null;
+      }
+    };
   }, [reactToBookingSuccess]);
 
   if (variant === "mark") {
@@ -50,6 +68,7 @@ export function BrandLogo({
         className={className}
         style={style}
         wiggle={wiggle}
+        decorative={decorative}
       />
     );
   }
@@ -57,6 +76,9 @@ export function BrandLogo({
   const isFooter = variant === "footer";
   const resolvedColor = color ?? (isFooter ? colors.fleaTerracotta : colors.fleaSage);
   const softShadow = isFooter ? "rgba(168, 85, 68, 0.12)" : "rgba(111, 138, 111, 0.14)";
+  const ariaProps = decorative
+    ? ({ "aria-hidden": true as const } as const)
+    : ({ role: "img" as const, "aria-label": title } as const);
 
   return (
     <span
@@ -71,8 +93,7 @@ export function BrandLogo({
         opacity: isFooter ? 0.8 : 1,
         ...style,
       }}
-      aria-label={title}
-      role="img"
+      {...ariaProps}
     >
       <HeartLeafDoodle
         color={resolvedColor}
@@ -176,38 +197,23 @@ function HeartLeafDoodle({
   wiggle,
   decorative,
 }: HeartLeafDoodleProps) {
+  const classes = [className, "un17-doodle", wiggle ? "un17-doodle--wiggle" : null]
+    .filter(Boolean)
+    .join(" ");
   return (
     <svg
+      data-un17-doodle="true"
       viewBox="0 0 32 32"
       width={size}
       height={size}
-      className={className}
-      style={{
-        display: "inline-block",
-        transformOrigin: "50% 60%",
-        animation: wiggle ? "un17-wiggle 1.2s ease-in-out" : undefined,
-        ...style,
-      }}
+      className={classes}
+      style={style}
       role={decorative ? "presentation" : "img"}
       aria-hidden={decorative || undefined}
       aria-label={decorative ? undefined : title}
     >
       {!decorative && title ? <title>{title}</title> : null}
-      <style>{`
-        @keyframes un17-wiggle {
-          0%   { transform: rotate(0) scale(1); }
-          18%  { transform: rotate(-6deg) scale(1.08); }
-          36%  { transform: rotate(5deg) scale(1.12); }
-          54%  { transform: rotate(-4deg) scale(1.06); }
-          72%  { transform: rotate(3deg) scale(1.04); }
-          100% { transform: rotate(0) scale(1); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          svg[data-un17-doodle] { animation: none !important; }
-        }
-      `}</style>
       <g
-        data-un17-doodle="true"
         fill="none"
         stroke={color}
         strokeWidth="1.6"

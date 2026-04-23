@@ -1,0 +1,23 @@
+.un17-doodle {
+  display: inline-block;
+  transform-origin: 50% 60%;
+}
+
+.un17-doodle--wiggle {
+  animation: un17-wiggle 1.2s ease-in-out;
+}
+
+@keyframes un17-wiggle {
+  0%   { transform: rotate(0deg) scale(1); }
+  18%  { transform: rotate(-6deg) scale(1.08); }
+  36%  { transform: rotate(5deg)  scale(1.12); }
+  54%  { transform: rotate(-4deg) scale(1.06); }
+  72%  { transform: rotate(3deg)  scale(1.04); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .un17-doodle--wiggle {
+    animation: none;
+  }
+}

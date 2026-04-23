@@ -514,7 +514,7 @@ describe("Home page render gating", () => {
 
     expect(screen.getByTestId("table-map-page")).toBeDefined();
 
-    const homeButton = screen.getByText("common.appName");
+    const homeButton = screen.getByLabelText("common.appName");
     await act(async () => {
       fireEvent.click(homeButton);
     });
