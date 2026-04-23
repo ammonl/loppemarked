@@ -14,6 +14,7 @@ import {
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { renderWithContact } from "@/i18n/contactLink";
 import { colors, fonts, shadows, alertError } from "@/styles/theme";
+import { emitBookingSuccess } from "@/utils/brandEvents";
 import { SwitchConfirmationDialog, type SwitchDetails } from "./SwitchConfirmationDialog";
 
 interface RegistrationFormProps {
@@ -114,6 +115,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
       }
 
       setSuccess(true);
+      emitBookingSuccess();
     } catch {
       setErrors([t("common.error")]);
     } finally {
@@ -140,6 +142,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
       }
 
       setSuccess(true);
+      emitBookingSuccess();
       setSwitchDetails(null);
     } catch {
       setSwitchDetails(null);

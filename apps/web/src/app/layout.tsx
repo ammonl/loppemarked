@@ -6,10 +6,6 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "UN17 Village Loppemarked",
   description: "Forårets loppemarked i Fælledhuset, UN17 Village — book dit loppebord.",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({

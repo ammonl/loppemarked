@@ -1,5 +1,6 @@
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { EventContactLink } from "@/i18n/contactLink";
+import { BrandLogo } from "@/components/BrandLogo";
 import { colors, fonts } from "@/styles/theme";
 
 export function ProjectAbout() {
@@ -69,6 +70,17 @@ export function ProjectAbout() {
           style={{ color: colors.fleaSageDark, textDecoration: "none", fontWeight: 600 }}
         />
       </p>
+      <div
+        aria-hidden
+        style={{
+          marginTop: "2rem",
+          display: "flex",
+          justifyContent: "center",
+          transform: "rotate(-2.5deg)",
+        }}
+      >
+        <BrandLogo variant="footer" />
+      </div>
     </footer>
   );
 }

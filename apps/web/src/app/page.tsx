@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import type { TranslationKey } from "@/i18n/translations";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { BrandLogo } from "@/components/BrandLogo";
 import { PreOpenPage } from "@/components/PreOpenPage";
 import { LandingPage } from "@/components/LandingPage";
 import { TableMapPage } from "@/components/TableMapPage";
@@ -167,10 +168,10 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
         alignItems: "center",
         justifyContent: "space-between",
         gap: "1rem",
-        padding: "0.85rem 1.5rem",
-        background: colors.fleaGreenDark,
-        borderBottom: `1px solid ${colors.fleaGreenDarker}`,
-        color: colors.fleaCream,
+        padding: "0.75rem 1.5rem",
+        background: colors.fleaCream,
+        borderBottom: `1px solid ${colors.fleaSand}`,
+        color: colors.fleaPenInk,
         position: "sticky",
         top: 0,
         zIndex: 10,
@@ -187,42 +188,26 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
           margin: 0,
           display: "inline-flex",
           alignItems: "center",
-          gap: "0.55rem",
-          color: colors.fleaCream,
-          fontFamily: fonts.display,
-          fontSize: "1.75rem",
           lineHeight: 1,
         }}
         aria-label={t("common.appName")}
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden fill="none">
-          <path
-            d="M12 20s-6-4.5-6-9a4 4 0 0 1 6-3.4A4 4 0 0 1 18 11c0 4.5-6 9-6 9z"
-            fill={colors.fleaTerracotta}
-            stroke={colors.fleaSandLight}
-            strokeWidth="1.1"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M12 10c.4-1.5 1.6-2.4 3-2.4"
-            stroke={colors.fleaSandLight}
-            strokeWidth="1.1"
-            strokeLinecap="round"
-            fill="none"
-          />
-        </svg>
-        <h1
+        <BrandLogo variant="header" reactToBookingSuccess title={t("common.appName")} />
+        <span
           style={{
-            fontSize: "inherit",
-            margin: 0,
-            fontFamily: "inherit",
-            color: "inherit",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            border: 0,
           }}
         >
           {t("common.appName")}
-        </h1>
+        </span>
       </button>
 
       <div
@@ -250,7 +235,7 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
             {t("nav.about")}
           </a>
         </nav>
-        <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaGreenDivider }} />
+        <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaSand }} />
         <button
           type="button"
           onClick={onAdmin}
@@ -262,7 +247,7 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
         >
           {t("admin.link")}
         </button>
-        <LanguageSelector variant="dark" />
+        <LanguageSelector />
       </div>
     </header>
   );
@@ -278,7 +263,7 @@ const publicNavLinkStyle: React.CSSProperties = {
   fontSize: "0.9rem",
   fontWeight: 500,
   letterSpacing: "0.02em",
-  color: colors.fleaCream,
+  color: colors.fleaPenInk,
   textDecoration: "none",
   opacity: 0.9,
 };
