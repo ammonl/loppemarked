@@ -7,6 +7,7 @@ import { logger } from "./logger.js";
 export type AdminOpsEvent =
   | { type: "user_registration"; userName: string; userEmail: string; boxId: number }
   | { type: "user_switch"; userName: string; userEmail: string; oldBoxId: number; newBoxId: number }
+  | { type: "user_cancellation"; userName: string; userEmail: string; boxId: number }
   | { type: "admin_box_reserve"; actingAdminId: string; boxId: number }
   | { type: "admin_box_release"; actingAdminId: string; boxId: number }
   | { type: "admin_registration_create"; actingAdminId: string; userName: string; boxId: number }
@@ -46,6 +47,10 @@ export function buildOpsNotificationEmail(eventWithEmail: AdminEventWithEmail | 
     case "user_switch":
       subject = `Table switch: ${event.userName} moved from ${tableLabel(event.oldBoxId)} to ${tableLabel(event.newBoxId)}`;
       bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) switched from <strong>${escapeHtml(tableLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(tableLabel(event.newBoxId))}</strong>.`;
+      break;
+    case "user_cancellation":
+      subject = `Booking cancelled: ${event.userName} released ${tableLabel(event.boxId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) cancelled their booking for <strong>${escapeHtml(tableLabel(event.boxId))}</strong>. The table is held as <strong>reserved</strong> pending admin review — release it to the public pool from the Tables view when ready.`;
       break;
     case "admin_box_reserve":
       subject = `Table reserved: ${tableLabel(event.boxId)}`;
@@ -93,7 +98,11 @@ export function buildOpsNotificationEmail(eventWithEmail: AdminEventWithEmail | 
 }
 
 function isUserEvent(event: AdminOpsEvent): boolean {
-  return event.type === "user_registration" || event.type === "user_switch";
+  return (
+    event.type === "user_registration" ||
+    event.type === "user_switch" ||
+    event.type === "user_cancellation"
+  );
 }
 
 /**

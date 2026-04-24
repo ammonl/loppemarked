@@ -141,8 +141,23 @@ Søen:
     - old box becomes publicly available immediately
 
 ### 4.6 Unregister Policy
-- Public users cannot unregister in the system.
-- UI directs users to email organizers if they no longer want the box.
+- Residents can self-cancel their own booking via a secure magic link sent in
+  the registration confirmation email.
+  - Link carries a cryptographically random, single-use token that is stored
+    hashed (SHA-256) and expires on a bounded timeline (default 60 days).
+  - Link resolves to a public cancellation page that shows the booked table,
+    a masked recipient-name hint, and an explanation of the effects before the
+    resident confirms.
+  - Confirmation deactivates the booking and parks the table in `reserved`
+    state with the label `Awaiting Admin Review` — it is NOT automatically
+    returned to the public pool.
+  - Admins are notified when a resident self-cancels so they can decide
+    whether to release the held table publicly (reusing the existing
+    admin reserved/release workflow).
+- The link is tied to a specific registration and cannot be reused to cancel
+  any other booking, guessed, or replayed after use.
+- UI still directs users to email organizers for anything outside the
+  self-cancellation flow (e.g., help when the link has expired).
 
 ### 4.7 Full Capacity and Waitlist
 - If no public boxes are available, user can join waitlist.

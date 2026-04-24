@@ -149,4 +149,39 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("#999");
     expect(result.bodyHtml).toContain("—");
   });
+
+  it("omits cancellation section when cancellationUrl is not provided", () => {
+    const result = buildConfirmationEmail(baseData);
+    expect(result.bodyHtml).not.toContain("Afmeld");
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).not.toContain("Cancel");
+  });
+
+  it("includes Danish cancellation section when cancellationUrl is provided", () => {
+    const result = buildConfirmationEmail({
+      ...baseData,
+      cancellationUrl: "https://example.test/cancel?token=abc123",
+    });
+    expect(result.bodyHtml).toContain("Afmeld");
+    expect(result.bodyHtml).toContain("https://example.test/cancel?token=abc123");
+  });
+
+  it("includes English cancellation section when cancellationUrl is provided", () => {
+    const result = buildConfirmationEmail({
+      ...baseData,
+      language: "en",
+      cancellationUrl: "https://example.test/cancel?token=abc123",
+    });
+    expect(result.bodyHtml).toContain("Cancel my booking");
+    expect(result.bodyHtml).toContain("https://example.test/cancel?token=abc123");
+  });
+
+  it("escapes malicious characters in cancellationUrl", () => {
+    const result = buildConfirmationEmail({
+      ...baseData,
+      cancellationUrl: 'https://example.test/cancel?token=abc"><script>alert(1)</script>',
+    });
+    expect(result.bodyHtml).not.toContain("<script>alert(1)</script>");
+    expect(result.bodyHtml).toContain("&lt;script&gt;");
+  });
 });

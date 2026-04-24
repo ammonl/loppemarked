@@ -147,7 +147,37 @@ const da = {
   "registration.switchKeep": "Behold nuværende bord",
   "registration.success": "Du er nu tilmeldt!",
   "registration.unregisterInfo":
-    "Du kan ikke selv afmelde dig. Kontakt {contact}, hvis du ikke længere ønsker dit loppebord.",
+    "Du kan selv afmelde dit bord via linket i din bekræftelsesmail. Du kan også kontakte {contact} for hjælp.",
+
+  "cancel.title": "Afmeld din bordbooking",
+  "cancel.linkInvalidTitle": "Linket er ikke gyldigt",
+  "cancel.linkInvalidBody":
+    "Dette afmeldingslink er enten udløbet, allerede brugt eller ugyldigt. Tjek din bekræftelsesmail eller kontakt {contact} for hjælp.",
+  "cancel.reviewTitle": "Bekræft afmelding",
+  "cancel.reviewIntro":
+    "Du er ved at afmelde følgende bordbooking. Læs venligst beskrivelsen igennem, før du bekræfter.",
+  "cancel.bookingHolder": "Booket af",
+  "cancel.bookingTable": "Loppebord",
+  "cancel.bookingSize": "Størrelse",
+  "cancel.effectsTitle": "Hvad sker der, når du afmelder?",
+  "cancel.effectEmail": "Din bordbooking bliver straks gjort inaktiv.",
+  "cancel.effectHold":
+    "Bordet frigives IKKE automatisk til andre beboere — det holdes reserveret, indtil en arrangør gennemgår det.",
+  "cancel.effectAdmins": "Arrangørerne bliver adviseret og afgør herefter, om bordet kan frigives igen.",
+  "cancel.effectIrreversible": "Afmeldingen kan ikke fortrydes via dette link.",
+  "cancel.confirmCta": "Afmeld min booking",
+  "cancel.confirmingCta": "Afmelder...",
+  "cancel.keepCta": "Nej, behold min booking",
+  "cancel.successTitle": "Din booking er afmeldt",
+  "cancel.successBody":
+    "Tak for din besked. Bordet er holdt reserveret, indtil arrangørerne har gennemgået det. Kontakt {contact}, hvis du ændrer mening, inden det frigives igen.",
+  "cancel.alreadyCancelledTitle": "Denne booking er allerede afmeldt",
+  "cancel.alreadyCancelledBody":
+    "Der er ikke mere at gøre her. Kontakt {contact}, hvis du har spørgsmål.",
+  "cancel.errorTitle": "Noget gik galt",
+  "cancel.errorBody":
+    "Vi kunne ikke gennemføre afmeldingen lige nu. Prøv igen om et øjeblik, eller kontakt {contact}.",
+  "cancel.backToHome": "Tilbage til forsiden",
 
   "validation.emailRequired": "E-mail er påkrævet",
   "validation.emailInvalid": "Ugyldig e-mailadresse",
@@ -174,7 +204,7 @@ const da = {
   "policy.oneApartmentRule":
     "Hver lejlighed kan kun booke ét loppebord. Hvis din lejlighed allerede har en booking, vil en ny tilmelding erstatte den eksisterende.",
   "policy.noSelfUnregister":
-    "Du kan ikke selv afmelde dig via systemet. Kontakt {contact}, hvis du ikke længere ønsker dit loppebord.",
+    "Du kan afmelde dit bord via linket i din bekræftelsesmail. Kontakt {contact}, hvis linket ikke virker.",
 
   "email.confirmationSubject":
     "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
@@ -551,7 +581,37 @@ const en: Record<TranslationKey, string> = {
   "registration.switchKeep": "Keep current table",
   "registration.success": "You are now booked!",
   "registration.unregisterInfo":
-    "You cannot unregister yourself. Contact {contact} if you no longer want your flea-market table.",
+    "You can cancel your own booking using the link in your confirmation email. You can also contact {contact} for help.",
+
+  "cancel.title": "Cancel your table booking",
+  "cancel.linkInvalidTitle": "This link is no longer valid",
+  "cancel.linkInvalidBody":
+    "The cancellation link has expired, been used, or is invalid. Check your confirmation email or contact {contact} for help.",
+  "cancel.reviewTitle": "Review your cancellation",
+  "cancel.reviewIntro":
+    "You are about to cancel the following table booking. Please read through the details before confirming.",
+  "cancel.bookingHolder": "Booked by",
+  "cancel.bookingTable": "Flea-market table",
+  "cancel.bookingSize": "Size",
+  "cancel.effectsTitle": "What happens when you cancel?",
+  "cancel.effectEmail": "Your table booking is immediately deactivated.",
+  "cancel.effectHold":
+    "The table is NOT automatically returned to the public pool — it is held as reserved until an organizer reviews it.",
+  "cancel.effectAdmins": "Organizers are notified and will decide whether to release the table again.",
+  "cancel.effectIrreversible": "The cancellation cannot be undone through this link.",
+  "cancel.confirmCta": "Cancel my booking",
+  "cancel.confirmingCta": "Cancelling...",
+  "cancel.keepCta": "No, keep my booking",
+  "cancel.successTitle": "Your booking has been cancelled",
+  "cancel.successBody":
+    "Thanks for letting us know. The table is held as reserved until the organizers review it. Contact {contact} if you change your mind before it's released again.",
+  "cancel.alreadyCancelledTitle": "This booking is already cancelled",
+  "cancel.alreadyCancelledBody":
+    "There's nothing more to do here. Contact {contact} if you have questions.",
+  "cancel.errorTitle": "Something went wrong",
+  "cancel.errorBody":
+    "We couldn't complete the cancellation right now. Try again in a moment, or contact {contact}.",
+  "cancel.backToHome": "Back to home",
 
   "validation.emailRequired": "Email is required",
   "validation.emailInvalid": "Invalid email address",
@@ -578,7 +638,7 @@ const en: Record<TranslationKey, string> = {
   "policy.oneApartmentRule":
     "Each apartment may only book one flea-market table. If your apartment already has a booking, a new booking will replace the existing one.",
   "policy.noSelfUnregister":
-    "You cannot unregister yourself through the system. Contact {contact} if you no longer want your flea-market table.",
+    "You can cancel your table using the link in your confirmation email. Contact {contact} if the link doesn't work.",
 
   "email.confirmationSubject":
     "Confirmation of your planter box registration – UN17 Village Loppemarked",

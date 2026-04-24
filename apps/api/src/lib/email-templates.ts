@@ -12,6 +12,7 @@ export interface ConfirmationEmailData {
   language: Language;
   boxId: number;
   switchedFromBoxId?: number;
+  cancellationUrl?: string;
 }
 
 interface EmailContent {
@@ -74,6 +75,13 @@ const translations = {
     ],
     contactTitle: "Kontakt",
     contactText: "Har du spørgsmål, er du velkommen til at skrive til arrangøren:",
+    cancelTitle: "Afmeld dit bord",
+    cancelIntro:
+      "Kan du alligevel ikke deltage? Brug linket herunder for at afmelde din bordbooking. Du bliver bedt om at bekræfte, før afmeldingen gennemføres.",
+    cancelCtaLabel: "Afmeld din booking",
+    cancelFallbackLabel: "Virker knappen ikke? Kopier dette link:",
+    cancelNote:
+      "Linket er personligt og må ikke deles. Når du har afmeldt, vil arrangørerne gennemgå bordet, før det eventuelt frigives igen.",
     closing: "Vi glæder os til at se dig i Fælledhuset!",
     teamSignature: "UN17 Village Loppemarked-teamet",
   },
@@ -102,6 +110,13 @@ const translations = {
     contactTitle: "Contact",
     contactText:
       "If you have any questions, feel free to reach out to the organizer:",
+    cancelTitle: "Cancel your booking",
+    cancelIntro:
+      "Need to cancel? Use the link below to release your table booking. You'll be asked to review and confirm before the cancellation is finalized.",
+    cancelCtaLabel: "Cancel my booking",
+    cancelFallbackLabel: "Button not working? Copy this link:",
+    cancelNote:
+      "This link is personal — please don't share it. After you cancel, the organizers will review the table before it may be released again.",
     closing: "We look forward to seeing you at Fælledhuset!",
     teamSignature: "The UN17 Village Loppemarked Team",
   },
@@ -134,6 +149,16 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
   const guidelinesHtml = t.guidelines
     .map((g) => `<li style="margin-bottom: 6px;">${escapeHtml(g)}</li>`)
     .join("");
+
+  const cancellationHtml = data.cancellationUrl
+    ? `<h2 style="color: ${BRAND.greenDark}; font-size: 18px; border-bottom: 2px solid ${BRAND.greenSoft}; padding-bottom: 8px; margin-top: 28px;">${escapeHtml(t.cancelTitle)}</h2>
+      <p>${escapeHtml(t.cancelIntro)}</p>
+      <p style="margin: 16px 0;">
+        <a href="${escapeHtml(data.cancellationUrl)}" style="display: inline-block; background: ${BRAND.salmon}; color: ${BRAND.cream}; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: 600;">${escapeHtml(t.cancelCtaLabel)}</a>
+      </p>
+      <p style="font-size: 13px; color: ${BRAND.ink}; margin-top: 12px;">${escapeHtml(t.cancelFallbackLabel)}<br><span style="word-break: break-all; color: ${BRAND.salmonDark};">${escapeHtml(data.cancellationUrl)}</span></p>
+      <p style="font-size: 12px; color: ${BRAND.ink}; opacity: 0.8; margin-top: 12px;">${escapeHtml(t.cancelNote)}</p>`
+    : "";
 
   const bodyHtml = `<!DOCTYPE html>
 <html lang="${data.language}">
@@ -174,6 +199,8 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
       <ul style="padding-left: 20px; line-height: 1.6;">
         ${guidelinesHtml}
       </ul>
+
+      ${cancellationHtml}
 
       <h2 style="color: ${BRAND.greenDark}; font-size: 18px; border-bottom: 2px solid ${BRAND.greenSoft}; padding-bottom: 8px; margin-top: 28px;">${escapeHtml(t.contactTitle)}</h2>
       <p>${escapeHtml(t.contactText)}</p>

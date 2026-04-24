@@ -9,6 +9,8 @@ vi.mock("../lib/admin-ops-notifications.js", () => ({
   notifyAdmins: vi.fn().mockResolvedValue(undefined),
 }));
 import {
+  handleCancellationConfirm,
+  handleCancellationInfo,
   handleJoinWaitlist,
   handlePublicBoxes,
   handlePublicGreenhouses,
@@ -18,6 +20,7 @@ import {
   handleValidateRegistration,
   handleWaitlistPosition,
 } from "./public.js";
+import { hashCancellationToken } from "../lib/cancellation-tokens.js";
 
 function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   return {
@@ -1343,3 +1346,317 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
     }),
   } as unknown as Kysely<Database>;
 }
+
+interface MockCancelTokenRow {
+  id: string;
+  registration_id: string;
+  expires_at: Date;
+  consumed_at: Date | null;
+}
+
+interface MockRegRow {
+  id: string;
+  box_id: number;
+  name: string;
+  email: string;
+  language: "da" | "en";
+  status: "active" | "switched" | "removed";
+}
+
+function makeMockDbForCancellation(opts: {
+  tokenRow?: MockCancelTokenRow;
+  regRow?: MockRegRow;
+  updateNumRows?: number;
+}): Kysely<Database> {
+  const tokenExecute = vi.fn().mockResolvedValue(opts.tokenRow);
+  const regExecute = vi.fn().mockResolvedValue(opts.regRow);
+
+  return {
+    selectFrom: vi.fn().mockImplementation((table: string) => {
+      if (table === "registration_cancellation_tokens") {
+        return {
+          select: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              executeTakeFirst: tokenExecute,
+            }),
+          }),
+        };
+      }
+      if (table === "registrations") {
+        return {
+          select: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              executeTakeFirst: regExecute,
+            }),
+          }),
+        };
+      }
+      return {};
+    }),
+    transaction: vi.fn().mockReturnValue({
+      execute: vi.fn().mockImplementation(async (fn: (trx: unknown) => Promise<unknown>) => {
+        const trx = {
+          updateTable: vi.fn().mockImplementation((tbl: string) => ({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  executeTakeFirst: vi.fn().mockResolvedValue({
+                    numUpdatedRows: tbl === "registration_cancellation_tokens"
+                      ? BigInt(opts.updateNumRows ?? 1)
+                      : BigInt(1),
+                  }),
+                }),
+                execute: vi.fn().mockResolvedValue(undefined),
+              }),
+            }),
+          })),
+          selectFrom: vi.fn().mockImplementation((tbl: string) => {
+            if (tbl === "registrations") {
+              return {
+                select: vi.fn().mockReturnValue({
+                  where: vi.fn().mockReturnValue({
+                    forUpdate: vi.fn().mockReturnValue({
+                      executeTakeFirst: vi.fn().mockResolvedValue(opts.regRow),
+                    }),
+                  }),
+                }),
+              };
+            }
+            if (tbl === "planter_boxes") {
+              return {
+                select: vi.fn().mockReturnValue({
+                  where: vi.fn().mockReturnValue({
+                    forUpdate: vi.fn().mockReturnValue({
+                      executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: opts.regRow?.box_id,
+                        state: "occupied",
+                      }),
+                    }),
+                  }),
+                }),
+              };
+            }
+            return {};
+          }),
+          insertInto: vi.fn().mockImplementation(() => ({
+            values: vi.fn().mockReturnValue({
+              execute: vi.fn().mockResolvedValue(undefined),
+            }),
+          })),
+        };
+        return fn(trx);
+      }),
+    }),
+  } as unknown as Kysely<Database>;
+}
+
+describe("handleCancellationInfo", () => {
+  it("throws badRequest when token is missing", async () => {
+    try {
+      await handleCancellationInfo(makeCtx({ params: {} }));
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      expect((err as AppError).statusCode).toBe(400);
+    }
+  });
+
+  it("throws badRequest on malformed percent-encoding instead of crashing", async () => {
+    try {
+      await handleCancellationInfo(
+        makeCtx({ params: { token: "%" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      expect((err as AppError).statusCode).toBe(400);
+    }
+  });
+
+  it("throws 404 for unknown token", async () => {
+    const mockDb = makeMockDbForCancellation({ tokenRow: undefined });
+
+    try {
+      await handleCancellationInfo(
+        makeCtx({ db: mockDb, params: { token: "unknown" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      expect((err as AppError).statusCode).toBe(404);
+    }
+  });
+
+  it("throws 404 for expired token", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() - 1000),
+        consumed_at: null,
+      },
+    });
+
+    try {
+      await handleCancellationInfo(
+        makeCtx({ db: mockDb, params: { token: "expired" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+  });
+
+  it("throws 404 for consumed token", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 60000),
+        consumed_at: new Date(),
+      },
+    });
+
+    try {
+      await handleCancellationInfo(
+        makeCtx({ db: mockDb, params: { token: "used" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+  });
+
+  it("returns masked name and table label for a valid token on an active booking", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+
+    const res = await handleCancellationInfo(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyCancelled).toBe(false);
+    expect(body.boxId).toBe(3);
+    expect(body.tableLabel).toContain("#3");
+    expect(body.recipientNameHint).not.toContain("nna");
+    expect(typeof body.recipientNameHint).toBe("string");
+    expect((body.recipientNameHint as string).startsWith("A")).toBe(true);
+  });
+
+  it("flags already-cancelled registrations without exposing identity", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "removed",
+      },
+    });
+
+    const res = await handleCancellationInfo(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyCancelled).toBe(true);
+    expect(body).not.toHaveProperty("recipientNameHint");
+  });
+});
+
+describe("handleCancellationConfirm", () => {
+  it("throws 404 for unknown token", async () => {
+    const mockDb = makeMockDbForCancellation({ tokenRow: undefined });
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "unknown" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+  });
+
+  it("rejects already-consumed token under concurrent use", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+      updateNumRows: 0,
+    });
+
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "racing" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+  });
+
+  it("returns cancelled outcome for a valid token", async () => {
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.cancelled).toBe(true);
+    expect(body.boxId).toBe(3);
+    expect(body.tableLabel).toContain("#3");
+  });
+
+  it("hashes tokens deterministically for storage lookup", () => {
+    expect(hashCancellationToken("abc")).toMatch(/^[0-9a-f]{64}$/);
+  });
+});

@@ -28,6 +28,7 @@ export const AUDIT_ACTIONS = [
   "registration_switch",
   "registration_remove",
   "registration_move",
+  "registration_self_cancel",
   "waitlist_add",
   "waitlist_remove",
   "waitlist_assign",
