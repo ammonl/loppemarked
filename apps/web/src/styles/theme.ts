@@ -56,7 +56,9 @@ export const colors = {
   fleaPaperAged: "#F5E6CB",
   fleaPaperAgedShade: "#E9D3AE",
   fleaPaperEdge: "rgba(120, 82, 48, 0.35)",
-  fleaAccent: "#A85544",
+  // Accent palette: the "accent" role is bound to fleaTerracottaDark so
+  // there's a single hex literal for the primary accent. fleaAccentInk /
+  // Glow / Pressed / Edge are distinct shades used alongside it.
   fleaAccentInk: "#762C21",
   fleaAccentGlow: "#D8826E",
   fleaAccentPressed: "#924736",

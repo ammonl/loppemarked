@@ -4,7 +4,8 @@
  * These mirror `colors` and `shadows` in `src/styles/theme.ts`. Plain CSS files
  * (e.g. `landing.css`) consume tokens via `var(--flea-*)` so that the same
  * material palette drives the landing page today and, later, the map and admin
- * surfaces. The `theme.test.ts` parity test guarantees TS and CSS never drift.
+ * surfaces. The `tokens.test.ts` parity test guarantees TS and CSS never
+ * drift in either direction.
  *
  * Naming is surface/role-based rather than page-specific so downstream pages
  * can reuse the same tokens without renaming.
@@ -30,7 +31,6 @@
   /* Terracotta accent family */
   --flea-terracotta: #C6705D;
   --flea-terracotta-dark: #A85544;
-  --flea-accent: #A85544;
   --flea-accent-ink: #762C21;
   --flea-accent-glow: #D8826E;
   --flea-accent-pressed: #924736;

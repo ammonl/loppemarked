@@ -8,8 +8,9 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Parity test: every `--flea-*` custom property in `tokens.css` must match a
- * token in `theme.ts`. The mapping is intentionally explicit so renaming or
- * removing a CSS variable forces a matching update on the TS side.
+ * token in `theme.ts`, and every declared CSS variable must appear in the
+ * pairs array below. The checks run in both directions so a typo
+ * (`--flea-wod-floor`) or an orphan CSS var can't sneak in.
  */
 
 const cssPath = path.resolve(moduleDir, "tokens.css");
@@ -36,7 +37,6 @@ const colorPairs: Array<[string, string]> = [
   ["flea-note-paper-light", colors.fleaNotePaperLight],
   ["flea-terracotta", colors.fleaTerracotta],
   ["flea-terracotta-dark", colors.fleaTerracottaDark],
-  ["flea-accent", colors.fleaAccent],
   ["flea-accent-ink", colors.fleaAccentInk],
   ["flea-accent-glow", colors.fleaAccentGlow],
   ["flea-accent-pressed", colors.fleaAccentPressed],
@@ -72,6 +72,16 @@ const shadowPairs: Array<[string, string]> = [
   ["flea-shadow-warm-contact", shadows.warmContact],
 ];
 
+function listCssVars(): string[] {
+  const names: string[] = [];
+  const pattern = /--(flea-[a-z0-9-]+):/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(cssSource)) !== null) {
+    names.push(match[1]);
+  }
+  return names;
+}
+
 describe("tokens.css", () => {
   it.each(colorPairs)("exposes color token --%s matching theme.ts", (name, value) => {
     expect(readCssVar(name)).toBe(value);
@@ -79,5 +89,15 @@ describe("tokens.css", () => {
 
   it.each(shadowPairs)("exposes shadow token --%s matching theme.ts", (name, value) => {
     expect(readCssVar(name)).toBe(value);
+  });
+
+  it("has no orphan CSS variables without a matching TS token", () => {
+    const declared = new Set(listCssVars());
+    const expected = new Set([
+      ...colorPairs.map(([name]) => name),
+      ...shadowPairs.map(([name]) => name),
+    ]);
+    const orphans = [...declared].filter((name) => !expected.has(name));
+    expect(orphans).toEqual([]);
   });
 });
