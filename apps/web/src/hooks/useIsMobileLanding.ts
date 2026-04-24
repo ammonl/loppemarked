@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LANDING_MOBILE_MEDIA_QUERY } from "@/components/landing/sceneConfig";
 
 /**
- * Viewport breakpoint at which the landing page swaps from its desktop scene to
- * its dedicated mobile composition. Exported so tests and asset configs stay in
- * sync with the component's switchover point.
- */
-export const MOBILE_LANDING_MEDIA_QUERY = "(max-width: 760px)";
-
-/**
- * Tracks whether the viewport currently matches the mobile landing breakpoint.
+ * Tracks whether the viewport currently matches the mobile landing breakpoint
+ * (see `LANDING_MOBILE_MEDIA_QUERY` in `sceneConfig.ts` for the shared source
+ * of truth; the matching `@media` block lives in `styles/landing.css`).
  *
  * On the server (and during first client paint) this returns `false`, so SSR
  * renders the desktop scene by default. After hydration a matchMedia listener
@@ -23,7 +19,7 @@ export function useIsMobileLanding(): boolean {
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
-    const mql = window.matchMedia(MOBILE_LANDING_MEDIA_QUERY);
+    const mql = window.matchMedia(LANDING_MOBILE_MEDIA_QUERY);
     const update = () => setIsMobile(mql.matches);
     update();
     mql.addEventListener("change", update);

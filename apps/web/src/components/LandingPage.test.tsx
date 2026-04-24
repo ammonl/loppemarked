@@ -1,14 +1,28 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { LandingPage } from "./LandingPage";
 
 vi.mock("@/i18n/LanguageProvider", () => ({
   useLanguage: () => ({ language: "en", ready: true, setLanguage: vi.fn(), t: (key: string) => key }),
 }));
 
-function mockMatchMedia(matches: boolean) {
+interface MockMatchMedia {
+  mql: {
+    matches: boolean;
+    media: string;
+    onchange: null;
+    addEventListener: (event: string, listener: (event: MediaQueryListEvent) => void) => void;
+    removeEventListener: (event: string, listener: (event: MediaQueryListEvent) => void) => void;
+    addListener: () => void;
+    removeListener: () => void;
+    dispatchEvent: () => boolean;
+  };
+  setMatches: (matches: boolean) => void;
+}
+
+function mockMatchMedia(matches: boolean): MockMatchMedia {
   const listeners = new Set<(event: MediaQueryListEvent) => void>();
-  const mql = {
+  const mql: MockMatchMedia["mql"] = {
     matches,
     media: "",
     onchange: null,
@@ -23,7 +37,11 @@ function mockMatchMedia(matches: boolean) {
     dispatchEvent: () => false,
   };
   window.matchMedia = vi.fn().mockImplementation(() => mql) as unknown as typeof window.matchMedia;
-  return { mql, listeners };
+  const setMatches = (next: boolean) => {
+    mql.matches = next;
+    listeners.forEach((listener) => listener({ matches: next } as MediaQueryListEvent));
+  };
+  return { mql, setMatches };
 }
 
 describe("LandingPage (desktop scene)", () => {
@@ -142,7 +160,7 @@ describe("LandingPage (mobile scene)", () => {
     });
   });
 
-  it("uses the mobile hero asset directly rather than the shared picture source", () => {
+  it("uses the mobile hero asset directly with meaningful alt text", () => {
     render(<LandingPage onEnter={() => {}} />);
 
     const img = screen
@@ -150,6 +168,7 @@ describe("LandingPage (mobile scene)", () => {
       .querySelector("img") as HTMLImageElement | null;
     expect(img).not.toBeNull();
     expect(img?.getAttribute("src")).toBe("/landing/landing-hero-mobile.webp");
+    expect(img?.getAttribute("alt")).toBe("landing.heroAlt");
   });
 
   it("fires onEnter when the mobile CTA is clicked", () => {
@@ -166,5 +185,27 @@ describe("LandingPage (mobile scene)", () => {
 
     const cta = screen.getByRole("button", { name: /landing\.primaryCta/ }) as HTMLButtonElement;
     expect(cta.disabled).toBe(true);
+  });
+});
+
+describe("LandingPage (viewport resize)", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("swaps from desktop to mobile when the media query flips post-mount", async () => {
+    const { setMatches } = mockMatchMedia(false);
+    render(<LandingPage onEnter={() => {}} />);
+
+    expect(screen.getByTestId("hero-scene")).toBeDefined();
+    expect(screen.queryByTestId("flea-landing-mobile")).toBeNull();
+
+    await act(async () => {
+      setMatches(true);
+    });
+
+    expect(screen.getByTestId("flea-landing-mobile")).toBeDefined();
+    expect(screen.queryByTestId("hero-scene")).toBeNull();
   });
 });

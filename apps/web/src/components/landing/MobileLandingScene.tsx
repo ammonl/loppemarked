@@ -37,11 +37,10 @@ export function MobileLandingScene({ onEnter, ctaIcon }: MobileLandingSceneProps
       <figure
         className="flea-landing-mobile__hero"
         data-testid="flea-landing-mobile-hero"
-        aria-hidden="true"
       >
         <img
           src="/landing/landing-hero-mobile.webp"
-          alt=""
+          alt={t("landing.heroAlt")}
           loading="eager"
           decoding="async"
           className="flea-landing-mobile__hero-image"

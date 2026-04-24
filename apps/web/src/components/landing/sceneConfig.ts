@@ -11,6 +11,12 @@ export interface LandingSceneAssets {
   foreground?: SceneAsset;
 }
 
+/**
+ * Single source of truth for the mobile landing breakpoint. Consumed by
+ * `useIsMobileLanding` (to swap scenes) and by the `<picture>` source below
+ * (as a pre-hydration fallback). The matching `@media` block in
+ * `styles/landing.css` must stay in sync with this value.
+ */
 export const LANDING_MOBILE_MEDIA_QUERY = "(max-width: 760px)";
 
 export const landingSceneAssets: LandingSceneAssets = {
