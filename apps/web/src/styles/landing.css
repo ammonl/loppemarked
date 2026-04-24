@@ -135,7 +135,7 @@
      a strong horizontal presence on narrow laptops and phones, and clip to
      100% of the overlay so the card never overflows its container when the
      floor exceeds available space. */
-  width: min(100%, max(40rem, 50vw));
+  width: min(100%, max(55rem, 56vw));
   padding: 1.65rem 2.25rem 1.85rem;
   border-radius: 14px;
   background:
@@ -144,7 +144,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--scene-ink);
-  transform: rotate(-0.5deg);
+  transform: rotate(-0.5deg) translateY(-40px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 0 0 1px var(--scene-paper-edge),
@@ -199,7 +199,7 @@
   line-height: 1.55;
   color: var(--scene-ink-soft);
   margin: 0 auto 1.1rem;
-  max-width: 28rem;
+  max-width: 40rem;
   text-align: center;
 }
 
@@ -235,6 +235,7 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  transform: translateY(-4rem);
 }
 
 /* Pressed, tactile CTA: gradient fill, inner highlight and shadow, a firm
