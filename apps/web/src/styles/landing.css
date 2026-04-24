@@ -103,7 +103,7 @@
   mix-blend-mode: multiply;
 }
 
-/* Overlay anchors the copy card to the lower-left of the scene and reserves
+/* Overlay centers the copy card near the top of the scene and reserves
    bottom space for the CTA (which lives in the --above overlay). The grid
    keeps the card's position predictable across breakpoints. */
 .flea-landing__overlay {
@@ -111,10 +111,10 @@
   box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  justify-items: start;
-  align-content: end;
+  justify-items: center;
+  align-content: start;
   gap: 0;
-  padding: clamp(2rem, 10vh, 6rem) clamp(1.25rem, 6vw, 4rem) clamp(10rem, 18vh, 14rem);
+  padding: clamp(2rem, 8vh, 5rem) clamp(1.25rem, 6vw, 4rem) clamp(10rem, 18vh, 14rem);
   max-width: 1180px;
   margin: 0 auto;
   min-height: 100vh;
@@ -130,7 +130,7 @@
   box-sizing: border-box;
   width: min(32rem, 100%);
   padding: 1.65rem 1.85rem 1.85rem;
-  border-radius: 4px;
+  border-radius: 14px;
   background:
     radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.55), transparent 55%),
     linear-gradient(170deg, var(--scene-paper) 0%, var(--scene-paper-shade) 100%);
@@ -179,6 +179,7 @@
   color: var(--scene-accent-ink);
   margin: 0 0 0.6rem;
   font-weight: 700;
+  text-align: center;
   text-shadow: 0 1px 0 rgba(255, 245, 225, 0.65);
 }
 
@@ -188,18 +189,21 @@
   font-size: 1rem;
   line-height: 1.55;
   color: var(--scene-ink-soft);
-  margin: 0 0 1.1rem;
+  margin: 0 auto 1.1rem;
   max-width: 28rem;
+  text-align: center;
 }
 
 .flea-landing__event {
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.1rem;
   margin: 0;
   font-family: "Caveat", "Amatic SC", cursive;
   color: var(--scene-accent);
+  text-align: center;
 }
 
 .flea-landing__event-date {
@@ -291,7 +295,6 @@
 
 @media (max-width: 760px) {
   .flea-landing__overlay {
-    justify-items: center;
     padding: clamp(1.5rem, 10vh, 3rem) 1rem clamp(8.5rem, 16vh, 11rem);
   }
 
@@ -301,20 +304,8 @@
     transform: rotate(-0.35deg);
   }
 
-  .flea-landing__title {
-    text-align: center;
-  }
-
   .flea-landing__body {
     font-size: 0.95rem;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
-  }
-
-  .flea-landing__event {
-    align-items: center;
-    text-align: center;
   }
 
   .flea-landing__cta {
