@@ -10,18 +10,21 @@
  */
 
 .flea-landing {
-  --scene-ink: #2E1F14;
-  --scene-ink-soft: #4A382A;
-  --scene-cream: #FDFBF7;
-  --scene-paper: #F5E6CB;
-  --scene-paper-shade: #E9D3AE;
-  --scene-paper-edge: rgba(120, 82, 48, 0.35);
-  --scene-accent: #A85544;
-  --scene-accent-ink: #762C21;
-  --scene-accent-glow: #D8826E;
-  --scene-shadow-warm: rgba(110, 55, 32, 0.45);
-  --scene-shadow-deep: rgba(18, 12, 6, 0.5);
-  --scene-light-warm: rgba(255, 235, 195, 0.55);
+  /* Local scene aliases bound to the global material palette (see tokens.css). */
+  --scene-ink: var(--flea-ink);
+  --scene-ink-soft: var(--flea-ink-soft);
+  --scene-cream: var(--flea-cream);
+  --scene-paper: var(--flea-paper-aged);
+  --scene-paper-shade: var(--flea-paper-aged-shade);
+  --scene-paper-edge: var(--flea-paper-edge);
+  --scene-accent: var(--flea-terracotta-dark);
+  --scene-accent-ink: var(--flea-accent-ink);
+  --scene-accent-glow: var(--flea-accent-glow);
+  --scene-accent-pressed: var(--flea-accent-pressed);
+  --scene-accent-edge: var(--flea-accent-edge);
+  --scene-shadow-warm: var(--flea-shadow-warm);
+  --scene-shadow-deep: var(--flea-shadow-deep);
+  --scene-light-warm: var(--flea-scene-light-warm);
 
   width: 100%;
   margin: 0;
@@ -89,7 +92,13 @@
   background:
     radial-gradient(ellipse at 50% 12%, var(--scene-light-warm), transparent 55%),
     radial-gradient(ellipse at 50% 95%, rgba(40, 24, 14, 0.55), transparent 60%),
-    linear-gradient(180deg, #3B2A1E 0%, #6B4A33 45%, #A8784F 78%, #E0BE89 100%);
+    linear-gradient(
+      180deg,
+      var(--flea-wood-floor-low) 0%,
+      var(--flea-wood-floor-deep) 45%,
+      var(--flea-wood-floor) 78%,
+      var(--flea-wood-floor-warm) 100%
+    );
 }
 
 /* Scene-wide vignette riding above the raster layers. Sits at z-index 2 so
@@ -148,9 +157,9 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 0 0 1px var(--scene-paper-edge),
-    0 1px 2px rgba(0, 0, 0, 0.1),
-    0 18px 28px -10px var(--scene-shadow-warm),
-    0 44px 70px -22px var(--scene-shadow-deep);
+    var(--flea-shadow-warm-contact),
+    var(--flea-shadow-warm-drop),
+    var(--flea-shadow-warm-cast);
 }
 
 .flea-landing__copy::before {
@@ -173,7 +182,7 @@
   right: 8%;
   bottom: -10px;
   height: 14px;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3), transparent 70%);
+  background: radial-gradient(ellipse at center, var(--flea-shadow-contact), transparent 70%);
   filter: blur(6px);
   pointer-events: none;
 }
@@ -246,7 +255,7 @@
   align-items: center;
   gap: 0.85rem;
   background:
-    linear-gradient(180deg, var(--scene-accent-glow) 0%, var(--scene-accent) 55%, #924736 100%);
+    linear-gradient(180deg, var(--scene-accent-glow) 0%, var(--scene-accent) 55%, var(--scene-accent-pressed) 100%);
   color: var(--scene-cream);
   border: 1px solid rgba(110, 35, 24, 0.8);
   padding: 1.2rem 2.5rem;
@@ -260,7 +269,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     inset 0 -2px 0 rgba(0, 0, 0, 0.25),
-    0 2px 0 #6E2318,
+    0 2px 0 var(--scene-accent-edge),
     0 12px 20px -2px rgba(110, 35, 24, 0.55),
     0 32px 48px -12px rgba(0, 0, 0, 0.45);
   transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
@@ -272,7 +281,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -2px 0 rgba(0, 0, 0, 0.28),
-    0 3px 0 #6E2318,
+    0 3px 0 var(--scene-accent-edge),
     0 16px 26px -2px rgba(110, 35, 24, 0.6),
     0 36px 54px -14px rgba(0, 0, 0, 0.5);
 }
@@ -281,7 +290,7 @@
   transform: translateY(1px);
   box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.28),
-    0 0 0 #6E2318,
+    0 0 0 var(--scene-accent-edge),
     0 6px 10px -2px rgba(110, 35, 24, 0.45);
 }
 
@@ -290,7 +299,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -2px 0 rgba(0, 0, 0, 0.28),
-    0 2px 0 #6E2318,
+    0 2px 0 var(--scene-accent-edge),
     0 0 0 3px var(--scene-cream),
     0 0 0 6px var(--scene-accent-ink),
     0 16px 26px -2px rgba(110, 35, 24, 0.6),

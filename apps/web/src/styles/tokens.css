@@ -1,0 +1,74 @@
+/*
+ * Design tokens — CSS custom properties.
+ *
+ * These mirror `colors` and `shadows` in `src/styles/theme.ts`. Plain CSS files
+ * (e.g. `landing.css`) consume tokens via `var(--flea-*)` so that the same
+ * material palette drives the landing page today and, later, the map and admin
+ * surfaces. The `tokens.test.ts` parity test guarantees TS and CSS never
+ * drift in either direction.
+ *
+ * Naming is surface/role-based rather than page-specific so downstream pages
+ * can reuse the same tokens without renaming.
+ */
+
+:root {
+  /* Neutrals */
+  --flea-ink: #2E1F14;
+  --flea-ink-soft: #4A382A;
+  --flea-pen-ink: #5B4636;
+  --flea-cream: #FDFBF7;
+  --flea-sand: #E5D3B3;
+  --flea-sand-light: #F0E3C9;
+
+  /* Aged paper */
+  --flea-paper-aged: #F5E6CB;
+  --flea-paper-aged-shade: #E9D3AE;
+  --flea-paper-edge: rgba(120, 82, 48, 0.35);
+  --flea-note-paper: #FBF4E1;
+  --flea-note-paper-warm: #F4E8D4;
+  --flea-note-paper-light: #F7EEDD;
+
+  /* Terracotta accent family */
+  --flea-terracotta: #C6705D;
+  --flea-terracotta-dark: #A85544;
+  --flea-accent-ink: #762C21;
+  --flea-accent-glow: #D8826E;
+  --flea-accent-pressed: #924736;
+  --flea-accent-edge: #6E2318;
+  --flea-pin-light: #E46E52;
+  --flea-pin-dark: #8A3A26;
+
+  /* Forest greens */
+  --flea-sage: #8DA88D;
+  --flea-sage-dark: #6F8A6F;
+  --flea-green-dark: #2F4A35;
+  --flea-green-darker: #23372A;
+  --flea-forest-deep: #1C2E21;
+  --flea-green-divider: rgba(253, 251, 247, 0.18);
+
+  /* Wood tones */
+  --flea-cork: #C89F76;
+  --flea-cork-dark: #A07A55;
+  --flea-cork-frame: #8A5F3E;
+  --flea-cork-frame-dark: #6A4626;
+  --flea-wood-floor: #A8784F;
+  --flea-wood-floor-deep: #6B4A33;
+  --flea-wood-floor-low: #3B2A1E;
+  --flea-wood-floor-warm: #E0BE89;
+  --flea-floor-shadow: #D7B98E;
+
+  /* Brass / pin accents */
+  --flea-brass: #B88A3A;
+  --flea-brass-dark: #8A6528;
+
+  /* Warm shadow & light */
+  --flea-scene-light-warm: rgba(255, 235, 195, 0.55);
+  --flea-shadow-warm: rgba(110, 55, 32, 0.45);
+  --flea-shadow-deep: rgba(18, 12, 6, 0.5);
+  --flea-shadow-contact: rgba(0, 0, 0, 0.3);
+
+  /* Composite shadows */
+  --flea-shadow-warm-drop: 0 18px 28px -10px rgba(110, 55, 32, 0.45);
+  --flea-shadow-warm-cast: 0 44px 70px -22px rgba(18, 12, 6, 0.5);
+  --flea-shadow-warm-contact: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

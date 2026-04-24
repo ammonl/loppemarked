@@ -47,6 +47,33 @@ export const colors = {
   fleaPinLight: "#E46E52",
   fleaPinDark: "#8A3A26",
   fleaPenInk: "#5B4636",
+
+  // Material palette for the scene-based landing redesign. Names are kept
+  // surface/role-based rather than page-specific so the map and admin pages
+  // can reuse the same tokens.
+  fleaInk: "#2E1F14",
+  fleaInkSoft: "#4A382A",
+  fleaPaperAged: "#F5E6CB",
+  fleaPaperAgedShade: "#E9D3AE",
+  fleaPaperEdge: "rgba(120, 82, 48, 0.35)",
+  // Accent palette: the "accent" role is bound to fleaTerracottaDark so
+  // there's a single hex literal for the primary accent. fleaAccentInk /
+  // Glow / Pressed / Edge are distinct shades used alongside it.
+  fleaAccentInk: "#762C21",
+  fleaAccentGlow: "#D8826E",
+  fleaAccentPressed: "#924736",
+  fleaAccentEdge: "#6E2318",
+  fleaForestDeep: "#1C2E21",
+  fleaWoodFloor: "#A8784F",
+  fleaWoodFloorDeep: "#6B4A33",
+  fleaWoodFloorLow: "#3B2A1E",
+  fleaWoodFloorWarm: "#E0BE89",
+  fleaBrass: "#B88A3A",
+  fleaBrassDark: "#8A6528",
+  fleaSceneLightWarm: "rgba(255, 235, 195, 0.55)",
+  fleaShadowWarm: "rgba(110, 55, 32, 0.45)",
+  fleaShadowDeep: "rgba(18, 12, 6, 0.5)",
+  fleaShadowContact: "rgba(0, 0, 0, 0.3)",
 };
 
 export const fonts = {
@@ -62,6 +89,11 @@ export const shadows = {
   cardHover: "0 4px 16px rgba(74, 55, 40, 0.14)",
   soft: "0 1px 4px rgba(74, 55, 40, 0.06)",
   overlay: "0 1px 8px rgba(0, 0, 0, 0.06)",
+  // Warm material shadows tuned for the scene-based landing redesign. Kept as
+  // separate layers so callers can compose drop + ambient cast as needed.
+  warmDrop: "0 18px 28px -10px rgba(110, 55, 32, 0.45)",
+  warmCast: "0 44px 70px -22px rgba(18, 12, 6, 0.5)",
+  warmContact: "0 1px 2px rgba(0, 0, 0, 0.1)",
 };
 
 export const containerStyle: CSSProperties = {

@@ -1,5 +1,6 @@
 import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { colors } from "@/styles/theme";
+import "@/styles/tokens.css";
 
 import type { Metadata } from "next";
 
