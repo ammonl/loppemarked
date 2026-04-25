@@ -124,4 +124,30 @@ describe("PreOpenPage", () => {
 
     expect(reload).not.toHaveBeenCalled();
   });
+
+  it("waits for the server-aligned target before refreshing when the client clock is fast", () => {
+    // Client clock reads 4s past opening, but the server is 10s slower, so
+    // the server-aligned now is still 6s before opening. The page must not
+    // auto-refresh until the server-aligned countdown actually reaches zero.
+    vi.setSystemTime(new Date("2026-04-01T10:00:04.000Z"));
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, reload },
+    });
+
+    render(
+      <PreOpenPage openingDatetime={OPENING} serverTimeOffsetMs={-10_000} />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(reload).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });

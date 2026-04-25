@@ -34,13 +34,24 @@ export default function Home() {
   const [showWaitlistForm, setShowWaitlistForm] = useHistoryState<boolean>("home.waitlistForm", false);
   const [status, setStatus] = useState<PublicStatus | null>(null);
   const [statusResolved, setStatusResolved] = useState(false);
+  // Offset (serverNow - clientNow) measured at the moment the status response
+  // arrived. Used by the pre-open countdown so a fast client clock cannot
+  // trigger an early auto-refresh ahead of the server's `isOpen` flip.
+  const [serverTimeOffsetMs, setServerTimeOffsetMs] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch("/public/status");
       if (res.ok) {
-        setStatus(await res.json());
+        const payload = (await res.json()) as PublicStatus;
+        setStatus(payload);
+        if (payload.serverTime) {
+          const serverMs = new Date(payload.serverTime).getTime();
+          if (Number.isFinite(serverMs)) {
+            setServerTimeOffsetMs(serverMs - Date.now());
+          }
+        }
       }
     } catch {
       /* API unreachable — safe default is pre-open (deny early access) */
@@ -77,7 +88,12 @@ export default function Home() {
       return <AdminPage />;
     }
     if (preOpen) {
-      return <PreOpenPage openingDatetime={openingDatetime} />;
+      return (
+        <PreOpenPage
+          openingDatetime={openingDatetime}
+          serverTimeOffsetMs={serverTimeOffsetMs}
+        />
+      );
     }
     if (showTableMap) {
       return (
