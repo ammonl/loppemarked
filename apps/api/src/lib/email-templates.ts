@@ -2,9 +2,11 @@ import {
   EMAIL_FROM,
   EMAIL_REPLY_TO,
   EVENT_CONTACT,
+  TABLE_CATALOG,
+  TABLE_MAP_VIEWBOX,
   getTableById,
 } from "@loppemarked/shared";
-import type { Language } from "@loppemarked/shared";
+import type { Language, TableCatalogEntry } from "@loppemarked/shared";
 
 export interface ConfirmationEmailData {
   recipientName: string;
@@ -62,14 +64,25 @@ const translations = {
     tableNumberLabel: "Bordnummer",
     tableSizeLabel: "Størrelse",
     tableLocationLabel: "Placering",
-    tableLocationValue: "Fælledhuset",
+    tableLocationVenue: "Fælledhuset",
+    tableLocationSummary: (tableNumber: string) =>
+      `Fælledhuset · Bord ${tableNumber}`,
+    tableLocationFallback: (tableNumber: string) =>
+      `Dit bord ${tableNumber} står i Fælledhuset. Hvis kortet ikke vises, kan du finde dit bord på plantegningen på loppemarkedssiden.`,
+    tableLocationCaption: (tableNumber: string) =>
+      `Bord ${tableNumber} er markeret med rødt på plantegningen over Fælledhuset.`,
+    tableLocationMapTitle: (tableNumber: string) =>
+      `Plantegning over Fælledhuset med bord ${tableNumber} fremhævet.`,
+    tableLocationStageLabel: "Scene",
+    tableLocationEntranceLabel: "Indgang",
     tableSizeValue: (meters: number) => `${meters} meter`,
-    guidelinesTitle: "Praktisk information",
+    guidelinesTitle: "Retningslinjer for sælgere",
     guidelines: [
-      "Mød op i god tid, så du er klar ved dit bord, inden markedet åbner.",
+      "Mød op i god tid, så du er klar ved dit bord, inden markedet åbner. Opstilling begynder kl. 11.00.",
       "Medbring selv alt, hvad du skal bruge til prismærkning, opstilling og salg (fx prisskilte, poser, byttepenge og en dug eller klud).",
       "Har du særlige behov, fx adgang til strøm, så kontakt arrangørerne i god tid, så vi kan planlægge efter det.",
-      "Bliv ved dit bord under hele markedet, så kunderne altid kan spørge og handle.",
+      "Bliv ved dit bord (eller sørg for, at en anden er ved dit bord) under hele markedet, så kunderne altid kan spørge og handle. Markedet er åbent fra kl. 12.00–14.30.",
+      "Tøjstativer er kun tilladt, hvis stativplads indgår i din booking, og du skal selv medbringe dit tøjstativ.",
       "Tag alle usolgte varer og eget affald med hjem, og efterlad dit bord rent og ryddet.",
       "Vær hjælpsom og venlig over for dine nabosælgere og gæsterne – det er det, der gør loppemarkedet hyggeligt.",
     ],
@@ -96,14 +109,25 @@ const translations = {
     tableNumberLabel: "Table number",
     tableSizeLabel: "Size",
     tableLocationLabel: "Location",
-    tableLocationValue: "Fælledhuset",
+    tableLocationVenue: "Fælledhuset",
+    tableLocationSummary: (tableNumber: string) =>
+      `Fælledhuset · Table ${tableNumber}`,
+    tableLocationFallback: (tableNumber: string) =>
+      `Your table ${tableNumber} is in Fælledhuset. If the map does not display, you can locate your table on the floor plan on the loppemarked page.`,
+    tableLocationCaption: (tableNumber: string) =>
+      `Table ${tableNumber} is highlighted in red on the Fælledhuset floor plan.`,
+    tableLocationMapTitle: (tableNumber: string) =>
+      `Floor plan of Fælledhuset with table ${tableNumber} highlighted.`,
+    tableLocationStageLabel: "Stage",
+    tableLocationEntranceLabel: "Entrance",
     tableSizeValue: (meters: number) => `${meters} meters`,
-    guidelinesTitle: "Practical information",
+    guidelinesTitle: "Seller Guidelines",
     guidelines: [
-      "Arrive with enough time to set up your table before the market opens.",
+      "Arrive with enough time to set up your table before the market opens. Setup begins at 11:00 AM.",
       "Bring everything you need for pricing, displaying, and selling (price tags, bags, change, and a tablecloth or runner).",
       "If you have any special requirements, such as access to electricity, contact the organizers in advance so we can plan ahead.",
-      "Stay at your table throughout the market so customers can always ask questions and buy from you.",
+      "Stay at your table (or have someone stay at your table) throughout the market so customers can always ask questions and buy from you. The market is open from 12:00–2:30 PM.",
+      "Clothing racks are only allowed if rack space is included in your booking, and you must bring your own clothing rack.",
       "Take any unsold items and your own trash home with you, and leave your table clean and tidy.",
       "Be friendly and helpful to your neighboring sellers and visitors — that is what makes the loppemarked feel welcoming.",
     ],
@@ -131,9 +155,85 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function buildTableLocationMapSvg(
+  bookedTable: TableCatalogEntry,
+  t: (typeof translations)["da" | "en"],
+): string {
+  const { width, height } = TABLE_MAP_VIEWBOX;
+  const tableLabel = `#${bookedTable.number}`;
+  const titleText = t.tableLocationMapTitle(tableLabel);
+
+  const tableTiles = TABLE_CATALOG.map((table) => {
+    const isBooked = table.id === bookedTable.id;
+    const fill = isBooked ? BRAND.salmon : BRAND.greenSoft;
+    const stroke = isBooked ? BRAND.salmonDark : BRAND.greenDark;
+    const textFill = isBooked ? BRAND.cream : BRAND.ink;
+    const cx = table.x + table.width / 2;
+    const cy = table.y + table.height / 2 + 1.1;
+    return (
+      `<rect x="${table.x}" y="${table.y}" width="${table.width}" height="${table.height}" rx="0.9" fill="${fill}" stroke="${stroke}" stroke-width="0.5"></rect>` +
+      `<text x="${cx}" y="${cy}" font-size="3" font-weight="700" text-anchor="middle" fill="${textFill}" font-family="Arial, Helvetica, sans-serif">${table.number}</text>`
+    );
+  }).join("");
+
+  const stageLabel = escapeHtml(t.tableLocationStageLabel);
+  const entranceLabel = escapeHtml(t.tableLocationEntranceLabel);
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
+    `width="100%" height="auto" preserveAspectRatio="xMidYMid meet" ` +
+    `role="img" ` +
+    `style="display: block; max-width: 100%; height: auto;">` +
+    `<title>${escapeHtml(titleText)}</title>` +
+    `<rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="3" fill="${BRAND.cream}" stroke="${BRAND.greenDark}" stroke-width="0.6"></rect>` +
+    `<rect x="${width / 2 - 10}" y="5.5" width="20" height="3" rx="0.6" fill="${BRAND.greenDark}" opacity="0.35"></rect>` +
+    `<text x="${width / 2}" y="7.9" font-size="2.6" text-anchor="middle" fill="${BRAND.ink}" font-family="Arial, Helvetica, sans-serif">${stageLabel}</text>` +
+    `<rect x="${width / 2 - 7}" y="${height - 5}" width="14" height="3" fill="${BRAND.greenSoft}" stroke="${BRAND.greenDark}" stroke-width="0.5"></rect>` +
+    `<text x="${width / 2}" y="${height - 2.6}" font-size="2.6" text-anchor="middle" fill="${BRAND.ink}" font-family="Arial, Helvetica, sans-serif">${entranceLabel}</text>` +
+    tableTiles +
+    `</svg>`
+  );
+}
+
+function buildTableLocationCellHtml(
+  bookedTable: TableCatalogEntry | undefined,
+  bookedTableLabel: string,
+  t: (typeof translations)["da" | "en"],
+): string {
+  const summary = t.tableLocationSummary(bookedTableLabel);
+
+  if (!bookedTable) {
+    return (
+      `<p style="margin: 0; font-weight: 600; color: ${BRAND.ink};">${escapeHtml(t.tableLocationVenue)}</p>` +
+      `<p style="margin: 4px 0 0; font-size: 13px; color: ${BRAND.ink};">${escapeHtml(t.tableLocationFallback(bookedTableLabel))}</p>`
+    );
+  }
+
+  const svg = buildTableLocationMapSvg(bookedTable, t);
+  const caption = t.tableLocationCaption(bookedTableLabel);
+
+  // The visible summary line ("Fælledhuset · Bord #3") is rendered for every
+  // client. The inline SVG is wrapped in an `<!--[if !mso]>` block so Outlook
+  // for Windows (Word renderer) silently skips it instead of showing broken
+  // markup; those clients still see the summary line and caption text.
+  return (
+    `<p style="margin: 0 0 8px; font-weight: 600; color: ${BRAND.ink};">${escapeHtml(summary)}</p>` +
+    `<!--[if !mso]><!-->` +
+    `<div style="margin: 0 0 6px;">${svg}</div>` +
+    `<p style="margin: 0; font-size: 13px; color: ${BRAND.ink};">${escapeHtml(caption)}</p>` +
+    `<!--<![endif]-->`
+  );
+}
+
 export function buildConfirmationEmail(data: ConfirmationEmailData): EmailContent {
   const t = translations[data.language];
   const table = describeTable(data.boxId, t);
+  const bookedTableEntry = getTableById(data.boxId);
+  const locationCellHtml = buildTableLocationCellHtml(
+    bookedTableEntry,
+    table.number,
+    t,
+  );
 
   const switchedTable =
     data.switchedFromBoxId != null
@@ -190,8 +290,8 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
           <td style="padding: 10px 12px; color: ${BRAND.ink};">${escapeHtml(table.size)}</td>
         </tr>
         <tr>
-          <td style="padding: 10px 12px; background: ${BRAND.greenSoft}; font-weight: bold; color: ${BRAND.ink};">${escapeHtml(t.tableLocationLabel)}</td>
-          <td style="padding: 10px 12px; color: ${BRAND.ink};">${escapeHtml(t.tableLocationValue)}</td>
+          <td style="padding: 10px 12px; background: ${BRAND.greenSoft}; font-weight: bold; color: ${BRAND.ink}; vertical-align: top;">${escapeHtml(t.tableLocationLabel)}</td>
+          <td style="padding: 10px 12px; color: ${BRAND.ink};">${locationCellHtml}</td>
         </tr>
       </table>
 
