@@ -64,7 +64,7 @@ module "loppemarked_stack" {
   amplify_enable_auto_build       = false
   amplify_domain_prefix           = "loppemarked"
   amplify_enable_preview_branches = false
-  amplify_enable_custom_domain    = false
+  amplify_enable_custom_domain    = true
 }
 
 output "alarm_sns_topic_arn" {
