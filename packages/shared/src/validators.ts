@@ -108,7 +108,7 @@ export function validateAddress(
 /**
  * Drop floor/door for house numbers that don't require them. Used by both
  * the public-facing forms and the API endpoints so the apartment dedupe
- * key is identical regardless of any stray client input.
+ * key is identical regardless of stray client input.
  */
 export function effectiveFloorDoor(
   houseNumber: number,
