@@ -99,7 +99,7 @@ export async function handleGetNotificationPreferences(ctx: RequestContext): Pro
 
   const prefs = await ctx.db
     .selectFrom("admin_notification_preferences")
-    .select(["notify_user_registration", "notify_admin_box_action", "updated_at"])
+    .select(["notify_user_registration", "notify_admin_table_action", "updated_at"])
     .where("admin_id", "=", adminId)
     .executeTakeFirst();
 
@@ -107,7 +107,7 @@ export async function handleGetNotificationPreferences(ctx: RequestContext): Pro
     statusCode: 200,
     body: {
       notifyUserRegistration: prefs?.notify_user_registration ?? true,
-      notifyAdminBoxAction: prefs?.notify_admin_box_action ?? true,
+      notifyAdminTableAction: prefs?.notify_admin_table_action ?? true,
       updatedAt: prefs?.updated_at ? new Date(prefs.updated_at).toISOString() : null,
     },
   };
@@ -115,7 +115,7 @@ export async function handleGetNotificationPreferences(ctx: RequestContext): Pro
 
 interface UpdateNotificationPreferencesBody {
   notifyUserRegistration?: boolean;
-  notifyAdminBoxAction?: boolean;
+  notifyAdminTableAction?: boolean;
 }
 
 export async function handleUpdateNotificationPreferences(ctx: RequestContext): Promise<RouteResponse> {
@@ -125,9 +125,9 @@ export async function handleUpdateNotificationPreferences(ctx: RequestContext): 
   }
 
   const body = (ctx.body ?? {}) as UpdateNotificationPreferencesBody;
-  const { notifyUserRegistration, notifyAdminBoxAction } = body;
+  const { notifyUserRegistration, notifyAdminTableAction } = body;
 
-  if (notifyUserRegistration === undefined && notifyAdminBoxAction === undefined) {
+  if (notifyUserRegistration === undefined && notifyAdminTableAction === undefined) {
     throw badRequest("At least one preference must be provided");
   }
 
@@ -135,24 +135,24 @@ export async function handleUpdateNotificationPreferences(ctx: RequestContext): 
 
   const existing = await ctx.db
     .selectFrom("admin_notification_preferences")
-    .select(["admin_id", "notify_user_registration", "notify_admin_box_action"])
+    .select(["admin_id", "notify_user_registration", "notify_admin_table_action"])
     .where("admin_id", "=", adminId)
     .executeTakeFirst();
 
   const beforeValues = {
     notify_user_registration: existing?.notify_user_registration ?? true,
-    notify_admin_box_action: existing?.notify_admin_box_action ?? true,
+    notify_admin_table_action: existing?.notify_admin_table_action ?? true,
   };
 
   const newUserReg = notifyUserRegistration ?? beforeValues.notify_user_registration;
-  const newBoxAction = notifyAdminBoxAction ?? beforeValues.notify_admin_box_action;
+  const newTableAction = notifyAdminTableAction ?? beforeValues.notify_admin_table_action;
 
   if (existing) {
     await ctx.db
       .updateTable("admin_notification_preferences")
       .set({
         notify_user_registration: newUserReg,
-        notify_admin_box_action: newBoxAction,
+        notify_admin_table_action: newTableAction,
         updated_at: now,
       })
       .where("admin_id", "=", adminId)
@@ -163,7 +163,7 @@ export async function handleUpdateNotificationPreferences(ctx: RequestContext): 
       .values({
         admin_id: adminId,
         notify_user_registration: newUserReg,
-        notify_admin_box_action: newBoxAction,
+        notify_admin_table_action: newTableAction,
         updated_at: now,
       })
       .execute();
@@ -176,14 +176,14 @@ export async function handleUpdateNotificationPreferences(ctx: RequestContext): 
     entity_type: "admin_notification_preferences",
     entity_id: adminId,
     before: beforeValues,
-    after: { notify_user_registration: newUserReg, notify_admin_box_action: newBoxAction },
+    after: { notify_user_registration: newUserReg, notify_admin_table_action: newTableAction },
   });
 
   return {
     statusCode: 200,
     body: {
       notifyUserRegistration: newUserReg,
-      notifyAdminBoxAction: newBoxAction,
+      notifyAdminTableAction: newTableAction,
       updatedAt: now,
     },
   };

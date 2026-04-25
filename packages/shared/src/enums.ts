@@ -33,7 +33,7 @@ export const AUDIT_ACTIONS = [
   "waitlist_remove",
   "waitlist_assign",
   "waitlist_reorder_preserve",
-  "box_state_change",
+  "table_state_change",
   "opening_datetime_change",
   "admin_create",
   "admin_delete",

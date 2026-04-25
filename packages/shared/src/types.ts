@@ -1,4 +1,3 @@
-import type { Greenhouse, GreenhousePreference } from "./constants.js";
 import type {
   ActorType,
   AuditAction,
@@ -17,24 +16,21 @@ export interface SystemSettings {
   updatedAt: string;
 }
 
-/** Greenhouse summary (public-safe — reserved boxes are counted as occupied) */
-export interface GreenhouseSummary {
-  name: Greenhouse;
-  totalBoxes: number;
-  availableBoxes: number;
-  occupiedBoxes: number;
+/** Flea-market hall summary (public-safe) */
+export interface HallSummary {
+  totalTables: number;
+  availableTables: number;
+  occupiedTables: number;
 }
 
-/** Planter box (public-safe view) */
-export interface PlanterBoxPublic {
+/** Flea-market table (public-safe view) */
+export interface TablePublic {
   id: number;
-  name: string;
-  greenhouse: Greenhouse;
   state: PublicBoxState;
 }
 
-/** Planter box (full admin view) */
-export interface PlanterBox extends Omit<PlanterBoxPublic, "state"> {
+/** Flea-market table (full admin view) */
+export interface Table extends Omit<TablePublic, "state"> {
   state: BoxState;
   reservedLabel: string | null;
   createdAt: string;
@@ -52,7 +48,7 @@ export interface NormalizedAddress {
 /** Registration record (admin view) */
 export interface Registration {
   id: string;
-  boxId: number;
+  tableId: number;
   name: string;
   email: string;
   address: NormalizedAddress;
@@ -65,7 +61,7 @@ export interface Registration {
 
 /** Registration record (public-safe, no PII) */
 export interface RegistrationPublic {
-  boxId: number;
+  tableId: number;
   status: RegistrationStatus;
 }
 
@@ -77,7 +73,6 @@ export interface WaitlistEntry {
   address: NormalizedAddress;
   apartmentKey: string;
   language: Language;
-  greenhousePreference: GreenhousePreference;
   status: WaitlistEntryStatus;
   createdAt: string;
   updatedAt: string;
@@ -128,7 +123,7 @@ export interface RegistrationInput {
   floor: string | null;
   door: string | null;
   language: Language;
-  boxId: number;
+  tableId: number;
 }
 
 /** Waitlist join input */
@@ -140,12 +135,11 @@ export interface WaitlistInput {
   floor: string | null;
   door: string | null;
   language: Language;
-  greenhousePreference: GreenhousePreference;
 }
 
 /** Public status response */
 export interface PublicStatus {
   isOpen: boolean;
   openingDatetime: string;
-  hasAvailableBoxes: boolean;
+  hasAvailableTables: boolean;
 }

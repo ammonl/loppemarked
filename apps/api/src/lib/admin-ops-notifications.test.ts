@@ -20,7 +20,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "user_registration",
         userName: "Alice",
         userEmail: "alice@test.com",
-        boxId: 1,
+        tableId: 1,
       },
     });
 
@@ -37,8 +37,8 @@ describe("buildOpsNotificationEmail", () => {
         type: "user_switch",
         userName: "Bob",
         userEmail: "bob@test.com",
-        oldBoxId: 1,
-        newBoxId: 2,
+        oldTableId: 1,
+        newTableId: 2,
       },
     });
 
@@ -54,9 +54,9 @@ describe("buildOpsNotificationEmail", () => {
     const result = buildOpsNotificationEmail({
       actingAdminEmail: "admin@test.com",
       event: {
-        type: "admin_box_reserve",
+        type: "admin_table_reserve",
         actingAdminId: "admin-1",
-        boxId: 5,
+        tableId: 5,
       },
     });
 
@@ -70,9 +70,9 @@ describe("buildOpsNotificationEmail", () => {
     const result = buildOpsNotificationEmail({
       actingAdminEmail: "admin@test.com",
       event: {
-        type: "admin_box_release",
+        type: "admin_table_release",
         actingAdminId: "admin-1",
-        boxId: 5,
+        tableId: 5,
       },
     });
 
@@ -87,7 +87,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "admin_registration_create",
         actingAdminId: "admin-1",
         userName: "Alice",
-        boxId: 3,
+        tableId: 3,
       },
     });
 
@@ -104,8 +104,8 @@ describe("buildOpsNotificationEmail", () => {
         type: "admin_registration_move",
         actingAdminId: "admin-1",
         userName: "Bob",
-        oldBoxId: 1,
-        newBoxId: 2,
+        oldTableId: 1,
+        newTableId: 2,
       },
     });
 
@@ -124,7 +124,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "admin_registration_remove",
         actingAdminId: "admin-1",
         userName: "Carol",
-        boxId: 4,
+        tableId: 4,
       },
     });
 
@@ -141,7 +141,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "admin_waitlist_assign",
         actingAdminId: "admin-1",
         userName: "Dave",
-        boxId: 7,
+        tableId: 7,
       },
     });
 
@@ -157,7 +157,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "user_cancellation",
         userName: "Alice",
         userEmail: "alice@test.com",
-        boxId: 4,
+        tableId: 4,
       },
     });
 
@@ -174,7 +174,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "user_registration",
         userName: "Alice",
         userEmail: "alice@test.com",
-        boxId: 999,
+        tableId: 999,
       },
     });
 
@@ -188,7 +188,7 @@ describe("buildOpsNotificationEmail", () => {
         type: "user_registration",
         userName: '<script>alert("xss")</script>',
         userEmail: "evil@test.com",
-        boxId: 1,
+        tableId: 1,
       },
     });
 
@@ -200,8 +200,8 @@ describe("buildOpsNotificationEmail", () => {
 describe("notifyAdmins", () => {
   function makeMockDb(
     admins: { id: string; email: string }[],
-    preferences: { admin_id: string; notify_user_registration: boolean; notify_admin_box_action: boolean }[] = [],
-    prefColumn: "notify_user_registration" | "notify_admin_box_action" = "notify_user_registration",
+    preferences: { admin_id: string; notify_user_registration: boolean; notify_admin_table_action: boolean }[] = [],
+    prefColumn: "notify_user_registration" | "notify_admin_table_action" = "notify_user_registration",
   ) {
     const prefMap = new Map(preferences.map((p) => [p.admin_id, p]));
     const joinedRows = admins.map((a) => {
@@ -230,7 +230,7 @@ describe("notifyAdmins", () => {
       type: "user_registration",
       userName: "Alice",
       userEmail: "alice@test.com",
-      boxId: 1,
+      tableId: 1,
     };
 
     await notifyAdmins(db, event);
@@ -255,7 +255,7 @@ describe("notifyAdmins", () => {
         { id: "admin-2", email: "admin2@test.com" },
       ],
       [
-        { admin_id: "admin-2", notify_user_registration: false, notify_admin_box_action: true },
+        { admin_id: "admin-2", notify_user_registration: false, notify_admin_table_action: true },
       ],
     );
 
@@ -263,7 +263,7 @@ describe("notifyAdmins", () => {
       type: "user_registration",
       userName: "Alice",
       userEmail: "alice@test.com",
-      boxId: 1,
+      tableId: 1,
     });
 
     expect(mockQueueAndSend).toHaveBeenCalledTimes(1);
@@ -279,12 +279,12 @@ describe("notifyAdmins", () => {
     const db = makeMockDb([
       { id: "admin-1", email: "admin1@test.com" },
       { id: "admin-2", email: "admin2@test.com" },
-    ], [], "notify_admin_box_action");
+    ], [], "notify_admin_table_action");
 
     await notifyAdmins(db, {
-      type: "admin_box_reserve",
+      type: "admin_table_reserve",
       actingAdminId: "admin-1",
-      boxId: 5,
+      tableId: 5,
     });
 
     expect(mockQueueAndSend).toHaveBeenCalledTimes(1);
@@ -304,16 +304,16 @@ describe("notifyAdmins", () => {
         { id: "admin-3", email: "admin3@test.com" },
       ],
       [
-        { admin_id: "admin-2", notify_user_registration: true, notify_admin_box_action: false },
+        { admin_id: "admin-2", notify_user_registration: true, notify_admin_table_action: false },
       ],
-      "notify_admin_box_action",
+      "notify_admin_table_action",
     );
 
     await notifyAdmins(db, {
       type: "admin_registration_create",
       actingAdminId: "admin-1",
       userName: "Alice",
-      boxId: 3,
+      tableId: 3,
     });
 
     // admin-1 excluded (self), admin-2 excluded (opted out), admin-3 notified
@@ -329,14 +329,14 @@ describe("notifyAdmins", () => {
 
     const db = makeMockDb(
       [{ id: "admin-1", email: "admin1@test.com" }],
-      [{ admin_id: "admin-1", notify_user_registration: false, notify_admin_box_action: false }],
+      [{ admin_id: "admin-1", notify_user_registration: false, notify_admin_table_action: false }],
     );
 
     await notifyAdmins(db, {
       type: "user_registration",
       userName: "Alice",
       userEmail: "alice@test.com",
-      boxId: 1,
+      tableId: 1,
     });
 
     expect(mockQueueAndSend).not.toHaveBeenCalled();
@@ -353,7 +353,7 @@ describe("notifyAdmins", () => {
       type: "user_registration",
       userName: "Alice",
       userEmail: "alice@test.com",
-      boxId: 1,
+      tableId: 1,
     })).resolves.toBeUndefined();
   });
 });

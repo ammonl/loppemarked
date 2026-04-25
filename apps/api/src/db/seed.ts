@@ -1,40 +1,23 @@
 import type { Kysely } from "kysely";
 import {
-  BOX_CATALOG,
   DEFAULT_OPENING_DATETIME,
-  GREENHOUSES,
   OPENING_TIMEZONE,
   SEED_ADMIN_EMAILS,
+  VISIBLE_TABLE_IDS,
 } from "@loppemarked/shared";
 
 import type { Database } from "./types.js";
 
 /**
- * Return greenhouse seed rows.
+ * Return seed rows for the `tables` table — one row per visible flea-market
+ * table, all in the `available` state.
  */
-export function getGreenhouseRows(): Array<{ name: string }> {
-  return GREENHOUSES.map((name) => ({ name }));
+export function getTableRows(): Array<{ id: number; state: "available" }> {
+  return VISIBLE_TABLE_IDS.map((id) => ({ id, state: "available" as const }));
 }
 
 /**
- * Return planter box seed rows.
- */
-export function getBoxRows(): Array<{
-  id: number;
-  name: string;
-  greenhouse_name: string;
-  state: "available";
-}> {
-  return BOX_CATALOG.map((box) => ({
-    id: box.id,
-    name: box.name,
-    greenhouse_name: box.greenhouse,
-    state: "available" as const,
-  }));
-}
-
-/**
- * Return admin seed rows. Passwords must be hashed before insertion.
+ * Return admin seed emails. Passwords must be hashed before insertion.
  */
 export function getAdminEmails(): readonly string[] {
   return SEED_ADMIN_EMAILS;
@@ -49,24 +32,15 @@ export async function seed(
   hashPassword: (password: string) => Promise<string>,
   initialPassword: string,
 ): Promise<void> {
-  // Seed greenhouses
-  const greenhouseRows = getGreenhouseRows();
+  // Seed tables
+  const tableRows = getTableRows();
   await db
-    .insertInto("greenhouses")
-    .values(greenhouseRows)
-    .onConflict((oc) => oc.column("name").doNothing())
-    .execute();
-
-  // Seed planter boxes
-  const boxRows = getBoxRows();
-  await db
-    .insertInto("planter_boxes")
-    .values(boxRows)
+    .insertInto("tables")
+    .values(tableRows)
     .onConflict((oc) => oc.column("id").doNothing())
     .execute();
 
-  // Seed system settings (opening datetime)
-  // Use the default opening datetime interpreted in Copenhagen timezone
+  // Seed system settings (opening datetime) interpreted in Copenhagen timezone
   const openingTimestamp = `${DEFAULT_OPENING_DATETIME} ${OPENING_TIMEZONE}`;
   const existing = await db
     .selectFrom("system_settings")

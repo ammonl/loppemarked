@@ -21,7 +21,7 @@ interface AuditEvent {
 
 interface AuditResponse {
   events: AuditEvent[];
-  boxLabels: Record<string, string>;
+  tableLabels: Record<string, string>;
   nextCursor: string | null;
   hasMore: boolean;
 }
@@ -29,7 +29,7 @@ interface AuditResponse {
 export function AdminAuditLog() {
   const { t } = useLanguage();
   const [events, setEvents] = useState<AuditEvent[]>([]);
-  const [boxLabels, setBoxLabels] = useState<Record<string, string>>({});
+  const [tableLabels, setBoxLabels] = useState<Record<string, string>>({});
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -56,10 +56,10 @@ export function AdminAuditLog() {
           const data: AuditResponse = await res.json();
           if (append) {
             setEvents((prev) => [...prev, ...data.events]);
-            setBoxLabels((prev) => ({ ...prev, ...data.boxLabels }));
+            setBoxLabels((prev) => ({ ...prev, ...data.tableLabels }));
           } else {
             setEvents(data.events);
-            setBoxLabels(data.boxLabels);
+            setBoxLabels(data.tableLabels);
           }
           setCursor(data.nextCursor);
           setHasMore(data.hasMore);
@@ -95,7 +95,7 @@ export function AdminAuditLog() {
   return (
     <AuditTimeline
       events={events}
-      boxLabels={boxLabels}
+      tableLabels={tableLabels}
       hasMore={hasMore}
       onLoadMore={handleLoadMore}
       actionFilter={actionFilter}

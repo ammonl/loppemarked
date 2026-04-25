@@ -62,7 +62,7 @@ describe("AdminBoxes", () => {
   it("calls reserve API when confirmed", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => mockBoxes })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ boxId: 1, state: "reserved" }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tableId: 1, state: "reserved" }) })
       .mockResolvedValueOnce({ ok: true, json: async () => mockBoxes });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -81,7 +81,7 @@ describe("AdminBoxes", () => {
 
     const reserveCall = fetchMock.mock.calls[1];
     expect(reserveCall[0]).toBe("/admin/boxes/reserve");
-    expect(JSON.parse(reserveCall[1].body)).toEqual({ boxId: 1 });
+    expect(JSON.parse(reserveCall[1].body)).toEqual({ tableId: 1 });
   });
 
   it("shows release dialog when Release is clicked", async () => {

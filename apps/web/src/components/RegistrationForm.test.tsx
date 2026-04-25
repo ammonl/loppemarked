@@ -30,7 +30,7 @@ describe("RegistrationForm — floor/door state", () => {
       json: async () => ({}),
     });
 
-    render(<RegistrationForm boxId={1} onCancel={vi.fn()} />);
+    render(<RegistrationForm tableId={1} onCancel={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText("registration.nameLabel *"), {
       target: { value: "Alice" },

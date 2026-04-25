@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  BOX_CATALOG,
-  GREENHOUSES,
-  KRONEN_BOX_RANGE,
-  SOEN_BOX_RANGE,
   TABLE_CATALOG,
   TABLE_MAP_VIEWBOX,
-  TOTAL_BOX_COUNT,
+  TOTAL_TABLE_COUNT,
+  VISIBLE_TABLE_IDS,
   FLOOR_DOOR_REQUIRED_NUMBERS,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
@@ -15,51 +12,6 @@ import {
   getTableById,
   formatTableLabel,
 } from "./constants.js";
-
-describe("GREENHOUSES", () => {
-  it("contains exactly Kronen and Søen", () => {
-    expect(GREENHOUSES).toEqual(["Kronen", "Søen"]);
-  });
-});
-
-describe("BOX_CATALOG", () => {
-  it("has 29 entries", () => {
-    expect(BOX_CATALOG).toHaveLength(TOTAL_BOX_COUNT);
-  });
-
-  it("has sequential IDs from 1 to 29", () => {
-    const ids = BOX_CATALOG.map((b) => b.id);
-    expect(ids).toEqual(Array.from({ length: 29 }, (_, i) => i + 1));
-  });
-
-  it("assigns Kronen boxes to IDs 1-14", () => {
-    const kronenBoxes = BOX_CATALOG.filter((b) => b.greenhouse === "Kronen");
-    expect(kronenBoxes).toHaveLength(14);
-    kronenBoxes.forEach((b) => {
-      expect(b.id).toBeGreaterThanOrEqual(KRONEN_BOX_RANGE.start);
-      expect(b.id).toBeLessThanOrEqual(KRONEN_BOX_RANGE.end);
-    });
-  });
-
-  it("assigns Søen boxes to IDs 15-29", () => {
-    const soenBoxes = BOX_CATALOG.filter((b) => b.greenhouse === "Søen");
-    expect(soenBoxes).toHaveLength(15);
-    soenBoxes.forEach((b) => {
-      expect(b.id).toBeGreaterThanOrEqual(SOEN_BOX_RANGE.start);
-      expect(b.id).toBeLessThanOrEqual(SOEN_BOX_RANGE.end);
-    });
-  });
-
-  it("has unique names", () => {
-    const names = BOX_CATALOG.map((b) => b.name);
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it("starts with Linaria and ends with Black bird", () => {
-    expect(BOX_CATALOG[0].name).toBe("Linaria");
-    expect(BOX_CATALOG[28].name).toBe("Black bird");
-  });
-});
 
 describe("FLOOR_DOOR_REQUIRED_NUMBERS", () => {
   it("includes 138 and 144", () => {
@@ -89,7 +41,7 @@ describe("address constants", () => {
 });
 
 describe("seed data", () => {
-  it("has two seed admin emails", () => {
+  it("has the seed admin emails", () => {
     expect(SEED_ADMIN_EMAILS).toEqual([
       "ammonl@hotmail.com",
     ]);
@@ -108,6 +60,7 @@ describe("EVENT_CONTACT", () => {
 describe("TABLE_CATALOG", () => {
   it("matches the published Fælledhuset map (23 visible tables)", () => {
     expect(TABLE_CATALOG).toHaveLength(23);
+    expect(TOTAL_TABLE_COUNT).toBe(23);
   });
 
   it("uses ids matching the reference numbering, with a deliberate gap at 22", () => {
@@ -116,6 +69,7 @@ describe("TABLE_CATALOG", () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24,
     ];
     expect(ids).toEqual(expected);
+    expect(VISIBLE_TABLE_IDS).toEqual(expected);
     TABLE_CATALOG.forEach((t) => {
       expect(t.number).toBe(t.id);
     });
@@ -144,16 +98,6 @@ describe("TABLE_CATALOG", () => {
     expect(getTableById(24)?.number).toBe(24);
     expect(getTableById(22)).toBeUndefined();
     expect(getTableById(999)).toBeUndefined();
-    // BOX_CATALOG still seeds id 29 against legacy planter rows; the
-    // shrunken map should not surface it as a bookable table.
-    expect(getTableById(29)).toBeUndefined();
-  });
-
-  it("references TOTAL_BOX_COUNT only for legacy planter seed parity", () => {
-    // The map shrunk from 29 to 23 visible tables; this assertion
-    // keeps the relationship explicit so a future BOX_CATALOG resync
-    // does not silently desync from the map.
-    expect(TABLE_CATALOG.length).toBeLessThan(TOTAL_BOX_COUNT);
   });
 });
 

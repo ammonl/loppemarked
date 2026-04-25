@@ -5,18 +5,18 @@ import { queueAndSendEmail } from "./email-service.js";
 import { logger } from "./logger.js";
 
 export type AdminOpsEvent =
-  | { type: "user_registration"; userName: string; userEmail: string; boxId: number }
-  | { type: "user_switch"; userName: string; userEmail: string; oldBoxId: number; newBoxId: number }
-  | { type: "user_cancellation"; userName: string; userEmail: string; boxId: number }
-  | { type: "admin_box_reserve"; actingAdminId: string; boxId: number }
-  | { type: "admin_box_release"; actingAdminId: string; boxId: number }
-  | { type: "admin_registration_create"; actingAdminId: string; userName: string; boxId: number }
-  | { type: "admin_registration_move"; actingAdminId: string; userName: string; oldBoxId: number; newBoxId: number }
-  | { type: "admin_registration_remove"; actingAdminId: string; userName: string; boxId: number }
-  | { type: "admin_waitlist_assign"; actingAdminId: string; userName: string; boxId: number };
+  | { type: "user_registration"; userName: string; userEmail: string; tableId: number }
+  | { type: "user_switch"; userName: string; userEmail: string; oldTableId: number; newTableId: number }
+  | { type: "user_cancellation"; userName: string; userEmail: string; tableId: number }
+  | { type: "admin_table_reserve"; actingAdminId: string; tableId: number }
+  | { type: "admin_table_release"; actingAdminId: string; tableId: number }
+  | { type: "admin_registration_create"; actingAdminId: string; userName: string; tableId: number }
+  | { type: "admin_registration_move"; actingAdminId: string; userName: string; oldTableId: number; newTableId: number }
+  | { type: "admin_registration_remove"; actingAdminId: string; userName: string; tableId: number }
+  | { type: "admin_waitlist_assign"; actingAdminId: string; userName: string; tableId: number };
 
-function tableLabel(boxId: number): string {
-  return formatTableLabel(boxId);
+function tableLabel(tableId: number): string {
+  return formatTableLabel(tableId);
 }
 
 function escapeHtml(text: string): string {
@@ -41,40 +41,40 @@ export function buildOpsNotificationEmail(eventWithEmail: AdminEventWithEmail | 
 
   switch (event.type) {
     case "user_registration":
-      subject = `New booking: ${event.userName} → ${tableLabel(event.boxId)}`;
-      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) booked <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+      subject = `New booking: ${event.userName} → ${tableLabel(event.tableId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) booked <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
     case "user_switch":
-      subject = `Table switch: ${event.userName} moved from ${tableLabel(event.oldBoxId)} to ${tableLabel(event.newBoxId)}`;
-      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) switched from <strong>${escapeHtml(tableLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(tableLabel(event.newBoxId))}</strong>.`;
+      subject = `Table switch: ${event.userName} moved from ${tableLabel(event.oldTableId)} to ${tableLabel(event.newTableId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) switched from <strong>${escapeHtml(tableLabel(event.oldTableId))}</strong> to <strong>${escapeHtml(tableLabel(event.newTableId))}</strong>.`;
       break;
     case "user_cancellation":
-      subject = `Booking cancelled: ${event.userName} released ${tableLabel(event.boxId)}`;
-      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) cancelled their booking for <strong>${escapeHtml(tableLabel(event.boxId))}</strong>. The table is held as <strong>reserved</strong> pending admin review — release it to the public pool from the Tables view when ready.`;
+      subject = `Booking cancelled: ${event.userName} released ${tableLabel(event.tableId)}`;
+      bodyText = `<strong>${escapeHtml(event.userName)}</strong> (${escapeHtml(event.userEmail)}) cancelled their booking for <strong>${escapeHtml(tableLabel(event.tableId))}</strong>. The table is held as <strong>reserved</strong> pending admin review — release it to the public pool from the Tables view when ready.`;
       break;
-    case "admin_box_reserve":
-      subject = `Table reserved: ${tableLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> reserved <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+    case "admin_table_reserve":
+      subject = `Table reserved: ${tableLabel(event.tableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> reserved <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
-    case "admin_box_release":
-      subject = `Table released: ${tableLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> released <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+    case "admin_table_release":
+      subject = `Table released: ${tableLabel(event.tableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> released <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
     case "admin_registration_create":
-      subject = `Booking added: ${event.userName} → ${tableLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> booked <strong>${escapeHtml(event.userName)}</strong> for <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+      subject = `Booking added: ${event.userName} → ${tableLabel(event.tableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> booked <strong>${escapeHtml(event.userName)}</strong> for <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
     case "admin_registration_move":
-      subject = `Booking moved: ${event.userName} from ${tableLabel(event.oldBoxId)} to ${tableLabel(event.newBoxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> moved <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.oldBoxId))}</strong> to <strong>${escapeHtml(tableLabel(event.newBoxId))}</strong>.`;
+      subject = `Booking moved: ${event.userName} from ${tableLabel(event.oldTableId)} to ${tableLabel(event.newTableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> moved <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.oldTableId))}</strong> to <strong>${escapeHtml(tableLabel(event.newTableId))}</strong>.`;
       break;
     case "admin_registration_remove":
-      subject = `Booking removed: ${event.userName} from ${tableLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> removed <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+      subject = `Booking removed: ${event.userName} from ${tableLabel(event.tableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> removed <strong>${escapeHtml(event.userName)}</strong> from <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
     case "admin_waitlist_assign":
-      subject = `Waitlist assigned: ${event.userName} → ${tableLabel(event.boxId)}`;
-      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> assigned <strong>${escapeHtml(event.userName)}</strong> from the waitlist to <strong>${escapeHtml(tableLabel(event.boxId))}</strong>.`;
+      subject = `Waitlist assigned: ${event.userName} → ${tableLabel(event.tableId)}`;
+      bodyText = `Admin <strong>${escapeHtml(adminEmail)}</strong> assigned <strong>${escapeHtml(event.userName)}</strong> from the waitlist to <strong>${escapeHtml(tableLabel(event.tableId))}</strong>.`;
       break;
   }
 
@@ -116,7 +116,7 @@ export async function notifyAdmins(
   try {
     const preferenceColumn = isUserEvent(event)
       ? "notify_user_registration" as const
-      : "notify_admin_box_action" as const;
+      : "notify_admin_table_action" as const;
 
     const adminsWithPrefs = await db
       .selectFrom("admins")

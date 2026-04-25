@@ -21,17 +21,13 @@ export type {
 } from "./enums.js";
 
 export {
-  GREENHOUSES,
-  BOX_CATALOG,
-  TOTAL_BOX_COUNT,
-  KRONEN_BOX_RANGE,
-  SOEN_BOX_RANGE,
   TABLE_CATALOG,
   TABLE_MAP_VIEWBOX,
   STANDARD_TABLE_SIZE_LABEL,
   CLOTHING_RACK_TABLE_IDS,
   CLOTHING_RACKS,
   VISIBLE_TABLE_IDS,
+  TOTAL_TABLE_COUNT,
   getTableById,
   tableHasClothingRack,
   getClothingRackSide,
@@ -50,7 +46,6 @@ export {
   FLOOR_DOOR_REQUIRED_NUMBERS,
   DEFAULT_LANGUAGE,
   ADMIN_DEFAULT_LANGUAGE,
-  GREENHOUSE_PREFERENCES,
   RESERVED_LABEL_DEFAULT,
   RESERVED_LABEL_AWAITING_REVIEW,
   CANCELLATION_TOKEN_TTL_DAYS,
@@ -58,18 +53,15 @@ export {
 } from "./constants.js";
 
 export type {
-  Greenhouse,
-  BoxCatalogEntry,
-  GreenhousePreference,
   TableCatalogEntry,
   ClothingRackSide,
 } from "./constants.js";
 
 export type {
   SystemSettings,
-  GreenhouseSummary,
-  PlanterBoxPublic,
-  PlanterBox,
+  HallSummary,
+  TablePublic,
+  Table,
   NormalizedAddress,
   Registration,
   RegistrationPublic,
@@ -93,7 +85,7 @@ export {
   normalizeApartmentKey,
   formatAddress,
   validateName,
-  validateBoxId,
+  validateTableId,
   validateLanguage,
   validateRegistrationInput,
   validateWaitlistInput,

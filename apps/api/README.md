@@ -29,7 +29,7 @@ src/
 │   ├── index.ts             DB module entry point
 │   ├── migrate.ts           Migration runner
 │   ├── migrations/          Kysely migration files
-│   ├── seed.ts              Seed data (greenhouses, boxes, admins)
+│   ├── seed.ts              Seed data (tables, admins, system settings)
 │   ├── setup.ts             Combined migrate + seed entry point
 │   └── types.ts             Database table type definitions
 ├── lib/
@@ -65,34 +65,34 @@ Uses [Kysely](https://kysely.dev/) as a type-safe query builder with PostgreSQL.
 
 ### Schema
 
-The schema is managed through Kysely migrations in `src/db/migrations/`. The initial migration creates all 10 core tables:
+The schema is managed as a single Kysely baseline migration in `src/db/migrations/`:
 
-- `greenhouses` - Greenhouse records (Kronen, Soen)
-- `planter_boxes` - 29 named planter boxes with state tracking
+- `tables` - Numbered flea-market tables in Fælledhuset, with state tracking
 - `admins` - Admin accounts
 - `admin_credentials` - Hashed admin passwords
+- `admin_notification_preferences` - Per-admin opt-in flags for ops emails
 - `sessions` - Admin session management
 - `system_settings` - Opening datetime configuration
-- `registrations` - Box registrations with address normalization
+- `registrations` - Table bookings with address normalization
 - `waitlist_entries` - Ordered waitlist by apartment
 - `emails` - Outbound email log with edit tracking
 - `audit_events` - Immutable audit trail (protected by trigger)
+- `registration_cancellation_tokens` - Resident self-cancellation magic links
 
 ### Key constraints
 
-- One active registration per normalized apartment key (partial unique index)
-- One active occupant per box (partial unique index)
-- Box state restricted to: available, occupied, reserved
+- One active occupant per table (partial unique index)
+- Table state restricted to: available, occupied, reserved
+- Table id constrained to the visible Fælledhuset catalog (1–24, with 22 skipped)
 - Audit events are immutable (UPDATE/DELETE blocked by trigger)
 - Waitlist FIFO ordering by `created_at`
 
 ### Seed data
 
 The seed module (`src/db/seed.ts`) populates:
-- 2 greenhouses (Kronen, Soen)
-- 29 planter boxes with spec naming and numbering
+- One row per visible flea-market table, all in the `available` state
 - Default opening datetime (2026-04-01 10:00 Europe/Copenhagen)
-- 2 initial admin accounts (passwords must be hashed at seed time)
+- Initial admin account(s) from `SEED_ADMIN_EMAILS` (passwords hashed at seed time)
 
 ## Scripts
 

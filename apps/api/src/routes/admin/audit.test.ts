@@ -36,7 +36,7 @@ function createMockDb(rows: unknown[], adminRows: unknown[] = [], boxRows: unkno
     if (table === "admins") {
       return { select: adminSelectFn };
     }
-    if (table === "planter_boxes") {
+    if (table === "tables") {
       return { select: boxSelectFn };
     }
     return { select: selectFn };
@@ -183,8 +183,8 @@ describe("handleListAuditEvents", () => {
         timestamp: new Date("2026-03-01T10:00:00Z"),
         actor_type: "admin" as const,
         actor_id: null,
-        action: "box_state_change",
-        entity_type: "planter_box",
+        action: "table_state_change",
+        entity_type: "table",
         entity_id: "5",
         before: { state: "available" },
         after: { state: "occupied" },
@@ -199,8 +199,8 @@ describe("handleListAuditEvents", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const body = res.body as { boxLabels: Record<string, string> };
-    expect(body.boxLabels).toEqual({ "5": "Table #5" });
+    const body = res.body as { tableLabels: Record<string, string> };
+    expect(body.tableLabels).toEqual({ "5": "Table #5" });
   });
 
   it("resolves table labels from before/after box_id fields", async () => {
@@ -213,8 +213,8 @@ describe("handleListAuditEvents", () => {
         action: "registration_move",
         entity_type: "registration",
         entity_id: "reg-1",
-        before: { box_id: 5 },
-        after: { box_id: 10 },
+        before: { table_id: 5 },
+        after: { table_id: 10 },
         reason: null,
       },
     ];
@@ -226,11 +226,11 @@ describe("handleListAuditEvents", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const body = res.body as { boxLabels: Record<string, string> };
-    expect(body.boxLabels).toEqual({ "5": "Table #5", "10": "Table #10" });
+    const body = res.body as { tableLabels: Record<string, string> };
+    expect(body.tableLabels).toEqual({ "5": "Table #5", "10": "Table #10" });
   });
 
-  it("returns empty boxLabels when no box IDs are present", async () => {
+  it("returns empty tableLabels when no box IDs are present", async () => {
     const mockEvents = [
       {
         id: "evt-1",
@@ -253,8 +253,8 @@ describe("handleListAuditEvents", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const body = res.body as { boxLabels: Record<string, string> };
-    expect(body.boxLabels).toEqual({});
+    const body = res.body as { tableLabels: Record<string, string> };
+    expect(body.tableLabels).toEqual({});
   });
 
   it("detects hasMore and returns nextCursor when extra rows returned", async () => {

@@ -59,9 +59,6 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
       floor: needsFloorDoor ? floor.trim() || null : null,
       door: needsFloorDoor ? door.trim() || null : null,
       language: language as Language,
-      // Flea market has a single hall — send the any-preference default
-      // to the existing API contract without exposing a pointless selector.
-      greenhousePreference: "any" as const,
     };
 
     const validation = validateWaitlistInput(input);

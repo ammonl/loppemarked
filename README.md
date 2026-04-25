@@ -1,6 +1,6 @@
 # UN17 Village Loppemarked
 
-UN17 Village Loppemarked is the UN17 rooftop greenhouse registration platform for the 2026 season.
+UN17 Village Loppemarked is the UN17 flea-market table booking platform for the 2026 season, hosted in Fælledhuset.
 
 Primary product specification:
 - [UN17 Village Loppemarked Spec](docs/specs/loppemarked-2026-spec.md)
@@ -66,7 +66,7 @@ npm install
 DB_PASSWORD=localdev npm run db:setup --workspace=@loppemarked/api
 ```
 
-This runs all Kysely migrations and seeds greenhouses, planter boxes, system settings, and an initial admin account. The default admin password is `changeme123` (override with `SEED_ADMIN_PASSWORD`).
+This runs the Kysely baseline migration and seeds the flea-market tables, system settings, and an initial admin account. The default admin password is `changeme123` (override with `SEED_ADMIN_PASSWORD`).
 
 ### 4. Start the API dev server
 

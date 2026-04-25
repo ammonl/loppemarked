@@ -5,7 +5,7 @@ describe("buildConfirmationEmail", () => {
   const baseData = {
     recipientName: "Anna Jensen",
     recipientEmail: "anna@example.com",
-    boxId: 3,
+    tableId: 3,
     language: "da" as const,
   };
 
@@ -80,7 +80,7 @@ describe("buildConfirmationEmail", () => {
   });
 
   it("falls back to text-only location info when the table id is unknown", () => {
-    const result = buildConfirmationEmail({ ...baseData, boxId: 999 });
+    const result = buildConfirmationEmail({ ...baseData, tableId: 999 });
     // No SVG is rendered for an unknown table — the recipient still sees the
     // venue name and a textual fallback.
     expect(result.bodyHtml).not.toContain("<svg");
@@ -89,7 +89,7 @@ describe("buildConfirmationEmail", () => {
   });
 
   it("falls back to English text-only location info when the table id is unknown", () => {
-    const result = buildConfirmationEmail({ ...baseData, language: "en", boxId: 999 });
+    const result = buildConfirmationEmail({ ...baseData, language: "en", tableId: 999 });
     expect(result.bodyHtml).not.toContain("<svg");
     expect(result.bodyHtml).toContain("Your table #999 is in Fælledhuset");
   });
@@ -104,7 +104,7 @@ describe("buildConfirmationEmail", () => {
     expect(daResult.bodyHtml).toContain("2 meter");
 
     // Every visible table on the simplified Fælledhuset map is 2 m.
-    const enResult = buildConfirmationEmail({ ...baseData, boxId: 23, language: "en" });
+    const enResult = buildConfirmationEmail({ ...baseData, tableId: 23, language: "en" });
     expect(enResult.bodyHtml).toContain("2 meters");
     expect(enResult.bodyHtml).toContain("#23");
   });
@@ -198,21 +198,21 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).not.toContain("previous booking");
   });
 
-  it("includes switch note when switchedFromBoxId is provided", () => {
+  it("includes switch note when switchedFromTableId is provided", () => {
     const result = buildConfirmationEmail({
       ...baseData,
-      switchedFromBoxId: 7,
+      switchedFromTableId: 7,
     });
     expect(result.bodyHtml).toContain("#7");
     expect(result.bodyHtml).toContain("#3");
     expect(result.bodyHtml).toContain("Bemærk");
   });
 
-  it("includes English switch note when switchedFromBoxId is provided", () => {
+  it("includes English switch note when switchedFromTableId is provided", () => {
     const result = buildConfirmationEmail({
       ...baseData,
       language: "en",
-      switchedFromBoxId: 7,
+      switchedFromTableId: 7,
     });
     expect(result.bodyHtml).toContain("#7");
     expect(result.bodyHtml).toContain("#3");
@@ -245,7 +245,7 @@ describe("buildConfirmationEmail", () => {
   });
 
   it("handles unknown table ID gracefully", () => {
-    const result = buildConfirmationEmail({ ...baseData, boxId: 999 });
+    const result = buildConfirmationEmail({ ...baseData, tableId: 999 });
     expect(result.bodyHtml).toContain("#999");
     expect(result.bodyHtml).toContain("—");
   });

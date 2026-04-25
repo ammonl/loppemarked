@@ -47,7 +47,7 @@ describe("handleGetNotificationPreferences", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.notifyUserRegistration).toBe(true);
-    expect(body.notifyAdminBoxAction).toBe(true);
+    expect(body.notifyAdminTableAction).toBe(true);
     expect(body.updatedAt).toBeNull();
   });
 
@@ -55,7 +55,7 @@ describe("handleGetNotificationPreferences", () => {
     const storedDate = "2026-03-10T12:00:00.000Z";
     const executeTakeFirstFn = vi.fn().mockResolvedValue({
       notify_user_registration: false,
-      notify_admin_box_action: true,
+      notify_admin_table_action: true,
       updated_at: storedDate,
     });
     const whereFn = vi.fn().mockReturnValue({ executeTakeFirst: executeTakeFirstFn });
@@ -67,7 +67,7 @@ describe("handleGetNotificationPreferences", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.notifyUserRegistration).toBe(false);
-    expect(body.notifyAdminBoxAction).toBe(true);
+    expect(body.notifyAdminTableAction).toBe(true);
     expect(body.updatedAt).toBe(new Date(storedDate).toISOString());
   });
 });
@@ -126,14 +126,14 @@ describe("handleUpdateNotificationPreferences", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.notifyUserRegistration).toBe(false);
-    expect(body.notifyAdminBoxAction).toBe(true);
+    expect(body.notifyAdminTableAction).toBe(true);
   });
 
   it("updates existing preferences", async () => {
     const executeTakeFirstFn = vi.fn().mockResolvedValue({
       admin_id: "admin-1",
       notify_user_registration: true,
-      notify_admin_box_action: true,
+      notify_admin_table_action: true,
     });
     const selectWhereFn = vi.fn().mockReturnValue({ executeTakeFirst: executeTakeFirstFn });
     const selectFn = vi.fn().mockReturnValue({ where: selectWhereFn });
@@ -157,12 +157,12 @@ describe("handleUpdateNotificationPreferences", () => {
 
     const res = await handleUpdateNotificationPreferences(makeCtx({
       db: mockDb,
-      body: { notifyAdminBoxAction: false },
+      body: { notifyAdminTableAction: false },
     }));
 
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.notifyUserRegistration).toBe(true);
-    expect(body.notifyAdminBoxAction).toBe(false);
+    expect(body.notifyAdminTableAction).toBe(false);
   });
 });

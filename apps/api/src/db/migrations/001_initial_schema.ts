@@ -1,26 +1,14 @@
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
+import { VISIBLE_TABLE_IDS } from "@loppemarked/shared";
 
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`.execute(db);
 
-  // Greenhouses
+  // Tables (flea market tables in Fælledhuset)
   await db.schema
-    .createTable("greenhouses")
-    .addColumn("name", "varchar(100)", (col) => col.primaryKey())
-    .addColumn("created_at", "timestamptz", (col) =>
-      col.notNull().defaultTo(sql`now()`),
-    )
-    .execute();
-
-  // Planter boxes
-  await db.schema
-    .createTable("planter_boxes")
+    .createTable("tables")
     .addColumn("id", "integer", (col) => col.primaryKey())
-    .addColumn("name", "varchar(100)", (col) => col.notNull())
-    .addColumn("greenhouse_name", "varchar(100)", (col) =>
-      col.notNull().references("greenhouses.name"),
-    )
     .addColumn("state", "varchar(20)", (col) =>
       col.notNull().defaultTo("available"),
     )
@@ -33,10 +21,12 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
-  await sql`ALTER TABLE planter_boxes ADD CONSTRAINT chk_box_state CHECK (state IN ('available', 'occupied', 'reserved'))`.execute(
+  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_state CHECK (state IN ('available', 'occupied', 'reserved'))`.execute(
     db,
   );
-  await sql`ALTER TABLE planter_boxes ADD CONSTRAINT chk_box_id_range CHECK (id >= 1 AND id <= 29)`.execute(
+
+  const idList = VISIBLE_TABLE_IDS.join(", ");
+  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_id_in_catalog CHECK (id IN (${sql.raw(idList)}))`.execute(
     db,
   );
 
@@ -62,6 +52,23 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       col.primaryKey().references("admins.id").onDelete("cascade"),
     )
     .addColumn("password_hash", "varchar(500)", (col) => col.notNull())
+    .addColumn("updated_at", "timestamptz", (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .execute();
+
+  // Admin notification preferences
+  await db.schema
+    .createTable("admin_notification_preferences")
+    .addColumn("admin_id", "uuid", (col) =>
+      col.primaryKey().references("admins.id").onDelete("cascade"),
+    )
+    .addColumn("notify_user_registration", "boolean", (col) =>
+      col.notNull().defaultTo(true),
+    )
+    .addColumn("notify_admin_table_action", "boolean", (col) =>
+      col.notNull().defaultTo(true),
+    )
     .addColumn("updated_at", "timestamptz", (col) =>
       col.notNull().defaultTo(sql`now()`),
     )
@@ -106,19 +113,18 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
-  // Enforce singleton row on system_settings
   await sql`CREATE UNIQUE INDEX uq_system_settings_singleton ON system_settings ((true))`.execute(
     db,
   );
 
-  // Registrations
+  // Registrations (table bookings)
   await db.schema
     .createTable("registrations")
     .addColumn("id", "uuid", (col) =>
       col.primaryKey().defaultTo(sql`gen_random_uuid()`),
     )
-    .addColumn("box_id", "integer", (col) =>
-      col.notNull().references("planter_boxes.id"),
+    .addColumn("table_id", "integer", (col) =>
+      col.notNull().references("tables.id"),
     )
     .addColumn("name", "varchar(300)", (col) => col.notNull())
     .addColumn("email", "varchar(320)", (col) => col.notNull())
@@ -148,13 +154,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     db,
   );
 
-  // One active registration per apartment
-  await sql`CREATE UNIQUE INDEX uq_registrations_active_apartment ON registrations (apartment_key) WHERE status = 'active'`.execute(
-    db,
-  );
-
-  // One active occupant per box
-  await sql`CREATE UNIQUE INDEX uq_registrations_active_box ON registrations (box_id) WHERE status = 'active'`.execute(
+  // One active occupant per table
+  await sql`CREATE UNIQUE INDEX uq_registrations_active_table ON registrations (table_id) WHERE status = 'active'`.execute(
     db,
   );
 
@@ -198,12 +199,10 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     db,
   );
 
-  // One active waitlist entry per apartment
   await sql`CREATE UNIQUE INDEX uq_waitlist_active_apartment ON waitlist_entries (apartment_key) WHERE status = 'waiting'`.execute(
     db,
   );
 
-  // FIFO ordering index
   await db.schema
     .createIndex("idx_waitlist_fifo")
     .on("waitlist_entries")
@@ -288,7 +287,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .column("action")
     .execute();
 
-  // Prevent UPDATE/DELETE on audit_events via trigger
   await sql`
     CREATE OR REPLACE FUNCTION prevent_audit_mutation() RETURNS trigger AS $$
     BEGIN
@@ -302,6 +300,29 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     BEFORE UPDATE OR DELETE ON audit_events
     FOR EACH ROW EXECUTE FUNCTION prevent_audit_mutation()
   `.execute(db);
+
+  // Registration cancellation tokens (resident self-cancellation magic links)
+  await db.schema
+    .createTable("registration_cancellation_tokens")
+    .addColumn("id", "uuid", (col) =>
+      col.primaryKey().defaultTo(sql`gen_random_uuid()`),
+    )
+    .addColumn("token_hash", "varchar(128)", (col) => col.notNull().unique())
+    .addColumn("registration_id", "uuid", (col) =>
+      col.notNull().references("registrations.id").onDelete("cascade"),
+    )
+    .addColumn("expires_at", "timestamptz", (col) => col.notNull())
+    .addColumn("consumed_at", "timestamptz")
+    .addColumn("created_at", "timestamptz", (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .execute();
+
+  await db.schema
+    .createIndex("idx_cancellation_tokens_registration")
+    .on("registration_cancellation_tokens")
+    .column("registration_id")
+    .execute();
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
@@ -311,16 +332,17 @@ export async function down(db: Kysely<unknown>): Promise<void> {
   await sql`DROP FUNCTION IF EXISTS prevent_audit_mutation()`.execute(db);
 
   const tables = [
+    "registration_cancellation_tokens",
     "audit_events",
     "emails",
     "waitlist_entries",
     "registrations",
     "system_settings",
     "sessions",
+    "admin_notification_preferences",
     "admin_credentials",
     "admins",
-    "planter_boxes",
-    "greenhouses",
+    "tables",
   ] as const;
 
   for (const table of tables) {

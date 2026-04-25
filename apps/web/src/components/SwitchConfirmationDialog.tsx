@@ -5,12 +5,10 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import { colors, fonts, alertWarning } from "@/styles/theme";
 
 export interface SwitchDetails {
-  existingBoxId: number;
-  existingBoxName: string;
-  existingGreenhouse: string;
-  newBoxId: number;
-  newBoxName: string;
-  newGreenhouse: string;
+  existingTableId: number;
+  existingTableLabel: string;
+  newTableId: number;
+  newTableLabel: string;
 }
 
 interface SwitchConfirmationDialogProps {
@@ -27,10 +25,10 @@ export function SwitchConfirmationDialog({
   confirming = false,
 }: SwitchConfirmationDialogProps) {
   const { t } = useLanguage();
-  const existingTable = getTableById(switchDetails.existingBoxId);
-  const newTable = getTableById(switchDetails.newBoxId);
-  const formatTable = (boxId: number, sizeMeters?: number) => {
-    const title = t("table.detailsTitle").replace("{number}", String(boxId));
+  const existingTable = getTableById(switchDetails.existingTableId);
+  const newTable = getTableById(switchDetails.newTableId);
+  const formatTable = (tableId: number, sizeMeters?: number) => {
+    const title = t("table.detailsTitle").replace("{number}", String(tableId));
     if (sizeMeters === undefined) return title;
     return `${title} (${sizeMeters} ${t("table.meters")})`;
   };
@@ -71,7 +69,7 @@ export function SwitchConfirmationDialog({
 
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
         <div
-          data-testid="current-box"
+          data-testid="current-table"
           style={{
             flex: 1,
             minWidth: 200,
@@ -81,18 +79,18 @@ export function SwitchConfirmationDialog({
           }}
         >
           <div style={{ fontSize: "0.8rem", color: colors.warmBrown, marginBottom: "0.25rem" }}>
-            {t("registration.switchCurrentBox")}
+            {t("registration.switchCurrentTable")}
           </div>
           <div style={{ fontWeight: 600 }}>
             {formatTable(
-              switchDetails.existingBoxId,
+              switchDetails.existingTableId,
               existingTable?.sizeMeters,
             )}
           </div>
         </div>
 
         <div
-          data-testid="new-box"
+          data-testid="new-table"
           style={{
             flex: 1,
             minWidth: 200,
@@ -102,11 +100,11 @@ export function SwitchConfirmationDialog({
           }}
         >
           <div style={{ fontSize: "0.8rem", color: colors.warmBrown, marginBottom: "0.25rem" }}>
-            {t("registration.switchNewBox")}
+            {t("registration.switchNewTable")}
           </div>
           <div style={{ fontWeight: 600 }}>
             {formatTable(
-              switchDetails.newBoxId,
+              switchDetails.newTableId,
               newTable?.sizeMeters,
             )}
           </div>

@@ -1,10 +1,9 @@
 import {
   ELIGIBLE_STREET,
   FLOOR_DOOR_REQUIRED_NUMBERS,
-  GREENHOUSE_PREFERENCES,
   HOUSE_NUMBER_MAX,
   HOUSE_NUMBER_MIN,
-  TOTAL_BOX_COUNT,
+  VISIBLE_TABLE_IDS,
 } from "./constants.js";
 import { LANGUAGES } from "./enums.js";
 import type { RegistrationInput, WaitlistInput } from "./types.js";
@@ -124,7 +123,7 @@ export function effectiveFloorDoor(
 
 /**
  * Generate a normalized apartment key from address components.
- * Used as the uniqueness constraint for one-box-per-apartment rule.
+ * Used as the uniqueness constraint for one-table-per-apartment rule.
  *
  * Format: "else alfelts vej <number>[/<floor>-<door>]"
  */
@@ -182,13 +181,13 @@ export function validateName(name: string): ValidationResult {
   return { valid: true };
 }
 
-/** Validate box ID is in valid range (1-TOTAL_BOX_COUNT) */
-export function validateBoxId(boxId: number): ValidationResult {
-  if (boxId == null || typeof boxId !== "number") {
-    return { valid: false, error: "Box ID is required" };
+/** Validate table ID is in the catalog. */
+export function validateTableId(tableId: number): ValidationResult {
+  if (tableId == null || typeof tableId !== "number") {
+    return { valid: false, error: "Table ID is required" };
   }
-  if (!Number.isInteger(boxId) || boxId < 1 || boxId > TOTAL_BOX_COUNT) {
-    return { valid: false, error: `Box ID must be between 1 and ${TOTAL_BOX_COUNT}` };
+  if (!Number.isInteger(tableId) || !VISIBLE_TABLE_IDS.includes(tableId)) {
+    return { valid: false, error: "Table ID must be a valid catalog entry" };
   }
   return { valid: true };
 }
@@ -237,8 +236,8 @@ export function validateRegistrationInput(
     if (!floorDoorResult.valid) errors["floorDoor"] = floorDoorResult.error!;
   }
 
-  const boxResult = validateBoxId((input.boxId ?? NaN) as number);
-  if (!boxResult.valid) errors["boxId"] = boxResult.error!;
+  const tableResult = validateTableId((input.tableId ?? NaN) as number);
+  if (!tableResult.valid) errors["tableId"] = tableResult.error!;
 
   const langResult = validateLanguage((input.language ?? "") as string);
   if (!langResult.valid) errors["language"] = langResult.error!;
@@ -279,11 +278,6 @@ export function validateWaitlistInput(
 
   const langResult = validateLanguage((input.language ?? "") as string);
   if (!langResult.valid) errors["language"] = langResult.error!;
-
-  const pref = input.greenhousePreference;
-  if (!pref || !GREENHOUSE_PREFERENCES.includes(pref as typeof GREENHOUSE_PREFERENCES[number])) {
-    errors["greenhousePreference"] = "Greenhouse preference must be one of: kronen, søen, any";
-  }
 
   return {
     valid: Object.keys(errors).length === 0,

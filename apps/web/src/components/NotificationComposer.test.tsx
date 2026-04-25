@@ -12,7 +12,7 @@ const baseProps = {
   recipientName: "Alice",
   recipientEmail: "alice@test.com",
   recipientLanguage: "en",
-  boxId: 1,
+  tableId: 1,
   value: { sendEmail: true, subject: "Test Subject", bodyHtml: "<p>Test</p>", valid: true },
   onChange: vi.fn(),
 };
@@ -221,7 +221,7 @@ describe("NotificationComposer", () => {
           {...baseProps}
           recipientName=""
           recipientEmail=""
-          boxId={0}
+          tableId={0}
         />,
       );
     });

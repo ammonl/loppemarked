@@ -1,4 +1,9 @@
-import { effectiveFloorDoor, normalizeApartmentKey, ADMIN_DEFAULT_LANGUAGE } from "@loppemarked/shared";
+import {
+  RESERVED_LABEL_DEFAULT,
+  effectiveFloorDoor,
+  normalizeApartmentKey,
+  ADMIN_DEFAULT_LANGUAGE,
+} from "@loppemarked/shared";
 import type { Language } from "@loppemarked/shared";
 import type { Kysely, Transaction } from "kysely";
 import { logAuditEvent } from "../../lib/audit.js";
@@ -105,7 +110,7 @@ export async function handleListRegistrations(ctx: RequestContext): Promise<Rout
     .selectFrom("registrations")
     .select([
       "registrations.id",
-      "registrations.box_id",
+      "registrations.table_id",
       "registrations.name",
       "registrations.email",
       "registrations.street",
@@ -128,7 +133,7 @@ export async function handleListRegistrations(ctx: RequestContext): Promise<Rout
 }
 
 interface CreateRegistrationBody {
-  boxId?: number;
+  tableId?: number;
   name?: string;
   email?: string;
   street?: string;
@@ -147,11 +152,11 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
   }
 
   const body = (ctx.body ?? {}) as CreateRegistrationBody;
-  const { boxId, name, email, street, houseNumber } = body;
+  const { tableId, name, email, street, houseNumber } = body;
   const language = body.language || ADMIN_DEFAULT_LANGUAGE;
 
-  if (!boxId || !name || !email || !street || houseNumber == null) {
-    throw badRequest("boxId, name, email, street, and houseNumber are required");
+  if (!tableId || !name || !email || !street || houseNumber == null) {
+    throw badRequest("tableId, name, email, street, and houseNumber are required");
   }
 
   if (language !== "da" && language !== "en") {
@@ -162,27 +167,27 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
 
   const apartmentKey = normalizeApartmentKey(street, houseNumber, floor, door);
 
-  let result: { type: "duplicate_warning"; existingRegistrations: { id: string; boxId: number; name: string; email: string }[] } | { type: "created"; id: string };
+  let result: { type: "duplicate_warning"; existingRegistrations: { id: string; tableId: number; name: string; email: string }[] } | { type: "created"; id: string };
 
   try {
     result = await ctx.db.transaction().execute(async (trx) => {
-      const box = await trx
-        .selectFrom("planter_boxes")
+      const table = await trx
+        .selectFrom("tables")
         .select(["id", "state"])
-        .where("id", "=", boxId)
+        .where("id", "=", tableId)
         .forUpdate()
         .executeTakeFirst();
 
-      if (!box) {
-        throw badRequest("Box not found");
+      if (!table) {
+        throw badRequest("Table not found");
       }
-      if (box.state === "occupied") {
-        throw conflict("Box is already occupied", "BOX_OCCUPIED");
+      if (table.state === "occupied") {
+        throw conflict("Table is already occupied", "TABLE_OCCUPIED");
       }
 
       const existingRegs = await trx
         .selectFrom("registrations")
-        .select(["id", "box_id", "name", "email"])
+        .select(["id", "table_id", "name", "email"])
         .where("apartment_key", "=", apartmentKey)
         .where("status", "=", "active")
         .forUpdate()
@@ -200,7 +205,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
             existing_count: existingRegs.length,
             existing_registrations: existingRegs.map((r) => ({
               id: r.id,
-              box_id: r.box_id,
+              table_id: r.table_id,
             })),
           },
         });
@@ -209,7 +214,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
           type: "duplicate_warning" as const,
           existingRegistrations: existingRegs.map((r) => ({
             id: r.id,
-            boxId: r.box_id,
+            tableId: r.table_id,
             name: r.name,
             email: r.email,
           })),
@@ -228,7 +233,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
             existing_count: existingRegs.length,
             existing_registrations: existingRegs.map((r) => ({
               id: r.id,
-              box_id: r.box_id,
+              table_id: r.table_id,
             })),
           },
         });
@@ -237,7 +242,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
       const [newReg] = await trx
         .insertInto("registrations")
         .values({
-          box_id: boxId,
+          table_id: tableId,
           name,
           email,
           street,
@@ -252,9 +257,9 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
         .execute();
 
       await trx
-        .updateTable("planter_boxes")
+        .updateTable("tables")
         .set({ state: "occupied", reserved_label: null, updated_at: new Date().toISOString() })
-        .where("id", "=", boxId)
+        .where("id", "=", tableId)
         .execute();
 
       await logAuditEvent(trx, {
@@ -263,16 +268,16 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
         action: "registration_create",
         entity_type: "registration",
         entity_id: newReg.id,
-        after: { box_id: boxId, apartment_key: apartmentKey, name, email },
+        after: { table_id: tableId, apartment_key: apartmentKey, name, email },
       });
 
       await logAuditEvent(trx, {
         actor_type: "admin",
         actor_id: adminId,
-        action: "box_state_change",
-        entity_type: "planter_box",
-        entity_id: String(boxId),
-        before: { state: box.state },
+        action: "table_state_change",
+        entity_type: "table",
+        entity_id: String(tableId),
+        before: { state: table.state },
         after: { state: "occupied" },
       });
 
@@ -308,7 +313,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
       recipientName: name,
       recipientEmail: email,
       language: language as Language,
-      boxId,
+      tableId,
     },
     "registration",
     result.id,
@@ -318,18 +323,18 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
     type: "admin_registration_create",
     actingAdminId: adminId,
     userName: name,
-    boxId,
+    tableId,
   });
 
   return {
     statusCode: 201,
-    body: { id: result.id, boxId, apartmentKey },
+    body: { id: result.id, tableId, apartmentKey },
   };
 }
 
 interface MoveRegistrationBody {
   registrationId?: string;
-  newBoxId?: number;
+  newTableId?: number;
   notification?: NotificationInput;
 }
 
@@ -340,16 +345,16 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
   }
 
   const body = (ctx.body ?? {}) as MoveRegistrationBody;
-  const { registrationId, newBoxId } = body;
+  const { registrationId, newTableId } = body;
 
-  if (!registrationId || !newBoxId) {
-    throw badRequest("registrationId and newBoxId are required");
+  if (!registrationId || !newTableId) {
+    throw badRequest("registrationId and newTableId are required");
   }
 
   const moveResult = await ctx.db.transaction().execute(async (trx) => {
     const reg = await trx
       .selectFrom("registrations")
-      .select(["id", "box_id", "name", "email", "language", "status"])
+      .select(["id", "table_id", "name", "email", "language", "status"])
       .where("id", "=", registrationId)
       .forUpdate()
       .executeTakeFirst();
@@ -361,52 +366,52 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
       throw badRequest("Only active registrations can be moved");
     }
 
-    const oldBoxId = reg.box_id;
-    if (oldBoxId === newBoxId) {
-      throw badRequest("New box must be different from current box");
+    const oldTableId = reg.table_id;
+    if (oldTableId === newTableId) {
+      throw badRequest("New table must be different from current table");
     }
 
-    const oldBox = await trx
-      .selectFrom("planter_boxes")
+    const oldTable = await trx
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", oldBoxId)
+      .where("id", "=", oldTableId)
       .forUpdate()
       .executeTakeFirst();
 
-    if (!oldBox) {
-      throw badRequest("Current box not found");
+    if (!oldTable) {
+      throw badRequest("Current table not found");
     }
 
-    const newBox = await trx
-      .selectFrom("planter_boxes")
+    const newTable = await trx
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", newBoxId)
+      .where("id", "=", newTableId)
       .forUpdate()
       .executeTakeFirst();
 
-    if (!newBox) {
-      throw badRequest("Target box not found");
+    if (!newTable) {
+      throw badRequest("Target table not found");
     }
-    if (newBox.state === "occupied") {
-      throw conflict("Target box is already occupied", "BOX_OCCUPIED");
+    if (newTable.state === "occupied") {
+      throw conflict("Target table is already occupied", "TABLE_OCCUPIED");
     }
 
     await trx
       .updateTable("registrations")
-      .set({ box_id: newBoxId, updated_at: new Date().toISOString() })
+      .set({ table_id: newTableId, updated_at: new Date().toISOString() })
       .where("id", "=", registrationId)
       .execute();
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({ state: "available", reserved_label: null, updated_at: new Date().toISOString() })
-      .where("id", "=", oldBoxId)
+      .where("id", "=", oldTableId)
       .execute();
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({ state: "occupied", reserved_label: null, updated_at: new Date().toISOString() })
-      .where("id", "=", newBoxId)
+      .where("id", "=", newTableId)
       .execute();
 
     await logAuditEvent(trx, {
@@ -415,16 +420,16 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
       action: "registration_move",
       entity_type: "registration",
       entity_id: registrationId,
-      before: { box_id: oldBoxId },
-      after: { box_id: newBoxId },
+      before: { table_id: oldTableId },
+      after: { table_id: newTableId },
     });
 
     await logAuditEvent(trx, {
       actor_type: "admin",
       actor_id: adminId,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(oldBoxId),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(oldTableId),
       before: { state: "occupied" },
       after: { state: "available" },
     });
@@ -432,15 +437,15 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
     await logAuditEvent(trx, {
       actor_type: "admin",
       actor_id: adminId,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(newBoxId),
-      before: { state: newBox.state },
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(newTableId),
+      before: { state: newTable.state },
       after: { state: "occupied" },
     });
 
     return {
-      oldBoxId,
+      oldTableId,
       recipientName: reg.name,
       recipientEmail: reg.email,
       language: reg.language as Language,
@@ -456,8 +461,8 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
       recipientName: moveResult.recipientName,
       recipientEmail: moveResult.recipientEmail,
       language: moveResult.language,
-      boxId: newBoxId,
-      oldBoxId: moveResult.oldBoxId,
+      tableId: newTableId,
+      oldTableId: moveResult.oldTableId,
     },
     "registration",
     registrationId,
@@ -467,19 +472,19 @@ export async function handleMoveRegistration(ctx: RequestContext): Promise<Route
     type: "admin_registration_move",
     actingAdminId: adminId,
     userName: moveResult.recipientName,
-    oldBoxId: moveResult.oldBoxId,
-    newBoxId,
+    oldTableId: moveResult.oldTableId,
+    newTableId,
   });
 
   return {
     statusCode: 200,
-    body: { registrationId, newBoxId },
+    body: { registrationId, newTableId },
   };
 }
 
 interface RemoveRegistrationBody {
   registrationId?: string;
-  makeBoxPublic?: boolean;
+  makeTablePublic?: boolean;
   notification?: NotificationInput;
 }
 
@@ -491,7 +496,7 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
 
   const body = (ctx.body ?? {}) as RemoveRegistrationBody;
   const { registrationId } = body;
-  const makeBoxPublic = body.makeBoxPublic ?? true;
+  const makeTablePublic = body.makeTablePublic ?? true;
 
   if (!registrationId) {
     throw badRequest("registrationId is required");
@@ -500,7 +505,7 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
   const removeResult = await ctx.db.transaction().execute(async (trx) => {
     const reg = await trx
       .selectFrom("registrations")
-      .select(["id", "box_id", "status", "name", "email", "language", "apartment_key"])
+      .select(["id", "table_id", "status", "name", "email", "language", "apartment_key"])
       .where("id", "=", registrationId)
       .forUpdate()
       .executeTakeFirst();
@@ -518,17 +523,17 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
       .where("id", "=", registrationId)
       .execute();
 
-    const newBoxState = makeBoxPublic ? "available" : "reserved";
-    const reservedLabel = makeBoxPublic ? null : "Admin Hold";
+    const newTableState = makeTablePublic ? "available" : "reserved";
+    const reservedLabel = makeTablePublic ? null : RESERVED_LABEL_DEFAULT;
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({
-        state: newBoxState,
+        state: newTableState,
         reserved_label: reservedLabel,
         updated_at: new Date().toISOString(),
       })
-      .where("id", "=", reg.box_id)
+      .where("id", "=", reg.table_id)
       .execute();
 
     await logAuditEvent(trx, {
@@ -537,22 +542,22 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
       action: "registration_remove",
       entity_type: "registration",
       entity_id: registrationId,
-      before: { box_id: reg.box_id, status: "active", name: reg.name },
+      before: { table_id: reg.table_id, status: "active", name: reg.name },
       after: { status: "removed" },
     });
 
     await logAuditEvent(trx, {
       actor_type: "admin",
       actor_id: adminId,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(reg.box_id),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(reg.table_id),
       before: { state: "occupied" },
-      after: { state: newBoxState, reserved_label: reservedLabel },
+      after: { state: newTableState, reserved_label: reservedLabel },
     });
 
     return {
-      boxId: reg.box_id,
+      tableId: reg.table_id,
       recipientName: reg.name,
       recipientEmail: reg.email,
       language: reg.language as Language,
@@ -568,7 +573,7 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
       recipientName: removeResult.recipientName,
       recipientEmail: removeResult.recipientEmail,
       language: removeResult.language,
-      boxId: removeResult.boxId,
+      tableId: removeResult.tableId,
     },
     "registration",
     registrationId,
@@ -578,18 +583,18 @@ export async function handleRemoveRegistration(ctx: RequestContext): Promise<Rou
     type: "admin_registration_remove",
     actingAdminId: adminId,
     userName: removeResult.recipientName,
-    boxId: removeResult.boxId,
+    tableId: removeResult.tableId,
   });
 
   return {
     statusCode: 200,
-    body: { registrationId, boxReleased: makeBoxPublic },
+    body: { registrationId, tableReleased: makeTablePublic },
   };
 }
 
 interface AssignWaitlistBody {
   waitlistEntryId?: string;
-  boxId?: number;
+  tableId?: number;
   notification?: NotificationInput;
   confirmDuplicate?: boolean;
   notifyDownstream?: boolean;
@@ -602,15 +607,15 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
   }
 
   const body = (ctx.body ?? {}) as AssignWaitlistBody;
-  const { waitlistEntryId, boxId } = body;
+  const { waitlistEntryId, tableId } = body;
   const notifyDownstream = body.notifyDownstream ?? false;
 
-  if (!waitlistEntryId || !boxId) {
-    throw badRequest("waitlistEntryId and boxId are required");
+  if (!waitlistEntryId || !tableId) {
+    throw badRequest("waitlistEntryId and tableId are required");
   }
 
   type AssignResult =
-    | { type: "duplicate_warning"; existingRegistrations: { id: string; boxId: number; name: string; email: string }[] }
+    | { type: "duplicate_warning"; existingRegistrations: { id: string; tableId: number; name: string; email: string }[] }
     | {
         type: "created";
         registrationId: string;
@@ -641,23 +646,23 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         throw badRequest("Waitlist entry is not in waiting status");
       }
 
-      const box = await trx
-        .selectFrom("planter_boxes")
+      const table = await trx
+        .selectFrom("tables")
         .select(["id", "state"])
-        .where("id", "=", boxId)
+        .where("id", "=", tableId)
         .forUpdate()
         .executeTakeFirst();
 
-      if (!box) {
-        throw badRequest("Box not found");
+      if (!table) {
+        throw badRequest("Table not found");
       }
-      if (box.state === "occupied") {
-        throw conflict("Box is already occupied", "BOX_OCCUPIED");
+      if (table.state === "occupied") {
+        throw conflict("Table is already occupied", "TABLE_OCCUPIED");
       }
 
       const existingRegs = await trx
         .selectFrom("registrations")
-        .select(["id", "box_id", "name", "email"])
+        .select(["id", "table_id", "name", "email"])
         .where("apartment_key", "=", entry.apartment_key)
         .where("status", "=", "active")
         .forUpdate()
@@ -675,7 +680,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
             existing_count: existingRegs.length,
             existing_registrations: existingRegs.map((r) => ({
               id: r.id,
-              box_id: r.box_id,
+              table_id: r.table_id,
             })),
           },
         });
@@ -684,7 +689,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
           type: "duplicate_warning" as const,
           existingRegistrations: existingRegs.map((r) => ({
             id: r.id,
-            boxId: r.box_id,
+            tableId: r.table_id,
             name: r.name,
             email: r.email,
           })),
@@ -703,7 +708,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
             existing_count: existingRegs.length,
             existing_registrations: existingRegs.map((r) => ({
               id: r.id,
-              box_id: r.box_id,
+              table_id: r.table_id,
             })),
           },
         });
@@ -712,7 +717,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
       const [newReg] = await trx
         .insertInto("registrations")
         .values({
-          box_id: boxId,
+          table_id: tableId,
           name: entry.name,
           email: entry.email,
           street: entry.street,
@@ -727,9 +732,9 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         .execute();
 
       await trx
-        .updateTable("planter_boxes")
+        .updateTable("tables")
         .set({ state: "occupied", reserved_label: null, updated_at: new Date().toISOString() })
-        .where("id", "=", boxId)
+        .where("id", "=", tableId)
         .execute();
 
       await trx
@@ -745,7 +750,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         entity_type: "waitlist_entry",
         entity_id: waitlistEntryId,
         before: { status: "waiting" },
-        after: { status: "assigned", registration_id: newReg.id, box_id: boxId },
+        after: { status: "assigned", registration_id: newReg.id, table_id: tableId },
       });
 
       await logAuditEvent(trx, {
@@ -755,7 +760,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         entity_type: "registration",
         entity_id: newReg.id,
         after: {
-          box_id: boxId,
+          table_id: tableId,
           apartment_key: entry.apartment_key,
           from_waitlist: waitlistEntryId,
         },
@@ -764,10 +769,10 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
       await logAuditEvent(trx, {
         actor_type: "admin",
         actor_id: adminId,
-        action: "box_state_change",
-        entity_type: "planter_box",
-        entity_id: String(boxId),
-        before: { state: box.state },
+        action: "table_state_change",
+        entity_type: "table",
+        entity_id: String(tableId),
+        before: { state: table.state },
         after: { state: "occupied" },
       });
 
@@ -810,7 +815,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
       recipientName: result.recipientName,
       recipientEmail: result.recipientEmail,
       language: result.language,
-      boxId,
+      tableId,
     },
     "registration",
     result.registrationId,
@@ -827,7 +832,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
     type: "admin_waitlist_assign",
     actingAdminId: adminId,
     userName: result.recipientName,
-    boxId,
+    tableId,
   });
 
   return {
@@ -835,7 +840,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
     body: {
       registrationId: result.registrationId,
       waitlistEntryId,
-      boxId,
+      tableId,
     },
   };
 }
@@ -845,8 +850,8 @@ interface NotificationPreviewBody {
   recipientName?: string;
   recipientEmail?: string;
   language?: string;
-  boxId?: number;
-  oldBoxId?: number;
+  tableId?: number;
+  oldTableId?: number;
 }
 
 export async function handleNotificationPreview(ctx: RequestContext): Promise<RouteResponse> {
@@ -856,10 +861,10 @@ export async function handleNotificationPreview(ctx: RequestContext): Promise<Ro
 
   const body = (ctx.body ?? {}) as NotificationPreviewBody;
 
-  const { action, recipientName, recipientEmail, language, boxId } = body;
+  const { action, recipientName, recipientEmail, language, tableId } = body;
 
-  if (!action || !recipientName || !recipientEmail || !language || !boxId) {
-    throw badRequest("action, recipientName, recipientEmail, language, and boxId are required");
+  if (!action || !recipientName || !recipientEmail || !language || !tableId) {
+    throw badRequest("action, recipientName, recipientEmail, language, and tableId are required");
   }
 
   const validActions = new Set<string>(["add", "move", "remove", "waitlist_assign"]);
@@ -871,8 +876,8 @@ export async function handleNotificationPreview(ctx: RequestContext): Promise<Ro
     throw badRequest("language must be 'da' or 'en'");
   }
 
-  if (action === "move" && !body.oldBoxId) {
-    throw badRequest("oldBoxId is required for move action");
+  if (action === "move" && !body.oldTableId) {
+    throw badRequest("oldTableId is required for move action");
   }
 
   const preview = buildAdminNotification({
@@ -880,8 +885,8 @@ export async function handleNotificationPreview(ctx: RequestContext): Promise<Ro
     recipientName,
     recipientEmail,
     language: language as Language,
-    boxId,
-    oldBoxId: body.oldBoxId,
+    tableId,
+    oldTableId: body.oldTableId,
   });
 
   return {

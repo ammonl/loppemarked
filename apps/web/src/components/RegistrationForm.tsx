@@ -21,17 +21,17 @@ import { SwitchConfirmationDialog, type SwitchDetails } from "./SwitchConfirmati
 import "@/styles/table-map.css";
 
 interface RegistrationFormProps {
-  boxId: number;
+  tableId: number;
   onCancel: () => void;
-  onBoxUnavailable?: () => void;
+  onTableUnavailable?: () => void;
   onSuccess?: () => void;
   /** When true, renders without the back button (e.g. inside a detail panel). */
   embedded?: boolean;
 }
 
-export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess, embedded }: RegistrationFormProps) {
+export function RegistrationForm({ tableId, onCancel, onTableUnavailable, onSuccess, embedded }: RegistrationFormProps) {
   const { language, t } = useLanguage();
-  const table = getTableById(boxId);
+  const table = getTableById(tableId);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,7 +60,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
       floor: needsUnitFields ? floor.trim() || null : null,
       door: needsUnitFields ? door.trim() || null : null,
       language: language as Language,
-      boxId,
+      tableId,
       ...opts,
     };
   }
@@ -86,7 +86,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
       }
       if (validation.errors["houseNumber"]) fieldErrors.push(t("validation.houseNumberInvalid"));
       if (validation.errors["floorDoor"]) fieldErrors.push(t("validation.floorDoorRequired"));
-      if (validation.errors["boxId"]) fieldErrors.push(t("validation.boxIdInvalid"));
+      if (validation.errors["tableId"]) fieldErrors.push(t("validation.tableIdInvalid"));
       setErrors(fieldErrors.length > 0 ? fieldErrors : [t("common.error")]);
       return;
     }
@@ -103,17 +103,15 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
         const body = await res.json().catch(() => null);
         if (res.status === 409 && body?.code === "SWITCH_REQUIRED") {
           setSwitchDetails({
-            existingBoxId: body.existingBoxId,
-            existingBoxName: body.existingBoxName,
-            existingGreenhouse: body.existingGreenhouse,
-            newBoxId: body.newBoxId,
-            newBoxName: body.newBoxName,
-            newGreenhouse: body.newGreenhouse,
+            existingTableId: body.existingTableId,
+            existingTableLabel: body.existingTableLabel,
+            newTableId: body.newTableId,
+            newTableLabel: body.newTableLabel,
           });
           return;
         }
-        if (body?.code === "BOX_UNAVAILABLE" && onBoxUnavailable) {
-          onBoxUnavailable();
+        if (body?.code === "TABLE_UNAVAILABLE" && onTableUnavailable) {
+          onTableUnavailable();
           return;
         }
         setErrors([body?.error ?? t("common.error")]);

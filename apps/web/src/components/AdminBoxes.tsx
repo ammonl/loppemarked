@@ -215,7 +215,7 @@ export function AdminBoxes() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ boxId: activeDialog.box.id }),
+        body: JSON.stringify({ tableId: activeDialog.box.id }),
       });
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.reserved") });
@@ -241,7 +241,7 @@ export function AdminBoxes() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ boxId: activeDialog.box.id }),
+        body: JSON.stringify({ tableId: activeDialog.box.id }),
       });
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.released") });
@@ -310,7 +310,7 @@ export function AdminBoxes() {
       floor: addFloor.trim() || null,
       door: addDoor.trim() || null,
       language: addLanguage,
-      boxId: activeDialog.box.id,
+      tableId: activeDialog.box.id,
     };
 
     const validation = validateRegistrationInput(input);
@@ -335,7 +335,7 @@ export function AdminBoxes() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          boxId: input.boxId,
+          tableId: input.tableId,
           name: input.name,
           email: input.email,
           street: input.street,
@@ -543,7 +543,7 @@ export function AdminBoxes() {
             recipientName={activeDialog.box.registration.name}
             recipientEmail={activeDialog.box.registration.email}
             recipientLanguage={activeDialog.box.registration.language}
-            boxId={activeDialog.box.id}
+            tableId={activeDialog.box.id}
             value={removeNotification}
             onChange={setRemoveNotification}
           />
@@ -650,7 +650,7 @@ export function AdminBoxes() {
               recipientName={addName}
               recipientEmail={addEmail}
               recipientLanguage={addLanguage}
-              boxId={activeDialog.box.id}
+              tableId={activeDialog.box.id}
               value={addNotification}
               onChange={setAddNotification}
             />

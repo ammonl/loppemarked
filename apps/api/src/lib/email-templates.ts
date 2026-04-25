@@ -12,8 +12,8 @@ export interface ConfirmationEmailData {
   recipientName: string;
   recipientEmail: string;
   language: Language;
-  boxId: number;
-  switchedFromBoxId?: number;
+  tableId: number;
+  switchedFromTableId?: number;
   cancellationUrl?: string;
 }
 
@@ -227,8 +227,8 @@ function buildTableLocationCellHtml(
 
 export function buildConfirmationEmail(data: ConfirmationEmailData): EmailContent {
   const t = translations[data.language];
-  const table = describeTable(data.boxId, t);
-  const bookedTableEntry = getTableById(data.boxId);
+  const table = describeTable(data.tableId, t);
+  const bookedTableEntry = getTableById(data.tableId);
   const locationCellHtml = buildTableLocationCellHtml(
     bookedTableEntry,
     table.number,
@@ -236,8 +236,8 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
   );
 
   const switchedTable =
-    data.switchedFromBoxId != null
-      ? describeTable(data.switchedFromBoxId, t)
+    data.switchedFromTableId != null
+      ? describeTable(data.switchedFromTableId, t)
       : null;
 
   const switchHtml = switchedTable

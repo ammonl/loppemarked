@@ -1,4 +1,4 @@
-import { GREENHOUSES } from "@loppemarked/shared";
+import { TABLE_CATALOG } from "@loppemarked/shared";
 import { createDatabase } from "./db/connection.js";
 import { migrateToLatestInline } from "./db/migration-registry.js";
 import { seed } from "./db/seed.js";
@@ -9,7 +9,7 @@ import { Router } from "./router.js";
 import type { RequestContext } from "./router.js";
 import { handleCreateAdmin, handleDeleteAdmin, handleListAdmins } from "./routes/admin/admins.js";
 import { handleListAuditEvents } from "./routes/admin/audit.js";
-import { handleAdminBoxes, handleReserveBox, handleReleaseBox } from "./routes/admin/boxes.js";
+import { handleAdminTables, handleReserveTable, handleReleaseTable } from "./routes/admin/boxes.js";
 import { handleChangePassword, handleLogin, handleLogout, handleMe } from "./routes/admin/auth.js";
 import {
   handleAssignWaitlist,
@@ -32,7 +32,7 @@ import {
   handleUpdateNotificationPreferences,
 } from "./routes/admin/settings.js";
 import {
-  handleFillBoxes,
+  handleFillTables,
   handleClearRegistrations,
 } from "./routes/admin/staging.js";
 import { handleListWaitlist, handleRemoveWaitlist } from "./routes/admin/waitlist.js";
@@ -41,17 +41,17 @@ import {
   handleCancellationConfirm,
   handleCancellationInfo,
   handleJoinWaitlist,
-  handlePublicBoxes,
-  handlePublicGreenhouses,
+  handlePublicHallSummary,
   handlePublicRegister,
   handlePublicStatus,
+  handlePublicTables,
   handleValidateAddress,
   handleValidateRegistration,
   handleWaitlistPosition,
 } from "./routes/public.js";
 
-export function getGreenhouses(): readonly string[] {
-  return GREENHOUSES;
+export function getTableCatalog(): typeof TABLE_CATALOG {
+  return TABLE_CATALOG;
 }
 
 export function createRouter(): Router {
@@ -60,8 +60,8 @@ export function createRouter(): Router {
   router.get("/health", handleHealth);
 
   router.get("/public/status", handlePublicStatus);
-  router.get("/public/greenhouses", handlePublicGreenhouses);
-  router.get("/public/boxes", handlePublicBoxes);
+  router.get("/public/hall", handlePublicHallSummary);
+  router.get("/public/tables", handlePublicTables);
   router.post("/public/validate-address", handleValidateAddress);
   router.post("/public/validate-registration", handleValidateRegistration);
   router.post("/public/register", handlePublicRegister);
@@ -79,9 +79,9 @@ export function createRouter(): Router {
   router.post("/admin/admins", requireAdmin(handleCreateAdmin));
   router.delete("/admin/admins/:id", requireAdmin(handleDeleteAdmin));
 
-  router.get("/admin/boxes", requireAdmin(handleAdminBoxes));
-  router.post("/admin/boxes/reserve", requireAdmin(handleReserveBox));
-  router.post("/admin/boxes/release", requireAdmin(handleReleaseBox));
+  router.get("/admin/tables", requireAdmin(handleAdminTables));
+  router.post("/admin/tables/reserve", requireAdmin(handleReserveTable));
+  router.post("/admin/tables/release", requireAdmin(handleReleaseTable));
   router.get("/admin/registrations", requireAdmin(handleListRegistrations));
   router.post("/admin/registrations", requireAdmin(handleCreateRegistration));
   router.post("/admin/registrations/move", requireAdmin(handleMoveRegistration));
@@ -102,7 +102,7 @@ export function createRouter(): Router {
   router.patch("/admin/settings/notification-preferences", requireAdmin(handleUpdateNotificationPreferences));
 
   if (process.env["ENVIRONMENT"] === "staging") {
-    router.post("/admin/staging/fill-boxes", requireAdmin(handleFillBoxes));
+    router.post("/admin/staging/fill-tables", requireAdmin(handleFillTables));
     router.post("/admin/staging/clear-registrations", requireAdmin(handleClearRegistrations));
   }
 

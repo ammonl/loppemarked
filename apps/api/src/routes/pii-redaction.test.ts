@@ -4,8 +4,8 @@ import type { Database } from "../db/types.js";
 import type { RequestContext } from "../router.js";
 import { AppError } from "../lib/errors.js";
 import {
-  handlePublicBoxes,
-  handlePublicGreenhouses,
+  handlePublicTables,
+  handlePublicHallSummary,
   handlePublicRegister,
   handlePublicStatus,
   handleJoinWaitlist,
@@ -66,7 +66,7 @@ function assertNoPiiInResponse(body: unknown, context: string, allowedFields: st
 
 describe("PII redaction — public endpoints never return personal data", () => {
   describe("GET /public/status", () => {
-    it("response contains only isOpen, openingDatetime, and hasAvailableBoxes", async () => {
+    it("response contains only isOpen, openingDatetime, and hasAvailableTables", async () => {
       const executeTakeFirstOrThrowFn = vi.fn().mockResolvedValue({ count: 5 });
       const asFn = vi.fn().mockReturnValue("count");
       const countAllFn = vi.fn().mockReturnValue({ as: asFn });
@@ -82,7 +82,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
               }),
             };
           }
-          if (table === "planter_boxes") {
+          if (table === "tables") {
             return {
               select: vi.fn().mockReturnValue({
                 where: vi.fn().mockReturnValue({
@@ -100,40 +100,38 @@ describe("PII redaction — public endpoints never return personal data", () => 
       expect(res.statusCode).toBe(200);
       const body = res.body as Record<string, unknown>;
       const keys = Object.keys(body).sort();
-      expect(keys).toEqual(["hasAvailableBoxes", "isOpen", "openingDatetime", "serverTime"]);
+      expect(keys).toEqual(["hasAvailableTables", "isOpen", "openingDatetime", "serverTime"]);
       assertNoPiiInResponse(body, "handlePublicStatus");
     });
   });
 
-  describe("GET /public/greenhouses", () => {
+  describe("GET /public/hall", () => {
     it("response contains only aggregated counts, no PII", async () => {
-      const mockBoxes = [
-        { greenhouse_name: "Kronen", state: "available" },
-        { greenhouse_name: "Kronen", state: "occupied" },
-        { greenhouse_name: "Søen", state: "reserved" },
+      const mockTables = [
+        { state: "available" },
+        { state: "occupied" },
+        { state: "reserved" },
       ];
-      const executeFn = vi.fn().mockResolvedValue(mockBoxes);
+      const executeFn = vi.fn().mockResolvedValue(mockTables);
       const selectFn = vi.fn().mockReturnValue({ execute: executeFn });
       const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
       const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-      const res = await handlePublicGreenhouses(makeCtx({ db: mockDb }));
+      const res = await handlePublicHallSummary(makeCtx({ db: mockDb }));
       expect(res.statusCode).toBe(200);
-      const body = res.body as Array<Record<string, unknown>>;
+      const body = res.body as Record<string, unknown>;
 
-      for (const greenhouse of body) {
-        const keys = Object.keys(greenhouse).sort();
-        expect(keys).toEqual(["availableBoxes", "name", "occupiedBoxes", "totalBoxes"]);
-        assertNoPiiInResponse([greenhouse], "handlePublicGreenhouses", ["name"]);
-      }
+      const keys = Object.keys(body).sort();
+      expect(keys).toEqual(["availableTables", "occupiedTables", "totalTables"]);
+      assertNoPiiInResponse(body, "handlePublicHallSummary");
     });
   });
 
-  describe("GET /public/boxes", () => {
-    it("response contains only id, name, greenhouse, state — no PII", async () => {
+  describe("GET /public/tables", () => {
+    it("response contains only id and state — no PII", async () => {
       const mockRows = [
-        { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "available" },
-        { id: 2, name: "Harebell", greenhouse_name: "Kronen", state: "occupied" },
+        { id: 1, state: "available" },
+        { id: 2, state: "occupied" },
       ];
       const executeFn = vi.fn().mockResolvedValue(mockRows);
       const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
@@ -141,14 +139,14 @@ describe("PII redaction — public endpoints never return personal data", () => 
       const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
       const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-      const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+      const res = await handlePublicTables(makeCtx({ db: mockDb }));
       expect(res.statusCode).toBe(200);
       const body = res.body as Array<Record<string, unknown>>;
 
-      for (const box of body) {
-        const keys = Object.keys(box).sort();
-        expect(keys).toEqual(["greenhouse", "id", "name", "state"]);
-        assertNoPiiInResponse([box], "handlePublicBoxes", ["name"]);
+      for (const t of body) {
+        const keys = Object.keys(t).sort();
+        expect(keys).toEqual(["id", "state"]);
+        assertNoPiiInResponse([t], "handlePublicTables");
       }
     });
   });
@@ -191,7 +189,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
             floor: null,
             door: null,
             language: "da",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -211,7 +209,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
   });
 
   describe("POST /public/register", () => {
-    it("success response returns only registrationId, boxId, apartmentKey — no PII", async () => {
+    it("success response returns only registrationId, tableId, apartmentKey — no PII", async () => {
       const pastDate = new Date(Date.now() - 86400000);
       const mockDb = makeMockDbForRegister({
         openingDatetime: pastDate,
@@ -231,7 +229,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
             floor: null,
             door: null,
             language: "da",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -239,7 +237,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
       const body = res.body as Record<string, unknown>;
       assertNoPiiInResponse(body, "handlePublicRegister");
       expect(body).toHaveProperty("registrationId");
-      expect(body).toHaveProperty("boxId");
+      expect(body).toHaveProperty("tableId");
       expect(body).toHaveProperty("apartmentKey");
       expect(body).not.toHaveProperty("name");
       expect(body).not.toHaveProperty("email");
@@ -251,7 +249,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
       const mockDb = makeMockDbForRegister({
         openingDatetime: pastDate,
         box: { id: 1, state: "available" },
-        existingReg: { id: "reg-old", box_id: 5, name: "Alice", email: "a@b.com", status: "active" },
+        existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
       });
 
       const res = await handlePublicRegister(
@@ -265,7 +263,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
             floor: null,
             door: null,
             language: "da",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -495,7 +493,7 @@ describe("admin data visibility — authenticated admin can access PII for opera
     const mockRegs = [
       {
         id: "r1",
-        box_id: 1,
+        table_id: 1,
         name: "Alice Smith",
         email: "alice@example.com",
         street: "Else Alfelts Vej",
@@ -537,7 +535,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
             }),
           };
         }
-        if (table === "planter_boxes") {
+        if (table === "tables") {
           return {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
@@ -556,43 +554,38 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
     expect(Object.keys(body)).toHaveLength(4);
     expect(body).toHaveProperty("isOpen");
     expect(body).toHaveProperty("openingDatetime");
-    expect(body).toHaveProperty("hasAvailableBoxes");
+    expect(body).toHaveProperty("hasAvailableTables");
     expect(body).toHaveProperty("serverTime");
   });
 
-  it("public greenhouse DTO has exactly 5 fields per entry", async () => {
-    const mockBoxes = [{ greenhouse_name: "Kronen", state: "available" }];
-    const executeFn = vi.fn().mockResolvedValue(mockBoxes);
+  it("public hall summary DTO has exactly 3 fields", async () => {
+    const mockTables = [{ state: "available" }];
+    const executeFn = vi.fn().mockResolvedValue(mockTables);
     const selectFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicGreenhouses(makeCtx({ db: mockDb }));
-    const body = res.body as Array<Record<string, unknown>>;
-    for (const entry of body) {
-      expect(Object.keys(entry)).toHaveLength(4);
-      expect(entry).toHaveProperty("name");
-      expect(entry).toHaveProperty("totalBoxes");
-      expect(entry).toHaveProperty("availableBoxes");
-      expect(entry).toHaveProperty("occupiedBoxes");
-    }
+    const res = await handlePublicHallSummary(makeCtx({ db: mockDb }));
+    const body = res.body as Record<string, unknown>;
+    expect(Object.keys(body)).toHaveLength(3);
+    expect(body).toHaveProperty("totalTables");
+    expect(body).toHaveProperty("availableTables");
+    expect(body).toHaveProperty("occupiedTables");
   });
 
-  it("public box DTO has exactly 4 fields per entry", async () => {
-    const mockRows = [{ id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "available" }];
+  it("public table DTO has exactly 2 fields per entry", async () => {
+    const mockRows = [{ id: 1, state: "available" }];
     const executeFn = vi.fn().mockResolvedValue(mockRows);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFn = vi.fn().mockReturnValue({ orderBy: orderByFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+    const res = await handlePublicTables(makeCtx({ db: mockDb }));
     const body = res.body as Array<Record<string, unknown>>;
     for (const entry of body) {
-      expect(Object.keys(entry)).toHaveLength(4);
+      expect(Object.keys(entry)).toHaveLength(2);
       expect(entry).toHaveProperty("id");
-      expect(entry).toHaveProperty("name");
-      expect(entry).toHaveProperty("greenhouse");
       expect(entry).toHaveProperty("state");
     }
   });
@@ -617,7 +610,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
           floor: null,
           door: null,
           language: "da",
-          boxId: 1,
+          tableId: 1,
         },
       }),
     );
@@ -625,7 +618,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
     const body = res.body as Record<string, unknown>;
     expect(Object.keys(body)).toHaveLength(3);
     expect(body).toHaveProperty("registrationId");
-    expect(body).toHaveProperty("boxId");
+    expect(body).toHaveProperty("tableId");
     expect(body).toHaveProperty("apartmentKey");
   });
 
@@ -659,7 +652,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
 interface MockRegisterOpts {
   openingDatetime: Date;
   box?: { id: number; state: string };
-  existingReg?: { id: string; box_id: number; name: string; email: string; status: string };
+  existingReg?: { id: string; table_id: number; name: string; email: string; status: string };
   newRegId?: string;
 }
 
@@ -669,7 +662,7 @@ function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
 
   const mockTrx = {
     selectFrom: vi.fn().mockImplementation((table: string) => {
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -870,7 +863,7 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
           }),
         };
       }
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({

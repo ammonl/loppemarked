@@ -4,10 +4,10 @@ Shared TypeScript code used by `apps/web` and `apps/api`.
 
 ## Contents
 
-- **Enums** (`enums.ts`) — Box states, registration statuses, waitlist statuses, actor types, languages, audit actions, email statuses.
-- **Constants** (`constants.ts`) — Greenhouse names, 29-box catalog with global numbering, opening datetime, email sender/reply-to, organizer contacts, address eligibility rules.
-- **Types** (`types.ts`) — Interfaces for all domain entities: `PlanterBoxPublic`, `GreenhouseSummary`, `Registration`, `WaitlistEntry`, `AuditEvent`, form inputs, etc.
-- **Validators** (`validators.ts`) — Address validation (street, house number, floor/door rules), email, name, and box ID validation with typed results.
+- **Enums** (`enums.ts`) — Table states, registration statuses, waitlist statuses, actor types, languages, audit actions, email statuses.
+- **Constants** (`constants.ts`) — Fælledhuset table catalog with positions and sizes, opening datetime, email sender/reply-to, organizer contacts, address eligibility rules, clothing-rack adjacencies.
+- **Types** (`types.ts`) — Interfaces for all domain entities: `TablePublic`, `Table`, `HallSummary`, `Registration`, `WaitlistEntry`, `AuditEvent`, form inputs, etc.
+- **Validators** (`validators.ts`) — Address validation (street, house number, floor/door rules), email, name, and table ID validation with typed results.
 - **DAWA** (`dawa.ts`) — Danish Address Web API (DAWA) types and helpers for address autocomplete.
 - **i18n** (`i18n.ts`) — Translation key contracts and language display labels (`Dansk`, `English`).
 
@@ -32,10 +32,9 @@ src/
 
 ```typescript
 import {
-  BOX_CATALOG,
-  GREENHOUSES,
+  TABLE_CATALOG,
   validateAddress,
-  type PlanterBoxPublic,
+  type TablePublic,
 } from "@loppemarked/shared";
 ```
 

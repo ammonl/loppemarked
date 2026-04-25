@@ -23,8 +23,8 @@ export interface NotificationPreviewInput {
   recipientName: string;
   recipientEmail: string;
   language: Language;
-  boxId: number;
-  oldBoxId?: number;
+  tableId: number;
+  oldTableId?: number;
 }
 
 export interface NotificationPreview {
@@ -94,10 +94,10 @@ function escapeHtml(text: string): string {
 
 function buildTableDetailsHtml(
   t: (typeof translations)["da"] | (typeof translations)["en"],
-  boxId: number,
+  tableId: number,
 ): string {
-  const table = getTableById(boxId);
-  const tableNumber = table?.number ?? boxId;
+  const table = getTableById(tableId);
+  const tableNumber = table?.number ?? tableId;
   const size = table ? `${table.sizeMeters} m` : "\u2014";
 
   return `
@@ -114,10 +114,10 @@ function buildTableDetailsHtml(
       </table>`;
 }
 
-function tableLabelFor(boxId: number | undefined, t: (typeof translations)["da"] | (typeof translations)["en"]): string {
-  if (boxId == null) return `${t.tableLabel} #?`;
-  const table = getTableById(boxId);
-  const tableNumber = table?.number ?? boxId;
+function tableLabelFor(tableId: number | undefined, t: (typeof translations)["da"] | (typeof translations)["en"]): string {
+  if (tableId == null) return `${t.tableLabel} #?`;
+  const table = getTableById(tableId);
+  const tableNumber = table?.number ?? tableId;
   return `${t.tableLabel} #${tableNumber}`;
 }
 
@@ -158,7 +158,7 @@ function wrapEmailHtml(language: Language, subject: string, contentHtml: string)
 
 function buildAddNotification(data: NotificationPreviewInput): NotificationPreview {
   const t = translations[data.language];
-  const tableDetailsHtml = buildTableDetailsHtml(t, data.boxId);
+  const tableDetailsHtml = buildTableDetailsHtml(t, data.tableId);
   const contactHtml = buildContactHtml(t);
 
   const contentHtml = `
@@ -180,10 +180,10 @@ function buildAddNotification(data: NotificationPreviewInput): NotificationPrevi
 function buildMoveNotification(data: NotificationPreviewInput): NotificationPreview {
   const t = translations[data.language];
 
-  const oldLabel = tableLabelFor(data.oldBoxId, t);
-  const newLabel = tableLabelFor(data.boxId, t);
+  const oldLabel = tableLabelFor(data.oldTableId, t);
+  const newLabel = tableLabelFor(data.tableId, t);
 
-  const tableDetailsHtml = buildTableDetailsHtml(t, data.boxId);
+  const tableDetailsHtml = buildTableDetailsHtml(t, data.tableId);
   const contactHtml = buildContactHtml(t);
 
   const contentHtml = `
@@ -208,7 +208,7 @@ function buildMoveNotification(data: NotificationPreviewInput): NotificationPrev
 function buildRemoveNotification(data: NotificationPreviewInput): NotificationPreview {
   const t = translations[data.language];
 
-  const label = tableLabelFor(data.boxId, t);
+  const label = tableLabelFor(data.tableId, t);
 
   const contactHtml = buildContactHtml(t);
 

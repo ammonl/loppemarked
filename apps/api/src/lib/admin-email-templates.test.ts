@@ -7,7 +7,7 @@ const baseInput: NotificationPreviewInput = {
   recipientName: "Anna Jensen",
   recipientEmail: "anna@example.com",
   language: "da",
-  boxId: 3,
+  tableId: 3,
 };
 
 describe("buildAdminNotification — add", () => {
@@ -98,8 +98,8 @@ describe("buildAdminNotification — move", () => {
     recipientName: "Anna Jensen",
     recipientEmail: "anna@example.com",
     language: "da",
-    boxId: 20,
-    oldBoxId: 3,
+    tableId: 20,
+    oldTableId: 3,
   };
 
   it("returns Danish move subject", () => {
@@ -144,7 +144,7 @@ describe("buildAdminNotification — remove", () => {
     recipientName: "Anna Jensen",
     recipientEmail: "anna@example.com",
     language: "da",
-    boxId: 3,
+    tableId: 3,
   };
 
   it("returns Danish remove subject", () => {
@@ -189,7 +189,7 @@ describe("buildAdminNotification — remove", () => {
 
 describe("buildAdminNotification — unknown table", () => {
   it("handles unknown table ID gracefully", () => {
-    const result = buildAdminNotification({ ...baseInput, boxId: 999 });
+    const result = buildAdminNotification({ ...baseInput, tableId: 999 });
     expect(result.bodyHtml).toContain("#999");
     expect(result.bodyHtml).toContain("\u2014");
   });

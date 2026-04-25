@@ -40,7 +40,7 @@ describe("AdminDashboard", () => {
 
     expect(screen.getByText("admin.tab.registrations")).toBeDefined();
     expect(screen.getByText("admin.tab.waitlist")).toBeDefined();
-    expect(screen.getByText("admin.tab.boxes")).toBeDefined();
+    expect(screen.getByText("admin.tab.tables")).toBeDefined();
     expect(screen.getByText("admin.tab.messaging")).toBeDefined();
     expect(screen.getByText("admin.tab.settings")).toBeDefined();
     expect(screen.getByText("admin.tab.audit")).toBeDefined();

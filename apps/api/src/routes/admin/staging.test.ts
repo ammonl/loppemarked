@@ -3,7 +3,7 @@ import type { Kysely } from "kysely";
 import type { Database } from "../../db/types.js";
 import type { RequestContext } from "../../router.js";
 import { AppError } from "../../lib/errors.js";
-import { handleFillBoxes, handleClearRegistrations } from "./staging.js";
+import { handleFillTables, handleClearRegistrations } from "./staging.js";
 
 vi.mock("../../lib/audit.js", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
@@ -22,7 +22,7 @@ function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   };
 }
 
-describe("handleFillBoxes", () => {
+describe("handleFillTables", () => {
   const originalEnv = process.env["ENVIRONMENT"];
 
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe("handleFillBoxes", () => {
 
   it("throws 401 when adminId is missing", async () => {
     try {
-      await handleFillBoxes(makeCtx({ adminId: undefined, body: { confirm: true } }));
+      await handleFillTables(makeCtx({ adminId: undefined, body: { confirm: true } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -50,7 +50,7 @@ describe("handleFillBoxes", () => {
   it("throws 400 when not in staging environment", async () => {
     process.env["ENVIRONMENT"] = "production";
     try {
-      await handleFillBoxes(makeCtx({ body: { confirm: true } }));
+      await handleFillTables(makeCtx({ body: { confirm: true } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -62,7 +62,7 @@ describe("handleFillBoxes", () => {
   it("throws 400 when ENVIRONMENT is unset", async () => {
     delete process.env["ENVIRONMENT"];
     try {
-      await handleFillBoxes(makeCtx({ body: { confirm: true } }));
+      await handleFillTables(makeCtx({ body: { confirm: true } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -72,7 +72,7 @@ describe("handleFillBoxes", () => {
 
   it("throws 400 when confirm is not provided", async () => {
     try {
-      await handleFillBoxes(makeCtx({ body: {} }));
+      await handleFillTables(makeCtx({ body: {} }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -112,11 +112,11 @@ describe("handleFillBoxes", () => {
     const transactionFn = vi.fn().mockReturnValue({ execute: trxExecuteFn });
     const mockDb = { transaction: transactionFn } as unknown as Kysely<Database>;
 
-    const res = await handleFillBoxes(makeCtx({ body: { confirm: true }, db: mockDb }));
+    const res = await handleFillTables(makeCtx({ body: { confirm: true }, db: mockDb }));
     expect(res.statusCode).toBe(200);
-    const body = res.body as { filledCount: number; totalBoxes: number };
+    const body = res.body as { filledCount: number; totalTables: number };
     expect(body.filledCount).toBe(2);
-    expect(body.totalBoxes).toBe(29);
+    expect(body.totalTables).toBe(23);
   });
 });
 
@@ -169,8 +169,8 @@ describe("handleClearRegistrations", () => {
 
   it("clears all active registrations and releases boxes", async () => {
     const mockRegs = [
-      { id: "r1", box_id: 1 },
-      { id: "r2", box_id: 3 },
+      { id: "r1", table_id: 1 },
+      { id: "r2", table_id: 3 },
     ];
 
     const selectExecuteFn = vi.fn().mockResolvedValue(mockRegs);

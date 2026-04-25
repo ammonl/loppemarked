@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  GREENHOUSES,
-  BOX_CATALOG,
+  TABLE_CATALOG,
+  TOTAL_TABLE_COUNT,
   BOX_STATES,
   LANGUAGES,
   AUDIT_ACTIONS,
@@ -12,15 +12,11 @@ import {
 } from "./index.js";
 
 describe("barrel exports", () => {
-  it("exports greenhouse names", () => {
-    expect(GREENHOUSES).toEqual(["Kronen", "Søen"]);
+  it("exports the table catalog", () => {
+    expect(TABLE_CATALOG).toHaveLength(TOTAL_TABLE_COUNT);
   });
 
-  it("exports box catalog with 29 entries", () => {
-    expect(BOX_CATALOG).toHaveLength(29);
-  });
-
-  it("exports box states", () => {
+  it("exports table states", () => {
     expect(BOX_STATES).toEqual(["available", "occupied", "reserved"]);
   });
 
@@ -31,6 +27,7 @@ describe("barrel exports", () => {
   it("exports audit actions", () => {
     expect(AUDIT_ACTIONS.length).toBeGreaterThan(0);
     expect(AUDIT_ACTIONS).toContain("registration_create");
+    expect(AUDIT_ACTIONS).toContain("table_state_change");
   });
 
   it("exports validators", () => {

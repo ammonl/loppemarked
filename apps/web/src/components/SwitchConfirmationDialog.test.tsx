@@ -10,8 +10,8 @@ vi.mock("@/i18n/LanguageProvider", () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "registration.switchTitle": "Confirm table switch",
-        "registration.switchCurrentBox": "Your current table",
-        "registration.switchNewBox": "New table",
+        "registration.switchCurrentTable": "Your current table",
+        "registration.switchNewTable": "New table",
         "registration.switchExplainer":
           "Each apartment may only book one table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
         "registration.switchKeep": "Keep current table",
@@ -26,12 +26,10 @@ vi.mock("@/i18n/LanguageProvider", () => ({
 }));
 
 const defaultSwitchDetails: SwitchDetails = {
-  existingBoxId: 5,
-  existingBoxName: "Bed 5",
-  existingGreenhouse: "Kronen",
-  newBoxId: 20,
-  newBoxName: "Bed 20",
-  newGreenhouse: "Søen",
+  existingTableId: 5,
+  existingTableLabel: "Table #5",
+  newTableId: 20,
+  newTableLabel: "Table #20",
 };
 
 afterEach(cleanup);
@@ -47,14 +45,10 @@ describe("SwitchConfirmationDialog", () => {
     );
 
     expect(screen.getByText("Confirm table switch")).toBeDefined();
-    expect(screen.getByTestId("current-box")).toBeDefined();
-    expect(screen.getByTestId("new-box")).toBeDefined();
+    expect(screen.getByTestId("current-table")).toBeDefined();
+    expect(screen.getByTestId("new-table")).toBeDefined();
     expect(screen.getByText(/Table #5/)).toBeDefined();
     expect(screen.getByText(/Table #20/)).toBeDefined();
-    // Greenhouse name/box name should not leak through any more.
-    expect(screen.queryByText(/Kronen/)).toBeNull();
-    expect(screen.queryByText(/Søen/)).toBeNull();
-    expect(screen.queryByText(/Bed 5/)).toBeNull();
   });
 
   it("renders the explainer text", () => {

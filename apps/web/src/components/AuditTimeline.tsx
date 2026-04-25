@@ -21,7 +21,7 @@ interface AuditEvent {
 
 interface AuditTimelineProps {
   events: AuditEvent[];
-  boxLabels: Record<string, string>;
+  tableLabels: Record<string, string>;
   hasMore?: boolean;
   onLoadMore?: () => void;
   actionFilter?: string;
@@ -63,9 +63,9 @@ function formatSnapshot(data: Record<string, unknown> | null): string {
     .join(", ");
 }
 
-export function resolveBoxLabel(boxId: unknown, boxLabels: Record<string, string>): string | null {
-  if (typeof boxId === "number" || typeof boxId === "string") {
-    return boxLabels[String(boxId)] ?? null;
+export function resolveTableLabel(tableId: unknown, tableLabels: Record<string, string>): string | null {
+  if (typeof tableId === "number" || typeof tableId === "string") {
+    return tableLabels[String(tableId)] ?? null;
   }
   return null;
 }
@@ -126,7 +126,7 @@ export interface DetailLine {
 
 export function formatEventDetails(
   evt: AuditEvent,
-  boxLabels: Record<string, string>,
+  tableLabels: Record<string, string>,
   t: (key: TranslationKey) => string,
 ): DetailLine[] {
   const lines: DetailLine[] = [];
@@ -166,9 +166,9 @@ export function formatEventDetails(
       break;
     }
 
-    case "box_state_change": {
-      const boxLabel = resolveBoxLabel(evt.entityId, boxLabels);
-      if (boxLabel) lines.push({ label: t("audit.detail.box"), value: boxLabel });
+    case "table_state_change": {
+      const tableLabel = resolveTableLabel(evt.entityId, tableLabels);
+      if (tableLabel) lines.push({ label: t("audit.detail.table"), value: tableLabel });
       const stateBefore = getStr(before, "state");
       const stateAfter = getStr(after, "state");
       if (stateBefore && stateAfter) {
@@ -178,9 +178,9 @@ export function formatEventDetails(
     }
 
     case "registration_create": {
-      const boxId = after?.box_id;
-      const boxLabel = resolveBoxLabel(boxId, boxLabels);
-      if (boxLabel) lines.push({ label: t("audit.detail.box"), value: boxLabel });
+      const tableId = after?.table_id;
+      const tableLabel = resolveTableLabel(tableId, tableLabels);
+      if (tableLabel) lines.push({ label: t("audit.detail.table"), value: tableLabel });
       const name = getStr(after, "name");
       if (name) lines.push({ label: t("audit.detail.name"), value: name });
       const addr = (after && formatAddressFromSnapshot(after))
@@ -190,9 +190,9 @@ export function formatEventDetails(
     }
 
     case "registration_remove": {
-      const boxId = before?.box_id;
-      const boxLabel = resolveBoxLabel(boxId, boxLabels);
-      if (boxLabel) lines.push({ label: t("audit.detail.box"), value: boxLabel });
+      const tableId = before?.table_id;
+      const tableLabel = resolveTableLabel(tableId, tableLabels);
+      if (tableLabel) lines.push({ label: t("audit.detail.table"), value: tableLabel });
       const name = getStr(before, "name");
       if (name) lines.push({ label: t("audit.detail.name"), value: name });
       const addr = (before && formatAddressFromSnapshot(before))
@@ -203,14 +203,14 @@ export function formatEventDetails(
 
     case "registration_switch":
     case "registration_move": {
-      const beforeBoxId = before?.box_id;
-      const afterBoxId = after?.box_id;
-      const fromLabel = resolveBoxLabel(beforeBoxId, boxLabels);
-      const toLabel = resolveBoxLabel(afterBoxId, boxLabels);
+      const beforeBoxId = before?.table_id;
+      const afterBoxId = after?.table_id;
+      const fromLabel = resolveTableLabel(beforeBoxId, tableLabels);
+      const toLabel = resolveTableLabel(afterBoxId, tableLabels);
       if (fromLabel && toLabel) {
-        lines.push({ label: t("audit.detail.box"), value: `${fromLabel} \u2192 ${toLabel}` });
+        lines.push({ label: t("audit.detail.table"), value: `${fromLabel} \u2192 ${toLabel}` });
       } else if (toLabel) {
-        lines.push({ label: t("audit.detail.box"), value: toLabel });
+        lines.push({ label: t("audit.detail.table"), value: toLabel });
       }
       const name = getStr(before, "name") ?? getStr(after, "name");
       if (name) lines.push({ label: t("audit.detail.name"), value: name });
@@ -253,7 +253,7 @@ export function formatEventDetails(
 
 export function AuditTimeline({
   events,
-  boxLabels,
+  tableLabels,
   hasMore,
   onLoadMore,
   actionFilter,
@@ -320,7 +320,7 @@ export function AuditTimeline({
             </thead>
             <tbody>
               {events.map((evt) => {
-                const details = formatEventDetails(evt, boxLabels, t);
+                const details = formatEventDetails(evt, tableLabels, t);
                 return (
                   <tr key={evt.id} style={{ borderBottom: `1px solid ${colors.parchment}` }}>
                     <td style={{ padding: "0.5rem", whiteSpace: "nowrap" }}>

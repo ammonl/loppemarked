@@ -176,7 +176,7 @@ describe("AdminWaitlist", () => {
       const fetchMock = mockFetch([
         { ok: true, body: waitlistEntries },
         { ok: true, body: [] },
-        { ok: true, status: 201, body: { registrationId: "r5", waitlistEntryId: "w1", boxId: 5 } },
+        { ok: true, status: 201, body: { registrationId: "r5", waitlistEntryId: "w1", tableId: 5 } },
         { ok: true, body: waitlistEntries },
         { ok: true, body: [] },
       ]);
@@ -201,7 +201,7 @@ describe("AdminWaitlist", () => {
       expect(assignCall[0]).toBe("/admin/waitlist/assign");
       const assignBody = JSON.parse(assignCall[1].body);
       expect(assignBody.waitlistEntryId).toBe("w1");
-      expect(assignBody.boxId).toBe(5);
+      expect(assignBody.tableId).toBe(5);
       expect(assignBody.notification).toBeDefined();
       expect(assignBody.notifyDownstream).toBe(false);
       expect(screen.getByText("admin.waitlist.assigned")).toBeDefined();
@@ -211,7 +211,7 @@ describe("AdminWaitlist", () => {
       const fetchMock = mockFetch([
         { ok: true, body: waitlistEntries },
         { ok: true, body: [] },
-        { ok: true, status: 201, body: { registrationId: "r5", waitlistEntryId: "w1", boxId: 5 } },
+        { ok: true, status: 201, body: { registrationId: "r5", waitlistEntryId: "w1", tableId: 5 } },
         { ok: true, body: waitlistEntries },
         { ok: true, body: [] },
       ]);

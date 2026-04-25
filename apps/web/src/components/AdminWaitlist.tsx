@@ -27,7 +27,7 @@ interface WaitlistEntry {
 
 interface DuplicateExisting {
   id: string;
-  boxId: number;
+  tableId: number;
   name: string;
   email: string;
 }
@@ -187,8 +187,8 @@ export function AdminWaitlist() {
   async function handleAssign(confirmDuplicate = false) {
     if (!assigningEntry) return;
 
-    const boxId = Number(assignBoxId);
-    if (isNaN(boxId) || boxId < 1) {
+    const tableId = Number(assignBoxId);
+    if (isNaN(tableId) || tableId < 1) {
       setMessage({ type: "error", text: t("common.error") });
       return;
     }
@@ -203,7 +203,7 @@ export function AdminWaitlist() {
         credentials: "include",
         body: JSON.stringify({
           waitlistEntryId: assigningEntry.id,
-          boxId,
+          tableId,
           confirmDuplicate,
           notification: {
             sendEmail: assignNotification.sendEmail,
@@ -314,7 +314,7 @@ export function AdminWaitlist() {
               recipientName={assigningEntry.name}
               recipientEmail={assigningEntry.email}
               recipientLanguage={assigningEntry.language}
-              boxId={Number(assignBoxId)}
+              tableId={Number(assignBoxId)}
               value={assignNotification}
               onChange={setAssignNotification}
             />
@@ -363,7 +363,7 @@ export function AdminWaitlist() {
                 <ul style={{ margin: "0 0 0.5rem", paddingLeft: "1.25rem", fontSize: "0.8rem" }}>
                   {assignDuplicateWarning.map((r) => (
                     <li key={r.id}>
-                      {r.name} ({r.email}) — {formatTableLabel(r.boxId)}
+                      {r.name} ({r.email}) — {formatTableLabel(r.tableId)}
                     </li>
                   ))}
                 </ul>

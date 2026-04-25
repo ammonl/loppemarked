@@ -2,7 +2,7 @@
 
 ## System Overview
 
-UN17 Village Loppemarked is a bilingual (Danish/English) registration platform that allows UN17 Village residents to register for rooftop planter boxes across two greenhouses. The system serves public users (no authentication) and admin users (email/password authentication).
+UN17 Village Loppemarked is a bilingual (Danish/English) booking platform that allows UN17 Village residents to register for flea-market tables in the Fælledhuset community hall. The system serves public users (no authentication) and admin users (email/password authentication).
 
 ```mermaid
 graph TB
@@ -46,15 +46,13 @@ graph TB
 
     subgraph Views
         PRE[PreOpenPage<br/>Info + countdown]
-        LAND[LandingPage<br/>Greenhouse cards]
-        MAP[GreenhouseMapPage<br/>Box grid + legend]
+        LAND[LandingPage<br/>Hero + CTA]
+        MAP[TableMapPage<br/>Floor plan + booking]
     end
 
     subgraph "Shared Components"
-        GC[GreenhouseCard]
-        BC[BoxCard]
+        TM[TableMap]
         BSL[BoxStateLegend]
-        GM[GreenhouseMap]
         LS[LanguageSelector]
     end
 
@@ -66,11 +64,9 @@ graph TB
     LAYOUT --> PAGE
     PAGE -->|preOpen| PRE
     PAGE -->|open, no selection| LAND
-    PAGE -->|greenhouse selected| MAP
-    LAND --> GC
-    MAP --> GM
+    PAGE -->|enter map| MAP
+    MAP --> TM
     MAP --> BSL
-    GM --> BC
     LP --> TR
 ```
 
@@ -79,8 +75,8 @@ graph TB
 The app uses state-driven view switching (not URL routing):
 
 1. **Pre-open mode** — When current time < opening datetime, show `PreOpenPage`.
-2. **Landing** — After opening, show `LandingPage` with greenhouse summary cards.
-3. **Map view** — When a greenhouse is selected, show `GreenhouseMapPage` with box grid.
+2. **Landing** — After opening, show `LandingPage` with the hero scene and entry CTA.
+3. **Map view** — On entry, show `TableMapPage` with the Fælledhuset floor plan and booking detail panel.
 
 ### i18n
 
@@ -138,7 +134,7 @@ graph TB
     end
 
     subgraph "Routes"
-        PUB[public.ts<br/>Status / Boxes / Register / Waitlist]
+        PUB[public.ts<br/>Status / Hall / Tables / Register / Waitlist]
         AUTH[admin/auth.ts<br/>Login / Change Password]
         ADMIN[admin/*.ts<br/>Registrations / Waitlist / Settings / Admins / Audit]
         HEALTH[health.ts<br/>Health Check]
@@ -185,17 +181,17 @@ graph TB
 | Method | Path                          | Auth   | Description                        |
 |--------|-------------------------------|--------|------------------------------------|
 | GET    | `/public/status`              | None   | Registration open/closed status    |
-| GET    | `/public/greenhouses`         | None   | Greenhouse summary counts          |
-| GET    | `/public/boxes`               | None   | Public-safe box states             |
-| POST   | `/public/register`            | None   | Register for a planter box         |
+| GET    | `/public/hall`                | None   | Aggregate hall availability counts |
+| GET    | `/public/tables`              | None   | Public-safe table states           |
+| POST   | `/public/register`            | None   | Register for a flea-market table   |
 | POST   | `/public/waitlist`            | None   | Join waitlist                      |
 | POST   | `/admin/auth/login`           | None   | Admin login                        |
 | POST   | `/admin/auth/change-password` | Admin  | Change own password                |
 | GET    | `/admin/registrations`        | Admin  | List all registrations             |
 | POST   | `/admin/registrations`        | Admin  | Create override reservation        |
-| POST   | `/admin/registrations/move`   | Admin  | Move registration between boxes    |
+| POST   | `/admin/registrations/move`   | Admin  | Move registration between tables   |
 | POST   | `/admin/registrations/remove` | Admin  | Remove registration                |
-| POST   | `/admin/waitlist/assign`      | Admin  | Assign waitlist entry to box       |
+| POST   | `/admin/waitlist/assign`      | Admin  | Assign waitlist entry to table     |
 | PATCH  | `/admin/settings/opening-time`| Admin  | Update opening datetime            |
 | POST   | `/admin/admins`               | Admin  | Create admin account               |
 | DELETE | `/admin/admins/:id`           | Admin  | Delete admin account               |
@@ -204,34 +200,28 @@ graph TB
 
 ## Database Architecture
 
-PostgreSQL 16 with 10 core tables. Schema is managed via Kysely migrations.
+PostgreSQL 16 with the core tables below. The schema is created from a single Kysely baseline migration; future schema changes ship as additional migrations on top of it.
 
 ```mermaid
 erDiagram
-    greenhouses ||--o{ planter_boxes : contains
-    planter_boxes ||--o| registrations : "occupied by"
+    tables ||--o| registrations : "occupied by"
     admins ||--|| admin_credentials : "has credentials"
     admins ||--o{ sessions : "has sessions"
+    admins ||--o| admin_notification_preferences : "opt-in flags"
+    registrations ||--o{ registration_cancellation_tokens : "self-cancel link"
 
-    greenhouses {
-        uuid id PK
-        text name
-    }
-
-    planter_boxes {
+    tables {
         int id PK
-        text name
-        uuid greenhouse_id FK
         text state "available|occupied|reserved"
         text reserved_label
     }
 
     registrations {
         uuid id PK
-        int box_id FK
+        int table_id FK
         text name
         text email
-        text apartment_key UK
+        text apartment_key
         text status "active|switched|removed"
     }
 
@@ -251,6 +241,12 @@ erDiagram
     admin_credentials {
         uuid admin_id PK,FK
         text password_hash
+    }
+
+    admin_notification_preferences {
+        uuid admin_id PK,FK
+        boolean notify_user_registration
+        boolean notify_admin_table_action
     }
 
     sessions {
@@ -279,14 +275,22 @@ erDiagram
         jsonb before
         jsonb after
     }
+
+    registration_cancellation_tokens {
+        uuid id PK
+        text token_hash UK
+        uuid registration_id FK
+        timestamp expires_at
+        timestamp consumed_at
+    }
 ```
 
 ### Key Constraints
 
-- **One active registration per apartment** — Partial unique index on `apartment_key` where `status = 'active'`.
-- **One active occupant per box** — Partial unique index on `box_id` where `status = 'active'`.
+- **One active occupant per table** — Partial unique index on `table_id` where `status = 'active'`.
+- **Table id catalog** — Check constraint limits `tables.id` to the visible Fælledhuset catalog (1–24, with 22 skipped).
 - **Immutable audit trail** — Database trigger prevents UPDATE/DELETE on `audit_events`.
-- **Box states** — Enum constraint: `available`, `occupied`, `reserved`.
+- **Table states** — Enum constraint: `available`, `occupied`, `reserved`.
 - **FIFO waitlist** — Ordered by `created_at`; duplicate apartment preserves earliest timestamp.
 
 ## Infrastructure Architecture
@@ -431,9 +435,9 @@ graph LR
 
 The `@loppemarked/shared` package contains code used by both frontend and backend:
 
-- **Domain constants** — Greenhouse names, 29-box catalog, opening datetime, email config.
-- **Types** — Interfaces for all entities (`PlanterBoxPublic`, `Registration`, etc.).
-- **Validators** — Address, email, name validation with typed results.
+- **Domain constants** — Fælledhuset table catalog, opening datetime, email config, clothing-rack adjacency.
+- **Types** — Interfaces for all entities (`TablePublic`, `Table`, `Registration`, etc.).
+- **Validators** — Address, email, name, and table-id validation with typed results.
 - **DAWA** — Danish Address Web API types and helpers for address autocomplete.
 - **i18n contracts** — Translation key definitions and language labels.
-- **Enums** — Box states, registration statuses, audit actions.
+- **Enums** — Table states, registration statuses, audit actions.

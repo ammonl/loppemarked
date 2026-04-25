@@ -27,12 +27,6 @@ const da = {
   "nav.home": "Forside",
   "nav.about": "Om",
 
-  "greenhouse.title": "Drivhuse  |  2026 Tilmelding",
-  "greenhouse.totalBoxes": "Plantekasser i alt",
-  "greenhouse.available": "Ledige",
-  "greenhouse.occupied": "Optaget",
-  "greenhouse.reserved": "Reserveret",
-
   "landing.heroTitle": "2026 FORÅRETS LOPPEMARKED I FÆLLEDHUSET",
   "landing.heroBody":
     "Tilmeld dig vores hyggelige loppemarked i UN17 Village. Book dit loppebord og giv dine ting nyt liv i fællesskabets rammer. Vi ses!",
@@ -128,7 +122,7 @@ const da = {
   "audit.detail.address": "Adresse",
   "audit.detail.recipient": "Modtager",
   "audit.detail.subject": "Emne",
-  "audit.detail.box": "Kasse",
+  "audit.detail.table": "Bord",
   "audit.detail.stateChange": "Status",
   "audit.detail.action": "Handling",
   "audit.detail.before": "Før",
@@ -142,7 +136,7 @@ const da = {
   "audit.action.waitlist_remove": "Fjernet fra venteliste",
   "audit.action.waitlist_assign": "Venteliste tildelt",
   "audit.action.waitlist_reorder_preserve": "Venteliste genordnet",
-  "audit.action.box_state_change": "Kassestatus ændret",
+  "audit.action.table_state_change": "Bordstatus ændret",
   "audit.action.opening_datetime_change": "Åbningstidspunkt ændret",
   "audit.action.admin_create": "Administrator oprettet",
   "audit.action.admin_delete": "Administrator slettet",
@@ -158,13 +152,13 @@ const da = {
   "registration.houseNumberLabel": "Husnummer",
   "registration.floorLabel": "Etage",
   "registration.doorLabel": "Dør",
-  "registration.boxLabel": "Loppebord",
+  "registration.tableLabel": "Loppebord",
   "registration.switchWarning":
     "Din lejlighed har allerede et aktivt bord. Hvis du fortsætter, skifter du til det nye bord, og dit nuværende bord frigives.",
   "registration.switchConfirm": "Bekræft skifte",
   "registration.switchTitle": "Bekræft bordskifte",
-  "registration.switchCurrentBox": "Dit nuværende bord",
-  "registration.switchNewBox": "Nyt bord",
+  "registration.switchCurrentTable": "Dit nuværende bord",
+  "registration.switchNewTable": "Nyt bord",
   "registration.switchExplainer":
     "Hver lejlighed kan kun booke ét bord. Hvis du fortsætter, vil dit nuværende bord blive frigivet, og du vil blive tilmeldt det nye bord. Denne handling kan ikke fortrydes.",
   "registration.switchKeep": "Behold nuværende bord",
@@ -207,7 +201,7 @@ const da = {
   "validation.streetInvalid": "Gaden skal være Else Alfelts Vej",
   "validation.houseNumberInvalid": "Husnummer skal være mellem 122 og 202",
   "validation.floorDoorRequired": "Etage er påkrævet for denne adresse",
-  "validation.boxIdInvalid": "Ugyldigt loppebord",
+  "validation.tableIdInvalid": "Ugyldigt loppebord",
 
   "consent.title": "Databeskyttelse og samtykke",
   "consent.dataCollected":
@@ -257,7 +251,7 @@ const da = {
 
   "admin.tab.registrations": "Bookinger",
   "admin.tab.waitlist": "Venteliste",
-  "admin.tab.boxes": "Loppeborde",
+  "admin.tab.tables": "Loppeborde",
   "admin.tab.settings": "Indstillinger",
   "admin.tab.messaging": "E-mail",
   "admin.tab.audit": "Hændelseslog",
@@ -492,12 +486,6 @@ const en: Record<TranslationKey, string> = {
   "nav.home": "Home",
   "nav.about": "About",
 
-  "greenhouse.title": "Greenhouses  |  2026 Registration",
-  "greenhouse.totalBoxes": "Total boxes",
-  "greenhouse.available": "Available",
-  "greenhouse.occupied": "Occupied",
-  "greenhouse.reserved": "Reserved",
-
   "landing.heroTitle": "2026 SPRING LOPPEMARKED IN FÆLLEDHUSET",
   "landing.heroBody":
     "Sign up for our cozy flea market at UN17 Village. Book your table and give your things new life within our community. See you there!",
@@ -593,7 +581,7 @@ const en: Record<TranslationKey, string> = {
   "audit.detail.address": "Address",
   "audit.detail.recipient": "Recipient",
   "audit.detail.subject": "Subject",
-  "audit.detail.box": "Box",
+  "audit.detail.table": "Table",
   "audit.detail.stateChange": "State",
   "audit.detail.action": "Action",
   "audit.detail.before": "Before",
@@ -607,7 +595,7 @@ const en: Record<TranslationKey, string> = {
   "audit.action.waitlist_remove": "Removed from Waitlist",
   "audit.action.waitlist_assign": "Waitlist Assigned",
   "audit.action.waitlist_reorder_preserve": "Waitlist Reordered",
-  "audit.action.box_state_change": "Box State Changed",
+  "audit.action.table_state_change": "Table State Changed",
   "audit.action.opening_datetime_change": "Opening Time Changed",
   "audit.action.admin_create": "Admin Created",
   "audit.action.admin_delete": "Admin Deleted",
@@ -623,13 +611,13 @@ const en: Record<TranslationKey, string> = {
   "registration.houseNumberLabel": "House number",
   "registration.floorLabel": "Floor",
   "registration.doorLabel": "Door",
-  "registration.boxLabel": "Table",
+  "registration.tableLabel": "Table",
   "registration.switchWarning":
     "Your apartment already has an active booking. If you continue, you will switch to the new table and your current table will be released.",
   "registration.switchConfirm": "Confirm switch",
   "registration.switchTitle": "Confirm table switch",
-  "registration.switchCurrentBox": "Your current table",
-  "registration.switchNewBox": "New table",
+  "registration.switchCurrentTable": "Your current table",
+  "registration.switchNewTable": "New table",
   "registration.switchExplainer":
     "Each apartment may only book one table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
   "registration.switchKeep": "Keep current table",
@@ -672,7 +660,7 @@ const en: Record<TranslationKey, string> = {
   "validation.streetInvalid": "Street must be Else Alfelts Vej",
   "validation.houseNumberInvalid": "House number must be between 122 and 202",
   "validation.floorDoorRequired": "Floor is required for this address",
-  "validation.boxIdInvalid": "Invalid table",
+  "validation.tableIdInvalid": "Invalid table",
 
   "consent.title": "Data protection and consent",
   "consent.dataCollected":
@@ -722,7 +710,7 @@ const en: Record<TranslationKey, string> = {
 
   "admin.tab.registrations": "Bookings",
   "admin.tab.waitlist": "Waitlist",
-  "admin.tab.boxes": "Tables",
+  "admin.tab.tables": "Tables",
   "admin.tab.settings": "Settings",
   "admin.tab.messaging": "Email",
   "admin.tab.audit": "Audit Log",

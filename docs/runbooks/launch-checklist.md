@@ -29,9 +29,8 @@ Complete all checks in the staging environment before proceeding to production.
 
 ### 1.2 Database & Data
 
-- [x] Greenhouses seeded: Kronen, Søen
-- [x] All 29 planter boxes seeded with correct names and greenhouse assignments
-- [x] All boxes in `available` state (no stale registrations from testing)
+- [x] Flea-market tables seeded from the published Fælledhuset catalog (23 visible tables; ids 1–24 with 22 skipped)
+- [x] All tables in `available` state (no stale registrations from testing)
 - [x] System settings row exists with correct opening datetime
 - [x] Opening datetime matches planned launch: `2026-04-01T10:00:00 Europe/Copenhagen`
 - [x] Audit events table is empty or contains only seed/test data
@@ -39,13 +38,10 @@ Complete all checks in the staging environment before proceeding to production.
 **Verification queries (run against staging DB):**
 
 ```sql
-SELECT name FROM greenhouses ORDER BY name;
--- Result: Kronen, Søen
-
-SELECT COUNT(*) AS total_boxes,
+SELECT COUNT(*) AS total_tables,
        COUNT(*) FILTER (WHERE state = 'available') AS available
-FROM planter_boxes;
--- Result: total_boxes=29, available=29
+FROM tables;
+-- Result: total_tables=23, available=23
 
 SELECT opening_datetime AT TIME ZONE 'Europe/Copenhagen' AS opens_at
 FROM system_settings;
@@ -56,12 +52,12 @@ FROM system_settings;
 
 - [x] `GET /health` — returns 200
 - [x] `GET /public/status` — returns correct `isOpen` flag (should be `false` before opening date)
-- [x] `GET /public/greenhouses` — returns both greenhouses with correct box counts
-- [x] `GET /public/boxes` — returns all 29 boxes with correct states
+- [x] `GET /public/hall` — returns the aggregated hall counts
+- [x] `GET /public/tables` — returns all visible tables with correct states
 - [x] `POST /public/validate-address` — accepts eligible address, rejects ineligible
 - [x] `POST /public/validate-registration` — validates complete input
 - [x] `POST /public/register` — creates registration (use a test address, clean up after)
-- [x] `POST /public/waitlist` — rejects when boxes are available (correct behavior pre-launch)
+- [x] `POST /public/waitlist` — rejects when tables are available (correct behavior pre-launch)
 - [x] `POST /admin/auth/login` — admin login works with seeded credentials
 - [x] `GET /admin/registrations` — returns registrations (empty or test data)
 - [x] `PATCH /admin/settings/opening-time` — can update opening datetime
@@ -155,7 +151,7 @@ Application code is deployed via the Deploy API workflow on merge to `main`.
 ### 2.4 Database Setup
 
 - [x] Run migrations against production database
-- [x] Run seed script (greenhouses, boxes, system settings, admin accounts)
+- [x] Run seed script (tables, system settings, admin accounts)
 - [x] Verify seed data with the queries from section 1.2
 - [x] Change admin passwords from seed defaults immediately
 
@@ -191,14 +187,14 @@ curl -s "${PROD_API_URL}/public/status" | jq .
 
 ```bash
 # Greenhouse summaries
-curl -s "${PROD_API_URL}/public/greenhouses" | jq .
+curl -s "${PROD_API_URL}/public/hall" | jq .
 
 # All boxes
-curl -s "${PROD_API_URL}/public/boxes" | jq .
+curl -s "${PROD_API_URL}/public/tables" | jq .
 ```
 
-- [x] `/public/greenhouses` returns 2 greenhouses (Kronen, Søen) with correct total counts
-- [x] `/public/boxes` returns 29 boxes, all in `available` state
+- [x] `/public/hall` returns aggregate `totalTables`/`availableTables`/`occupiedTables` counts
+- [x] `/public/tables` returns the visible tables, all in `available` state
 - [x] No test or stale data present
 
 ### 3.3 Address Validation

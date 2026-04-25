@@ -10,7 +10,7 @@ import {
   normalizeApartmentKey,
   formatAddress,
   validateName,
-  validateBoxId,
+  validateTableId,
   validateLanguage,
   validateRegistrationInput,
   validateWaitlistInput,
@@ -259,23 +259,27 @@ describe("validateName", () => {
   });
 });
 
-describe("validateBoxId", () => {
-  it("accepts valid box IDs 1-29", () => {
-    expect(validateBoxId(1)).toEqual({ valid: true });
-    expect(validateBoxId(15)).toEqual({ valid: true });
-    expect(validateBoxId(29)).toEqual({ valid: true });
+describe("validateTableId", () => {
+  it("accepts catalog ids", () => {
+    expect(validateTableId(1)).toEqual({ valid: true });
+    expect(validateTableId(15)).toEqual({ valid: true });
+    expect(validateTableId(24)).toEqual({ valid: true });
   });
 
   it("rejects 0", () => {
-    expect(validateBoxId(0).valid).toBe(false);
+    expect(validateTableId(0).valid).toBe(false);
   });
 
-  it("rejects 30", () => {
-    expect(validateBoxId(30).valid).toBe(false);
+  it("rejects ids outside the catalog (e.g. 22)", () => {
+    expect(validateTableId(22).valid).toBe(false);
+  });
+
+  it("rejects ids beyond the catalog max", () => {
+    expect(validateTableId(25).valid).toBe(false);
   });
 
   it("rejects non-integers", () => {
-    expect(validateBoxId(1.5).valid).toBe(false);
+    expect(validateTableId(1.5).valid).toBe(false);
   });
 });
 
@@ -307,7 +311,7 @@ describe("validateRegistrationInput", () => {
     houseNumber: 130,
     floor: null,
     door: null,
-    boxId: 1,
+    tableId: 1,
     language: "da" as const,
   };
 
@@ -324,7 +328,7 @@ describe("validateRegistrationInput", () => {
     expect(result.errors["email"]).toBeDefined();
     expect(result.errors["street"]).toBeDefined();
     expect(result.errors["houseNumber"]).toBeDefined();
-    expect(result.errors["boxId"]).toBeDefined();
+    expect(result.errors["tableId"]).toBeDefined();
     expect(result.errors["language"]).toBeDefined();
   });
 
@@ -369,7 +373,6 @@ describe("validateWaitlistInput", () => {
     floor: null,
     door: null,
     language: "da" as const,
-    greenhousePreference: "any" as const,
   };
 
   it("accepts a fully valid input", () => {
@@ -378,10 +381,10 @@ describe("validateWaitlistInput", () => {
     expect(Object.keys(result.errors)).toHaveLength(0);
   });
 
-  it("does not require boxId (unlike registration)", () => {
+  it("does not require tableId (unlike registration)", () => {
     const result = validateWaitlistInput(validInput);
     expect(result.valid).toBe(true);
-    expect(result.errors["boxId"]).toBeUndefined();
+    expect(result.errors["tableId"]).toBeUndefined();
   });
 
   it("returns all field errors at once", () => {
@@ -392,8 +395,7 @@ describe("validateWaitlistInput", () => {
     expect(result.errors["street"]).toBeDefined();
     expect(result.errors["houseNumber"]).toBeDefined();
     expect(result.errors["language"]).toBeDefined();
-    expect(result.errors["greenhousePreference"]).toBeDefined();
-    expect(result.errors["boxId"]).toBeUndefined();
+    expect(result.errors["tableId"]).toBeUndefined();
   });
 
   it("validates floor/door when house number requires it", () => {
@@ -415,21 +417,5 @@ describe("validateWaitlistInput", () => {
       door: "th",
     });
     expect(result.valid).toBe(true);
-  });
-
-  it("accepts all valid greenhouse preferences", () => {
-    for (const pref of ["kronen", "søen", "any"] as const) {
-      const result = validateWaitlistInput({ ...validInput, greenhousePreference: pref });
-      expect(result.valid).toBe(true);
-    }
-  });
-
-  it("rejects invalid greenhouse preference", () => {
-    const result = validateWaitlistInput({
-      ...validInput,
-      greenhousePreference: "invalid" as never,
-    });
-    expect(result.valid).toBe(false);
-    expect(result.errors["greenhousePreference"]).toBeDefined();
   });
 });

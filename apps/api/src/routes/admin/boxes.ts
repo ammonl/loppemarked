@@ -1,31 +1,30 @@
+import { RESERVED_LABEL_DEFAULT } from "@loppemarked/shared";
 import { logAuditEvent } from "../../lib/audit.js";
 import { notifyAdmins } from "../../lib/admin-ops-notifications.js";
 import { badRequest, unauthorized } from "../../lib/errors.js";
 import type { RequestContext, RouteResponse } from "../../router.js";
 
-export async function handleAdminBoxes(ctx: RequestContext): Promise<RouteResponse> {
-  const boxes = await ctx.db
-    .selectFrom("planter_boxes")
-    .select(["id", "name", "greenhouse_name", "state", "reserved_label"])
+export async function handleAdminTables(ctx: RequestContext): Promise<RouteResponse> {
+  const tables = await ctx.db
+    .selectFrom("tables")
+    .select(["id", "state", "reserved_label"])
     .orderBy("id", "asc")
     .execute();
 
   const registrations = await ctx.db
     .selectFrom("registrations")
-    .select(["id", "box_id", "name", "email", "language", "status"])
+    .select(["id", "table_id", "name", "email", "language", "status"])
     .where("status", "=", "active")
     .execute();
 
-  const regByBox = new Map(registrations.map((r) => [r.box_id, r]));
+  const regByTable = new Map(registrations.map((r) => [r.table_id, r]));
 
-  const result = boxes.map((b) => {
-    const reg = regByBox.get(b.id);
+  const result = tables.map((t) => {
+    const reg = regByTable.get(t.id);
     return {
-      id: b.id,
-      name: b.name,
-      greenhouse: b.greenhouse_name,
-      state: b.state,
-      reservedLabel: b.reserved_label,
+      id: t.id,
+      state: t.state,
+      reservedLabel: t.reserved_label,
       registration: reg
         ? { id: reg.id, name: reg.name, email: reg.email, language: reg.language }
         : null,
@@ -38,124 +37,124 @@ export async function handleAdminBoxes(ctx: RequestContext): Promise<RouteRespon
   };
 }
 
-interface ReserveBoxBody {
-  boxId?: number;
+interface ReserveTableBody {
+  tableId?: number;
 }
 
-export async function handleReserveBox(ctx: RequestContext): Promise<RouteResponse> {
+export async function handleReserveTable(ctx: RequestContext): Promise<RouteResponse> {
   const adminId = ctx.adminId;
   if (!adminId) {
     throw unauthorized();
   }
 
-  const body = (ctx.body ?? {}) as ReserveBoxBody;
-  const { boxId } = body;
+  const body = (ctx.body ?? {}) as ReserveTableBody;
+  const { tableId } = body;
 
-  if (typeof boxId !== "number") {
-    throw badRequest("boxId is required");
+  if (typeof tableId !== "number") {
+    throw badRequest("tableId is required");
   }
 
   await ctx.db.transaction().execute(async (trx) => {
-    const box = await trx
-      .selectFrom("planter_boxes")
+    const table = await trx
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", boxId)
+      .where("id", "=", tableId)
       .forUpdate()
       .executeTakeFirst();
 
-    if (!box) {
-      throw badRequest("Box not found");
+    if (!table) {
+      throw badRequest("Table not found");
     }
-    if (box.state !== "available") {
-      throw badRequest("Only available boxes can be reserved");
+    if (table.state !== "available") {
+      throw badRequest("Only available tables can be reserved");
     }
 
     await trx
-      .updateTable("planter_boxes")
-      .set({ state: "reserved", reserved_label: "Admin Hold", updated_at: new Date().toISOString() })
-      .where("id", "=", boxId)
+      .updateTable("tables")
+      .set({ state: "reserved", reserved_label: RESERVED_LABEL_DEFAULT, updated_at: new Date().toISOString() })
+      .where("id", "=", tableId)
       .execute();
 
     await logAuditEvent(trx, {
       actor_type: "admin",
       actor_id: adminId,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(boxId),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(tableId),
       before: { state: "available" },
-      after: { state: "reserved", reserved_label: "Admin Hold" },
+      after: { state: "reserved", reserved_label: RESERVED_LABEL_DEFAULT },
     });
   });
 
   await notifyAdmins(ctx.db, {
-    type: "admin_box_reserve",
+    type: "admin_table_reserve",
     actingAdminId: adminId,
-    boxId,
+    tableId,
   });
 
   return {
     statusCode: 200,
-    body: { boxId, state: "reserved" },
+    body: { tableId, state: "reserved" },
   };
 }
 
-interface ReleaseBoxBody {
-  boxId?: number;
+interface ReleaseTableBody {
+  tableId?: number;
 }
 
-export async function handleReleaseBox(ctx: RequestContext): Promise<RouteResponse> {
+export async function handleReleaseTable(ctx: RequestContext): Promise<RouteResponse> {
   const adminId = ctx.adminId;
   if (!adminId) {
     throw unauthorized();
   }
 
-  const body = (ctx.body ?? {}) as ReleaseBoxBody;
-  const { boxId } = body;
+  const body = (ctx.body ?? {}) as ReleaseTableBody;
+  const { tableId } = body;
 
-  if (typeof boxId !== "number") {
-    throw badRequest("boxId is required");
+  if (typeof tableId !== "number") {
+    throw badRequest("tableId is required");
   }
 
   await ctx.db.transaction().execute(async (trx) => {
-    const box = await trx
-      .selectFrom("planter_boxes")
+    const table = await trx
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", boxId)
+      .where("id", "=", tableId)
       .forUpdate()
       .executeTakeFirst();
 
-    if (!box) {
-      throw badRequest("Box not found");
+    if (!table) {
+      throw badRequest("Table not found");
     }
-    if (box.state !== "reserved") {
-      throw badRequest("Only reserved boxes can be released");
+    if (table.state !== "reserved") {
+      throw badRequest("Only reserved tables can be released");
     }
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({ state: "available", reserved_label: null, updated_at: new Date().toISOString() })
-      .where("id", "=", boxId)
+      .where("id", "=", tableId)
       .execute();
 
     await logAuditEvent(trx, {
       actor_type: "admin",
       actor_id: adminId,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(boxId),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(tableId),
       before: { state: "reserved" },
       after: { state: "available" },
     });
   });
 
   await notifyAdmins(ctx.db, {
-    type: "admin_box_release",
+    type: "admin_table_release",
     actingAdminId: adminId,
-    boxId,
+    tableId,
   });
 
   return {
     statusCode: 200,
-    body: { boxId, state: "available" },
+    body: { tableId, state: "available" },
   };
 }

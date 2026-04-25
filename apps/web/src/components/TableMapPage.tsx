@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
+import type { TableCatalogEntry, TablePublic } from "@loppemarked/shared";
 import {
   VISIBLE_TABLE_IDS,
   getTableById,
@@ -24,18 +24,18 @@ type PageView = "map" | "waitlist";
 
 export function TableMapPage({ onBack }: TableMapPageProps) {
   const { t } = useLanguage();
-  const [boxes, setBoxes] = useState<PlanterBoxPublic[]>([]);
+  const [tables, setTables] = useState<TablePublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageView, setPageView] = useHistoryState<PageView>("tableMap.pageView", "map");
-  const [selectedBoxId, setSelectedBoxId] = useHistoryState<number | null>("tableMap.selectedBoxId", null);
+  const [selectedTableId, setSelectedTableId] = useHistoryState<number | null>("tableMap.selectedTableId", null);
   const [panelMode, setPanelMode] = useState<"closed" | "detail" | "form">("closed");
 
-  const fetchBoxes = useCallback(async () => {
+  const fetchTables = useCallback(async () => {
     try {
-      const res = await fetch("/public/boxes");
+      const res = await fetch("/public/tables");
       if (res.ok) {
-        const data: PlanterBoxPublic[] = await res.json();
-        setBoxes(data);
+        const data: TablePublic[] = await res.json();
+        setTables(data);
       }
     } catch {
       /* API unreachable — map shows empty; user will see all tables as occupied. */
@@ -45,31 +45,31 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
   }, []);
 
   useEffect(() => {
-    fetchBoxes();
-  }, [fetchBoxes]);
+    fetchTables();
+  }, [fetchTables]);
 
-  const boxesById = useMemo(() => {
-    const map = new Map<number, PlanterBoxPublic>();
-    for (const b of boxes) map.set(b.id, b);
+  const tablesById = useMemo(() => {
+    const map = new Map<number, TablePublic>();
+    for (const t of tables) map.set(t.id, t);
     return map;
-  }, [boxes]);
+  }, [tables]);
 
-  const visibleBoxes = useMemo(
-    () => boxes.filter((b) => VISIBLE_TABLE_IDS.includes(b.id)),
-    [boxes],
+  const visibleTables = useMemo(
+    () => tables.filter((t) => VISIBLE_TABLE_IDS.includes(t.id)),
+    [tables],
   );
-  const total = visibleBoxes.length;
-  const available = visibleBoxes.filter((b) => b.state === "available").length;
+  const total = visibleTables.length;
+  const available = visibleTables.filter((t) => t.state === "available").length;
   const reserved = total - available;
   const hasAvailable = available > 0;
 
   function handleSelectTable(table: TableCatalogEntry) {
-    setSelectedBoxId(table.id);
+    setSelectedTableId(table.id);
     setPanelMode("detail");
   }
 
   function closePanel() {
-    setSelectedBoxId(null);
+    setSelectedTableId(null);
     setPanelMode("closed");
   }
 
@@ -122,22 +122,22 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
 
       <div className="flea-map__layout">
         <TableMap
-          boxesById={boxesById}
-          selectedId={selectedBoxId}
+          tablesById={tablesById}
+          selectedId={selectedTableId}
           onSelect={handleSelectTable}
         />
 
         <DetailPanel
-          selectedBoxId={selectedBoxId}
-          boxesById={boxesById}
+          selectedTableId={selectedTableId}
+          tablesById={tablesById}
           panelMode={panelMode}
           onOpenForm={() => setPanelMode("form")}
           onClose={closePanel}
           onBookingSuccess={() => {
-            fetchBoxes();
+            fetchTables();
             closePanel();
           }}
-          onBoxUnavailable={() => {
+          onTableUnavailable={() => {
             closePanel();
             setPageView("waitlist");
           }}
@@ -148,26 +148,26 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
 }
 
 interface DetailPanelProps {
-  selectedBoxId: number | null;
-  boxesById: Map<number, PlanterBoxPublic>;
+  selectedTableId: number | null;
+  tablesById: Map<number, TablePublic>;
   panelMode: "closed" | "detail" | "form";
   onOpenForm: () => void;
   onClose: () => void;
   onBookingSuccess: () => void;
-  onBoxUnavailable: () => void;
+  onTableUnavailable: () => void;
 }
 
 function DetailPanel({
-  selectedBoxId,
-  boxesById,
+  selectedTableId,
+  tablesById,
   panelMode,
   onOpenForm,
   onClose,
   onBookingSuccess,
-  onBoxUnavailable,
+  onTableUnavailable,
 }: DetailPanelProps) {
   const { t } = useLanguage();
-  const open = panelMode !== "closed" && selectedBoxId !== null;
+  const open = panelMode !== "closed" && selectedTableId !== null;
   const panelRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -185,7 +185,7 @@ function DetailPanel({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, panelMode, onClose]);
 
-  if (!open || selectedBoxId === null) {
+  if (!open || selectedTableId === null) {
     return (
       <aside
         aria-hidden
@@ -196,10 +196,10 @@ function DetailPanel({
     );
   }
 
-  const box = boxesById.get(selectedBoxId);
-  const table = getTableById(selectedBoxId);
-  const isAvailable = box?.state === "available";
-  const headerNumber = table ? table.number : selectedBoxId;
+  const entry = tablesById.get(selectedTableId);
+  const table = getTableById(selectedTableId);
+  const isAvailable = entry?.state === "available";
+  const headerNumber = table ? table.number : selectedTableId;
 
   return (
     <>
@@ -232,7 +232,7 @@ function DetailPanel({
         </header>
 
         {panelMode === "detail" && (
-          <TableSummary boxId={selectedBoxId} isAvailable={isAvailable} />
+          <TableSummary tableId={selectedTableId} isAvailable={isAvailable} />
         )}
 
         {panelMode === "detail" && isAvailable && (
@@ -247,10 +247,10 @@ function DetailPanel({
 
         {panelMode === "form" && (
           <RegistrationForm
-            boxId={selectedBoxId}
+            tableId={selectedTableId}
             embedded
             onCancel={onClose}
-            onBoxUnavailable={onBoxUnavailable}
+            onTableUnavailable={onTableUnavailable}
             onSuccess={onBookingSuccess}
           />
         )}
@@ -259,16 +259,16 @@ function DetailPanel({
   );
 }
 
-function TableSummary({ boxId, isAvailable }: { boxId: number; isAvailable: boolean }) {
+function TableSummary({ tableId, isAvailable }: { tableId: number; isAvailable: boolean }) {
   const { t } = useLanguage();
-  const table = getTableById(boxId);
+  const table = getTableById(tableId);
   if (!table) return null;
   return (
     <div className="flea-map__summary">
       <p>
         <strong>{t("table.detailsSize")}:</strong> {STANDARD_TABLE_SIZE_LABEL}
       </p>
-      {tableHasClothingRack(boxId) && (
+      {tableHasClothingRack(tableId) && (
         <p className="flea-map__summary-rack">
           <span aria-hidden>🧥</span> {t("table.detailsRack")}
         </p>

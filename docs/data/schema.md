@@ -6,26 +6,26 @@ This document captures key data constraints from the product specification.
 
 - `admins`
 - `admin_credentials`
+- `admin_notification_preferences`
 - `sessions`
 - `system_settings`
-- `greenhouses`
-- `planter_boxes`
+- `tables`
 - `registrations`
 - `waitlist_entries`
 - `emails`
 - `audit_events`
+- `registration_cancellation_tokens`
 
 ## Critical Invariants
 
-1. One active registration per normalized apartment key.
-2. One active occupant per box.
-3. Box states are constrained to:
+1. One active occupant per table (partial unique index on `registrations.table_id` where `status = 'active'`).
+2. Table states are constrained to:
    - `available`
    - `occupied`
    - `reserved`
-4. Waitlist ordering is FIFO by first waitlist timestamp.
-5. If an apartment joins waitlist again, preserve earliest timestamp.
-6. Every critical mutation writes an immutable `audit_events` row with actor + before/after.
+3. Waitlist ordering is FIFO by first waitlist timestamp.
+4. If an apartment joins waitlist again, preserve earliest timestamp.
+5. Every critical mutation writes an immutable `audit_events` row with actor + before/after.
 
 ## Address Normalization Rules
 

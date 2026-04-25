@@ -1,8 +1,7 @@
 import type { ColumnType, Generated, Insertable, Selectable } from "kysely";
 
 export interface Database {
-  greenhouses: GreenhouseTable;
-  planter_boxes: PlanterBoxTable;
+  tables: TableTable;
   admins: AdminTable;
   admin_credentials: AdminCredentialTable;
   admin_notification_preferences: AdminNotificationPreferencesTable;
@@ -15,18 +14,11 @@ export interface Database {
   registration_cancellation_tokens: RegistrationCancellationTokenTable;
 }
 
-export interface GreenhouseTable {
-  name: string;
-  created_at: ColumnType<Date, string | undefined, never>;
-}
+type TableState = "available" | "occupied" | "reserved";
 
-type BoxState = "available" | "occupied" | "reserved";
-
-export interface PlanterBoxTable {
+export interface TableTable {
   id: number;
-  name: string;
-  greenhouse_name: string;
-  state: ColumnType<BoxState, BoxState | undefined, BoxState>;
+  state: ColumnType<TableState, TableState | undefined, TableState>;
   reserved_label: string | null;
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string>;
@@ -48,7 +40,7 @@ export interface AdminCredentialTable {
 export interface AdminNotificationPreferencesTable {
   admin_id: string;
   notify_user_registration: ColumnType<boolean, boolean | undefined, boolean>;
-  notify_admin_box_action: ColumnType<boolean, boolean | undefined, boolean>;
+  notify_admin_table_action: ColumnType<boolean, boolean | undefined, boolean>;
   updated_at: ColumnType<Date, string | undefined, string>;
 }
 
@@ -70,7 +62,7 @@ type Lang = "da" | "en";
 
 export interface RegistrationTable {
   id: Generated<string>;
-  box_id: number;
+  table_id: number;
   name: string;
   email: string;
   street: string;
@@ -85,7 +77,6 @@ export interface RegistrationTable {
 }
 
 type WaitlistStatus = "waiting" | "assigned" | "cancelled";
-type GreenhousePref = "kronen" | "søen" | "any";
 
 export interface WaitlistEntryTable {
   id: Generated<string>;
@@ -97,7 +88,6 @@ export interface WaitlistEntryTable {
   door: string | null;
   apartment_key: string;
   language: ColumnType<Lang, Lang | undefined, Lang>;
-  greenhouse_preference: ColumnType<GreenhousePref, GreenhousePref | undefined, GreenhousePref>;
   status: ColumnType<WaitlistStatus, WaitlistStatus | undefined, WaitlistStatus>;
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string>;
@@ -139,10 +129,8 @@ export interface AuditEventTable {
   reason: string | null;
 }
 
-export type Greenhouse = Selectable<GreenhouseTable>;
-export type NewGreenhouse = Insertable<GreenhouseTable>;
-export type PlanterBox = Selectable<PlanterBoxTable>;
-export type NewPlanterBox = Insertable<PlanterBoxTable>;
+export type Table = Selectable<TableTable>;
+export type NewTable = Insertable<TableTable>;
 export type Admin = Selectable<AdminTable>;
 export type NewAdmin = Insertable<AdminTable>;
 export type AdminCredential = Selectable<AdminCredentialTable>;

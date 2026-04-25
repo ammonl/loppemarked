@@ -165,27 +165,27 @@ export async function handleListAuditEvents(ctx: RequestContext): Promise<RouteR
     adminMap = new Map(admins.map((a) => [a.id, a.email]));
   }
 
-  const boxIds = new Set<number>();
+  const tableIds = new Set<number>();
   for (const e of events) {
-    if (e.entity_type === "planter_box") {
+    if (e.entity_type === "table") {
       const parsed = Number(e.entity_id);
-      if (!isNaN(parsed)) boxIds.add(parsed);
+      if (!isNaN(parsed)) tableIds.add(parsed);
     }
-    const beforeBoxId = (e.before as Record<string, unknown> | null)?.box_id;
-    const afterBoxId = (e.after as Record<string, unknown> | null)?.box_id;
-    for (const rawId of [beforeBoxId, afterBoxId]) {
+    const beforeTableId = (e.before as Record<string, unknown> | null)?.table_id;
+    const afterTableId = (e.after as Record<string, unknown> | null)?.table_id;
+    for (const rawId of [beforeTableId, afterTableId]) {
       if (typeof rawId === "number") {
-        boxIds.add(rawId);
+        tableIds.add(rawId);
       } else if (typeof rawId === "string") {
         const parsed = Number(rawId);
-        if (!isNaN(parsed)) boxIds.add(parsed);
+        if (!isNaN(parsed)) tableIds.add(parsed);
       }
     }
   }
 
-  const boxLabels: Record<string, string> = {};
-  for (const id of boxIds) {
-    boxLabels[String(id)] = `Table #${id}`;
+  const tableLabels: Record<string, string> = {};
+  for (const id of tableIds) {
+    tableLabels[String(id)] = `Table #${id}`;
   }
 
   return {
@@ -206,7 +206,7 @@ export async function handleListAuditEvents(ctx: RequestContext): Promise<RouteR
         after: e.after,
         reason: e.reason,
       })),
-      boxLabels,
+      tableLabels,
       nextCursor,
       hasMore,
     },

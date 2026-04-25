@@ -50,7 +50,7 @@ describe("handleListRegistrations", () => {
 
   it("returns registrations from database", async () => {
     const mockRegs = [
-      { id: "r1", box_id: 1, name: "Alice", status: "active" },
+      { id: "r1", table_id: 1, name: "Alice", status: "active" },
     ];
     const executeFn = vi.fn().mockResolvedValue(mockRegs);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
@@ -78,7 +78,7 @@ describe("handleCreateRegistration", () => {
 
   it("throws 400 when required fields are missing", async () => {
     try {
-      await handleCreateRegistration(makeCtx({ body: { boxId: 1 } }));
+      await handleCreateRegistration(makeCtx({ body: { tableId: 1 } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -96,7 +96,7 @@ describe("handleCreateRegistration", () => {
         makeCtx({
           db: mockDb,
           body: {
-            boxId: 99,
+            tableId: 99,
             name: "Alice",
             email: "a@b.com",
             street: "Else Alfelts Vej",
@@ -109,7 +109,7 @@ describe("handleCreateRegistration", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
-      expect((err as AppError).message).toBe("Box not found");
+      expect((err as AppError).message).toBe("Table not found");
     }
   });
 
@@ -123,7 +123,7 @@ describe("handleCreateRegistration", () => {
         makeCtx({
           db: mockDb,
           body: {
-            boxId: 1,
+            tableId: 1,
             name: "Alice",
             email: "a@b.com",
             street: "Else Alfelts Vej",
@@ -136,7 +136,7 @@ describe("handleCreateRegistration", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(409);
-      expect((err as AppError).code).toBe("BOX_OCCUPIED");
+      expect((err as AppError).code).toBe("TABLE_OCCUPIED");
     }
   });
 });
@@ -152,7 +152,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -164,7 +164,7 @@ describe("handleCreateRegistration (happy path)", () => {
     expect(result.statusCode).toBe(201);
     const body = result.body as Record<string, unknown>;
     expect(body.id).toBe("new-reg-id");
-    expect(body.boxId).toBe(1);
+    expect(body.tableId).toBe(1);
     expect(body.apartmentKey).toBe("else alfelts vej 130");
   });
 
@@ -173,7 +173,7 @@ describe("handleCreateRegistration (happy path)", () => {
       await handleCreateRegistration(
         makeCtx({
           body: {
-            boxId: 1,
+            tableId: 1,
             name: "Alice",
             email: "a@b.com",
             street: "Else Alfelts Vej",
@@ -200,7 +200,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -225,7 +225,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 3,
+          tableId: 3,
           name: "Alice",
           email: "alice@example.com",
           street: "Else Alfelts Vej",
@@ -259,7 +259,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -282,7 +282,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -317,7 +317,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -353,7 +353,7 @@ describe("handleCreateRegistration (happy path)", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -461,14 +461,14 @@ describe("handleAssignWaitlist", () => {
     const result = await handleAssignWaitlist(
       makeCtx({
         db: mockDb,
-        body: { waitlistEntryId: "wl-1", boxId: 5 },
+        body: { waitlistEntryId: "wl-1", tableId: 5 },
       }),
     );
     expect(result.statusCode).toBe(201);
     const body = result.body as Record<string, unknown>;
     expect(body.registrationId).toBe("reg-from-wl");
     expect(body.waitlistEntryId).toBe("wl-1");
-    expect(body.boxId).toBe(5);
+    expect(body.tableId).toBe(5);
   });
 
   it("throws 409 when box is occupied", async () => {
@@ -493,14 +493,14 @@ describe("handleAssignWaitlist", () => {
       await handleAssignWaitlist(
         makeCtx({
           db: mockDb,
-          body: { waitlistEntryId: "wl-1", boxId: 5 },
+          body: { waitlistEntryId: "wl-1", tableId: 5 },
         }),
       );
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(409);
-      expect((err as AppError).code).toBe("BOX_OCCUPIED");
+      expect((err as AppError).code).toBe("TABLE_OCCUPIED");
     }
   });
 
@@ -515,7 +515,7 @@ describe("handleAssignWaitlist", () => {
       await handleAssignWaitlist(
         makeCtx({
           db: mockDb,
-          body: { waitlistEntryId: "wl-missing", boxId: 5 },
+          body: { waitlistEntryId: "wl-missing", tableId: 5 },
         }),
       );
       expect.fail("should have thrown");
@@ -558,7 +558,7 @@ describe("handleNotificationPreview", () => {
             recipientName: "Alice",
             recipientEmail: "a@b.com",
             language: "da",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -579,7 +579,7 @@ describe("handleNotificationPreview", () => {
             recipientName: "Alice",
             recipientEmail: "a@b.com",
             language: "fr",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -591,7 +591,7 @@ describe("handleNotificationPreview", () => {
     }
   });
 
-  it("throws 400 for move without oldBoxId", async () => {
+  it("throws 400 for move without oldTableId", async () => {
     try {
       await handleNotificationPreview(
         makeCtx({
@@ -600,7 +600,7 @@ describe("handleNotificationPreview", () => {
             recipientName: "Alice",
             recipientEmail: "a@b.com",
             language: "da",
-            boxId: 1,
+            tableId: 1,
           },
         }),
       );
@@ -608,7 +608,7 @@ describe("handleNotificationPreview", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
-      expect((err as AppError).message).toContain("oldBoxId");
+      expect((err as AppError).message).toContain("oldTableId");
     }
   });
 
@@ -620,7 +620,7 @@ describe("handleNotificationPreview", () => {
           recipientName: "Anna Jensen",
           recipientEmail: "anna@example.com",
           language: "da",
-          boxId: 3,
+          tableId: 3,
         },
       }),
     );
@@ -640,8 +640,8 @@ describe("handleNotificationPreview", () => {
           recipientName: "Anna Jensen",
           recipientEmail: "anna@example.com",
           language: "en",
-          boxId: 20,
-          oldBoxId: 3,
+          tableId: 20,
+          oldTableId: 3,
         },
       }),
     );
@@ -659,7 +659,7 @@ describe("handleNotificationPreview", () => {
           recipientName: "Anna Jensen",
           recipientEmail: "anna@example.com",
           language: "en",
-          boxId: 3,
+          tableId: 3,
         },
       }),
     );
@@ -672,7 +672,7 @@ describe("handleNotificationPreview", () => {
 describe("handleMoveRegistration (happy path)", () => {
   it("moves registration to a new box", async () => {
     const mockDb = makeMockMoveDb({
-      reg: { id: "reg-1", box_id: 1, name: "Alice", email: "a@b.com", language: "da", status: "active" },
+      reg: { id: "reg-1", table_id: 1, name: "Alice", email: "a@b.com", language: "da", status: "active" },
       oldBox: { id: 1, state: "occupied" },
       newBox: { id: 5, state: "available" },
     });
@@ -680,13 +680,13 @@ describe("handleMoveRegistration (happy path)", () => {
     const result = await handleMoveRegistration(
       makeCtx({
         db: mockDb,
-        body: { registrationId: "reg-1", newBoxId: 5 },
+        body: { registrationId: "reg-1", newTableId: 5 },
       }),
     );
     expect(result.statusCode).toBe(200);
     const body = result.body as Record<string, unknown>;
     expect(body.registrationId).toBe("reg-1");
-    expect(body.newBoxId).toBe(5);
+    expect(body.newTableId).toBe(5);
   });
 
   it("throws 404 when registration not found", async () => {
@@ -694,7 +694,7 @@ describe("handleMoveRegistration (happy path)", () => {
 
     try {
       await handleMoveRegistration(
-        makeCtx({ db: mockDb, body: { registrationId: "nonexistent", newBoxId: 5 } }),
+        makeCtx({ db: mockDb, body: { registrationId: "nonexistent", newTableId: 5 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
@@ -705,12 +705,12 @@ describe("handleMoveRegistration (happy path)", () => {
 
   it("throws 400 when registration is not active", async () => {
     const mockDb = makeMockMoveDb({
-      reg: { id: "reg-1", box_id: 1, name: "A", email: "a@b.com", language: "da", status: "removed" },
+      reg: { id: "reg-1", table_id: 1, name: "A", email: "a@b.com", language: "da", status: "removed" },
     });
 
     try {
       await handleMoveRegistration(
-        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newBoxId: 5 } }),
+        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newTableId: 5 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
@@ -722,37 +722,37 @@ describe("handleMoveRegistration (happy path)", () => {
 
   it("throws 400 when new box is same as current", async () => {
     const mockDb = makeMockMoveDb({
-      reg: { id: "reg-1", box_id: 5, name: "A", email: "a@b.com", language: "da", status: "active" },
+      reg: { id: "reg-1", table_id: 5, name: "A", email: "a@b.com", language: "da", status: "active" },
     });
 
     try {
       await handleMoveRegistration(
-        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newBoxId: 5 } }),
+        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newTableId: 5 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
-      expect((err as AppError).message).toBe("New box must be different from current box");
+      expect((err as AppError).message).toBe("New table must be different from current table");
     }
   });
 
   it("throws 409 when target box is occupied", async () => {
     const mockDb = makeMockMoveDb({
-      reg: { id: "reg-1", box_id: 1, name: "A", email: "a@b.com", language: "da", status: "active" },
+      reg: { id: "reg-1", table_id: 1, name: "A", email: "a@b.com", language: "da", status: "active" },
       oldBox: { id: 1, state: "occupied" },
       newBox: { id: 5, state: "occupied" },
     });
 
     try {
       await handleMoveRegistration(
-        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newBoxId: 5 } }),
+        makeCtx({ db: mockDb, body: { registrationId: "reg-1", newTableId: 5 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(409);
-      expect((err as AppError).code).toBe("BOX_OCCUPIED");
+      expect((err as AppError).code).toBe("TABLE_OCCUPIED");
     }
   });
 });
@@ -761,7 +761,7 @@ describe("handleRemoveRegistration (happy path)", () => {
   it("removes registration and releases box as public (default)", async () => {
     const mockDb = makeMockRemoveDb({
       reg: {
-        id: "reg-1", box_id: 3, status: "active",
+        id: "reg-1", table_id: 3, status: "active",
         name: "Alice", email: "a@b.com", language: "da", apartment_key: "else alfelts vej 130",
       },
     });
@@ -772,23 +772,23 @@ describe("handleRemoveRegistration (happy path)", () => {
     expect(result.statusCode).toBe(200);
     const body = result.body as Record<string, unknown>;
     expect(body.registrationId).toBe("reg-1");
-    expect(body.boxReleased).toBe(true);
+    expect(body.tableReleased).toBe(true);
   });
 
-  it("removes registration and holds box as reserved when makeBoxPublic is false", async () => {
+  it("removes registration and holds box as reserved when makeTablePublic is false", async () => {
     const mockDb = makeMockRemoveDb({
       reg: {
-        id: "reg-1", box_id: 3, status: "active",
+        id: "reg-1", table_id: 3, status: "active",
         name: "Alice", email: "a@b.com", language: "da", apartment_key: "else alfelts vej 130",
       },
     });
 
     const result = await handleRemoveRegistration(
-      makeCtx({ db: mockDb, body: { registrationId: "reg-1", makeBoxPublic: false } }),
+      makeCtx({ db: mockDb, body: { registrationId: "reg-1", makeTablePublic: false } }),
     );
     expect(result.statusCode).toBe(200);
     const body = result.body as Record<string, unknown>;
-    expect(body.boxReleased).toBe(false);
+    expect(body.tableReleased).toBe(false);
   });
 
   it("throws 404 when registration not found", async () => {
@@ -808,7 +808,7 @@ describe("handleRemoveRegistration (happy path)", () => {
   it("throws 400 when registration is not active", async () => {
     const mockDb = makeMockRemoveDb({
       reg: {
-        id: "reg-1", box_id: 3, status: "removed",
+        id: "reg-1", table_id: 3, status: "removed",
         name: "A", email: "a@b.com", language: "da", apartment_key: "key",
       },
     });
@@ -840,12 +840,12 @@ describe("handleAssignWaitlist (happy path)", () => {
     });
 
     const result = await handleAssignWaitlist(
-      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", tableId: 10 } }),
     );
     expect(result.statusCode).toBe(201);
     const body = result.body as Record<string, unknown>;
     expect(body.waitlistEntryId).toBe("wl-1");
-    expect(body.boxId).toBe(10);
+    expect(body.tableId).toBe(10);
     expect(body.registrationId).toBeTruthy();
   });
 
@@ -854,7 +854,7 @@ describe("handleAssignWaitlist (happy path)", () => {
 
     try {
       await handleAssignWaitlist(
-        makeCtx({ db: mockDb, body: { waitlistEntryId: "nonexistent", boxId: 10 } }),
+        makeCtx({ db: mockDb, body: { waitlistEntryId: "nonexistent", tableId: 10 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
@@ -875,7 +875,7 @@ describe("handleAssignWaitlist (happy path)", () => {
 
     try {
       await handleAssignWaitlist(
-        makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+        makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", tableId: 10 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
@@ -898,13 +898,13 @@ describe("handleAssignWaitlist (happy path)", () => {
 
     try {
       await handleAssignWaitlist(
-        makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+        makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", tableId: 10 } }),
       );
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(409);
-      expect((err as AppError).code).toBe("BOX_OCCUPIED");
+      expect((err as AppError).code).toBe("TABLE_OCCUPIED");
     }
   });
 
@@ -921,7 +921,7 @@ describe("handleAssignWaitlist (happy path)", () => {
     });
 
     const result = await handleAssignWaitlist(
-      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", tableId: 10 } }),
     );
     expect(result.statusCode).toBe(409);
     const body = result.body as Record<string, unknown>;
@@ -949,7 +949,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
     });
 
     await handleAssignWaitlist(
-      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", tableId: 10 } }),
     );
 
     expect(notifyDownstreamWaitlist).not.toHaveBeenCalled();
@@ -972,7 +972,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
     await handleAssignWaitlist(
       makeCtx({
         db: mockDb,
-        body: { waitlistEntryId: "wl-1", boxId: 10, notifyDownstream: true },
+        body: { waitlistEntryId: "wl-1", tableId: 10, notifyDownstream: true },
       }),
     );
 
@@ -1003,7 +1003,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
     const result = await handleAssignWaitlist(
       makeCtx({
         db: mockDb,
-        body: { waitlistEntryId: "wl-1", boxId: 10, notifyDownstream: true },
+        body: { waitlistEntryId: "wl-1", tableId: 10, notifyDownstream: true },
       }),
     );
 
@@ -1023,7 +1023,7 @@ describe("duplicate-address warning in admin create", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -1047,7 +1047,7 @@ describe("duplicate-address warning in admin create", () => {
       makeCtx({
         db: mockDb,
         body: {
-          boxId: 1,
+          tableId: 1,
           name: "Alice",
           email: "a@b.com",
           street: "Else Alfelts Vej",
@@ -1064,7 +1064,7 @@ describe("duplicate-address warning in admin create", () => {
 });
 
 function makeMockMoveDb(opts: {
-  reg?: { id: string; box_id: number; name: string; email: string; language: string; status: string };
+  reg?: { id: string; table_id: number; name: string; email: string; language: string; status: string };
   oldBox?: { id: number; state: string };
   newBox?: { id: number; state: string };
 }): Kysely<Database> {
@@ -1084,7 +1084,7 @@ function makeMockMoveDb(opts: {
           }),
         };
       }
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         boxCallCount++;
         const boxData = boxCallCount === 1 ? opts.oldBox : opts.newBox;
         return {
@@ -1139,7 +1139,7 @@ function makeMockMoveDb(opts: {
 
 function makeMockRemoveDb(opts: {
   reg?: {
-    id: string; box_id: number; status: string;
+    id: string; table_id: number; status: string;
     name: string; email: string; language: string; apartment_key: string;
   };
 }): Kysely<Database> {
@@ -1221,7 +1221,7 @@ function makeMockAssignDb(opts: {
           }),
         };
       }
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -1302,7 +1302,7 @@ function makeMockTrxDb(
   const existingRegs = opts.existingReg ? [opts.existingReg] : [];
   const mockTrx = {
     selectFrom: vi.fn().mockImplementation((table: string) => {
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -1411,7 +1411,7 @@ function makeMockAssignWaitlistDb(opts: MockAssignWaitlistOpts): Kysely<Database
           }),
         };
       }
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({

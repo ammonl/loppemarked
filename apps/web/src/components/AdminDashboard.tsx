@@ -19,10 +19,10 @@ type Tab = "registrations" | "waitlist" | "boxes" | "messaging" | "settings" | "
 const BASE_TABS: Tab[] = ["boxes", "waitlist", "registrations", "messaging", "settings", "audit", "account"];
 const TABS: Tab[] = isStaging ? [...BASE_TABS, "stagingTools"] : BASE_TABS;
 
-const TAB_KEYS: Record<Tab, "admin.tab.registrations" | "admin.tab.waitlist" | "admin.tab.boxes" | "admin.tab.messaging" | "admin.tab.settings" | "admin.tab.audit" | "admin.tab.account" | "admin.tab.stagingTools"> = {
+const TAB_KEYS: Record<Tab, "admin.tab.registrations" | "admin.tab.waitlist" | "admin.tab.tables" | "admin.tab.messaging" | "admin.tab.settings" | "admin.tab.audit" | "admin.tab.account" | "admin.tab.stagingTools"> = {
   registrations: "admin.tab.registrations",
   waitlist: "admin.tab.waitlist",
-  boxes: "admin.tab.boxes",
+  boxes: "admin.tab.tables",
   messaging: "admin.tab.messaging",
   settings: "admin.tab.settings",
   audit: "admin.tab.audit",

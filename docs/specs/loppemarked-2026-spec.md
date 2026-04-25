@@ -298,20 +298,20 @@ Søen:
 ### 10.1 Core Tables
 - `admins`
 - `admin_credentials`
+- `admin_notification_preferences`
 - `sessions`
 - `system_settings`
-- `greenhouses`
-- `planter_boxes`
+- `tables`
 - `registrations`
 - `waitlist_entries`
 - `emails`
 - `audit_events`
+- `registration_cancellation_tokens`
 
 ### 10.2 Key Constraints
-- One active registration per normalized apartment key.
-- One active occupant per box where box state is occupiable.
+- One active occupant per table where table state is occupiable.
 - Waitlist uniqueness by apartment key with earliest timestamp preserved.
-- Box states:
+- Table states:
   - `available`
   - `occupied`
   - `reserved`
@@ -320,8 +320,8 @@ Søen:
 
 ### 11.1 Public
 - `GET /public/status` (open/closed, opening datetime)
-- `GET /public/greenhouses` (summary counts)
-- `GET /public/boxes` (public-safe box state)
+- `GET /public/hall` (aggregate hall counts)
+- `GET /public/tables` (public-safe table state)
 - `POST /public/register`
 - `POST /public/waitlist`
 
@@ -446,8 +446,7 @@ Søen:
 - Repo scaffolding and app CI
 - DB schema + migrations
 - Seed data:
-  - greenhouses
-  - 29 planter boxes
+  - flea-market tables (Fælledhuset catalog)
   - initial admins
   - default opening datetime
 - Basic public read endpoints

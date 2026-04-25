@@ -17,7 +17,7 @@ interface Recipient {
 async function queryRecipients(ctx: RequestContext): Promise<Recipient[]> {
   const query = ctx.db
     .selectFrom("registrations")
-    .innerJoin("planter_boxes", "planter_boxes.id", "registrations.box_id")
+    .innerJoin("tables", "tables.id", "registrations.table_id")
     .select([
       "registrations.email",
       "registrations.name",

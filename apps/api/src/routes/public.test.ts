@@ -12,8 +12,8 @@ import {
   handleCancellationConfirm,
   handleCancellationInfo,
   handleJoinWaitlist,
-  handlePublicBoxes,
-  handlePublicGreenhouses,
+  handlePublicTables,
+  handlePublicHallSummary,
   handlePublicRegister,
   handlePublicStatus,
   handleValidateAddress,
@@ -55,7 +55,7 @@ describe("handlePublicStatus — server-authoritative time gate", () => {
         if (table === "system_settings") {
           return { select: selectFn };
         }
-        if (table === "planter_boxes") {
+        if (table === "tables") {
           return { select: countSelectFn };
         }
         return {};
@@ -73,7 +73,7 @@ describe("handlePublicStatus — server-authoritative time gate", () => {
     const body = res.body as Record<string, unknown>;
     expect(body.isOpen).toBe(false);
     expect(body.openingDatetime).toBe(futureDate.toISOString());
-    expect(body.hasAvailableBoxes).toBe(true);
+    expect(body.hasAvailableTables).toBe(true);
   });
 
   it("returns isOpen true when opening is in the past", async () => {
@@ -95,7 +95,7 @@ describe("handlePublicStatus — server-authoritative time gate", () => {
     const body = res.body as Record<string, unknown>;
     expect(body.isOpen).toBe(false);
     expect(body.openingDatetime).toBeNull();
-    expect(body.hasAvailableBoxes).toBe(false);
+    expect(body.hasAvailableTables).toBe(false);
   });
 
   it("includes serverTime in response", async () => {
@@ -163,16 +163,16 @@ describe("handlePublicStatus — server-authoritative time gate", () => {
     vi.useRealTimers();
   });
 
-  it("hasAvailableBoxes reflects real count", async () => {
+  it("hasAvailableTables reflects real count", async () => {
     const pastDate = new Date(Date.now() - 86_400_000);
 
     const noBoxesDb = makeMockDbForStatus(pastDate, 0);
     const res1 = await handlePublicStatus(makeCtx({ db: noBoxesDb }));
-    expect((res1.body as Record<string, unknown>).hasAvailableBoxes).toBe(false);
+    expect((res1.body as Record<string, unknown>).hasAvailableTables).toBe(false);
 
     const someBoxesDb = makeMockDbForStatus(pastDate, 3);
     const res2 = await handlePublicStatus(makeCtx({ db: someBoxesDb }));
-    expect((res2.body as Record<string, unknown>).hasAvailableBoxes).toBe(true);
+    expect((res2.body as Record<string, unknown>).hasAvailableTables).toBe(true);
   });
 });
 
@@ -184,7 +184,7 @@ describe("handlePublicRegister — server time gate boundary", () => {
     houseNumber: 130,
     floor: null,
     door: null,
-    boxId: 1,
+    tableId: 1,
     language: "da",
   };
 
@@ -309,7 +309,7 @@ describe("handleValidateRegistration", () => {
     houseNumber: 130,
     floor: null,
     door: null,
-    boxId: 1,
+    tableId: 1,
     language: "da",
   };
 
@@ -360,7 +360,7 @@ describe("handlePublicRegister", () => {
     houseNumber: 130,
     floor: null,
     door: null,
-    boxId: 1,
+    tableId: 1,
     language: "da",
   };
 
@@ -418,7 +418,7 @@ describe("handlePublicRegister", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
-      expect((err as AppError).message).toBe("Box not found");
+      expect((err as AppError).message).toBe("Table not found");
     }
   });
 
@@ -435,7 +435,7 @@ describe("handlePublicRegister", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(409);
-      expect((err as AppError).code).toBe("BOX_UNAVAILABLE");
+      expect((err as AppError).code).toBe("TABLE_UNAVAILABLE");
     }
   });
 
@@ -444,19 +444,17 @@ describe("handlePublicRegister", () => {
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
       box: { id: 1, state: "available" },
-      existingReg: { id: "reg-old", box_id: 5, name: "Alice", email: "a@b.com", status: "active" },
+      existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
     });
 
     const res = await handlePublicRegister(makeCtx({ db: mockDb, body: validRegBody }));
     expect(res.statusCode).toBe(409);
     const body = res.body as Record<string, unknown>;
     expect(body.code).toBe("SWITCH_REQUIRED");
-    expect(body.existingBoxId).toBe(5);
-    expect(body.existingBoxName).toBe("Daisy");
-    expect(body.existingGreenhouse).toBe("Kronen");
-    expect(body.newBoxId).toBe(1);
-    expect(body.newBoxName).toBe("Linaria");
-    expect(body.newGreenhouse).toBe("Kronen");
+    expect(body.existingTableId).toBe(5);
+    expect(body.existingTableLabel).toBe("Table #5");
+    expect(body.newTableId).toBe(1);
+    expect(body.newTableLabel).toBe("Table #1");
   });
 
   it("creates registration for new apartment (no existing)", async () => {
@@ -472,7 +470,7 @@ describe("handlePublicRegister", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.registrationId).toBe("reg-new");
-    expect(body.boxId).toBe(1);
+    expect(body.tableId).toBe(1);
     expect(body.apartmentKey).toBe("else alfelts vej 130");
   });
 
@@ -481,7 +479,7 @@ describe("handlePublicRegister", () => {
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
       box: { id: 1, state: "available" },
-      existingReg: { id: "reg-old", box_id: 5, name: "Alice", email: "a@b.com", status: "active" },
+      existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
       newRegId: "reg-new",
     });
 
@@ -491,7 +489,7 @@ describe("handlePublicRegister", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.registrationId).toBe("reg-new");
-    expect(body.boxId).toBe(1);
+    expect(body.tableId).toBe(1);
   });
 });
 
@@ -535,7 +533,7 @@ describe("handleJoinWaitlist", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
-      expect((err as AppError).code).toBe("BOXES_AVAILABLE");
+      expect((err as AppError).code).toBe("TABLES_AVAILABLE");
     }
   });
 
@@ -568,7 +566,7 @@ describe("handleJoinWaitlist", () => {
     expect(mockDb.transaction).not.toHaveBeenCalled();
   });
 
-  it("blocks waitlist signup with registration check before BOXES_AVAILABLE check", async () => {
+  it("blocks waitlist signup with registration check before TABLES_AVAILABLE check", async () => {
     const mockDb = makeMockDbForWaitlist({
       availableCount: 5,
       existingRegistrationId: "reg-existing",
@@ -658,7 +656,7 @@ describe("handleJoinWaitlist (happy path)", () => {
 
     await expect(
       handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody })),
-    ).rejects.toMatchObject({ code: "BOXES_AVAILABLE" });
+    ).rejects.toMatchObject({ code: "TABLES_AVAILABLE" });
 
     const insertCalls = (mockDb.insertInto as ReturnType<typeof vi.fn>).mock.calls;
     const emailCalls = insertCalls.filter(
@@ -772,7 +770,7 @@ describe("server-side floor/door normalization (issue #97)", () => {
             houseNumber: 122,
             floor: "2",
             door: "th",
-            boxId: 1,
+            tableId: 1,
             language: "da",
           },
         }),
@@ -813,7 +811,7 @@ describe("server-side floor/door normalization (issue #97)", () => {
             houseNumber: 122,
             floor: "2",
             door: "th",
-            boxId: 1,
+            tableId: 1,
             language: "da",
           },
         }),
@@ -853,7 +851,7 @@ describe("server-side floor/door normalization (issue #97)", () => {
             houseNumber: 138,
             floor: "2",
             door: "th",
-            boxId: 1,
+            tableId: 1,
             language: "da",
           },
         }),
@@ -982,61 +980,51 @@ describe("handleWaitlistPosition", () => {
   });
 });
 
-describe("handlePublicGreenhouses", () => {
-  it("returns greenhouse summaries with live box counts", async () => {
-    const mockBoxes = [
-      { greenhouse_name: "Kronen", state: "available" },
-      { greenhouse_name: "Kronen", state: "occupied" },
-      { greenhouse_name: "Kronen", state: "available" },
-      { greenhouse_name: "Søen", state: "occupied" },
-      { greenhouse_name: "Søen", state: "reserved" },
+describe("handlePublicHallSummary", () => {
+  it("returns hall counts that aggregate across all tables", async () => {
+    const mockTables = [
+      { state: "available" },
+      { state: "occupied" },
+      { state: "available" },
+      { state: "occupied" },
+      { state: "reserved" },
     ];
-    const executeFn = vi.fn().mockResolvedValue(mockBoxes);
+    const executeFn = vi.fn().mockResolvedValue(mockTables);
     const selectFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicGreenhouses(makeCtx({ db: mockDb }));
+    const res = await handlePublicHallSummary(makeCtx({ db: mockDb }));
     expect(res.statusCode).toBe(200);
-    const body = res.body as Array<Record<string, unknown>>;
-    expect(body).toHaveLength(2);
+    const body = res.body as Record<string, unknown>;
 
-    const kronen = body.find((g) => g.name === "Kronen")!;
-    expect(kronen.totalBoxes).toBe(3);
-    expect(kronen.availableBoxes).toBe(2);
-    expect(kronen.occupiedBoxes).toBe(1);
-    expect(kronen).not.toHaveProperty("reservedBoxes");
-
-    const soen = body.find((g) => g.name === "Søen")!;
-    expect(soen.totalBoxes).toBe(2);
-    expect(soen.availableBoxes).toBe(0);
-    expect(soen.occupiedBoxes).toBe(2);
+    expect(body.totalTables).toBe(5);
+    expect(body.availableTables).toBe(2);
+    expect(body.occupiedTables).toBe(3);
+    expect(body).not.toHaveProperty("reservedTables");
   });
 
-  it("returns zero counts when no boxes exist", async () => {
+  it("returns zero counts when no tables exist", async () => {
     const executeFn = vi.fn().mockResolvedValue([]);
     const selectFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicGreenhouses(makeCtx({ db: mockDb }));
+    const res = await handlePublicHallSummary(makeCtx({ db: mockDb }));
     expect(res.statusCode).toBe(200);
-    const body = res.body as Array<Record<string, unknown>>;
-    for (const gh of body) {
-      expect(gh.totalBoxes).toBe(0);
-      expect(gh.availableBoxes).toBe(0);
-      expect(gh.occupiedBoxes).toBe(0);
-      expect(gh).not.toHaveProperty("reservedBoxes");
-    }
+    const body = res.body as Record<string, unknown>;
+    expect(body.totalTables).toBe(0);
+    expect(body.availableTables).toBe(0);
+    expect(body.occupiedTables).toBe(0);
   });
 });
 
-describe("handlePublicBoxes", () => {
-  it("returns all boxes with live state", async () => {
+describe("handlePublicTables", () => {
+  it("returns all tables with live state", async () => {
     const mockRows = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "available" },
-      { id: 2, name: "Harebell", greenhouse_name: "Kronen", state: "occupied" },
-      { id: 15, name: "Robin", greenhouse_name: "Søen", state: "reserved" },
+      { id: 1, state: "available" },
+      { id: 2, state: "occupied" },
+      { id: 15, state: "reserved" },
     ];
     const executeFn = vi.fn().mockResolvedValue(mockRows);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
@@ -1044,111 +1032,95 @@ describe("handlePublicBoxes", () => {
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+    const res = await handlePublicTables(makeCtx({ db: mockDb }));
     expect(res.statusCode).toBe(200);
     const body = res.body as Array<Record<string, unknown>>;
     expect(body).toHaveLength(3);
 
-    expect(body[0]).toEqual({ id: 1, name: "Linaria", greenhouse: "Kronen", state: "available" });
-    expect(body[1]).toEqual({ id: 2, name: "Harebell", greenhouse: "Kronen", state: "occupied" });
-    expect(body[2]).toEqual({ id: 15, name: "Robin", greenhouse: "Søen", state: "occupied" });
+    expect(body[0]).toEqual({ id: 1, state: "available" });
+    expect(body[1]).toEqual({ id: 2, state: "occupied" });
+    expect(body[2]).toEqual({ id: 15, state: "occupied" });
   });
 
-  it("returns empty array when no boxes exist", async () => {
+  it("returns empty array when no tables exist", async () => {
     const executeFn = vi.fn().mockResolvedValue([]);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFn = vi.fn().mockReturnValue({ orderBy: orderByFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+    const res = await handlePublicTables(makeCtx({ db: mockDb }));
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual([]);
-  });
-
-  it("maps greenhouse_name to greenhouse in response", async () => {
-    const mockRows = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "occupied" },
-    ];
-    const executeFn = vi.fn().mockResolvedValue(mockRows);
-    const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
-    const selectFn = vi.fn().mockReturnValue({ orderBy: orderByFn });
-    const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
-    const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
-
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
-    const body = res.body as Array<Record<string, unknown>>;
-    expect(body[0].greenhouse).toBe("Kronen");
-    expect(body[0]).not.toHaveProperty("greenhouse_name");
   });
 });
 
 describe("stale-state regression", () => {
-  it("greenhouses endpoint reflects occupied state after registration", async () => {
-    const boxesBeforeReg = [
-      { greenhouse_name: "Kronen", state: "available" },
-      { greenhouse_name: "Kronen", state: "available" },
+  it("hall summary reflects occupied state after registration", async () => {
+    const tablesBeforeReg = [
+      { state: "available" },
+      { state: "available" },
     ];
-    const executeFn1 = vi.fn().mockResolvedValue(boxesBeforeReg);
+    const executeFn1 = vi.fn().mockResolvedValue(tablesBeforeReg);
     const selectFn1 = vi.fn().mockReturnValue({ execute: executeFn1 });
     const selectFromFn1 = vi.fn().mockReturnValue({ select: selectFn1 });
     const db1 = { selectFrom: selectFromFn1 } as unknown as Kysely<Database>;
 
-    const resBefore = await handlePublicGreenhouses(makeCtx({ db: db1 }));
-    const before = (resBefore.body as Array<Record<string, unknown>>).find((g) => g.name === "Kronen")!;
-    expect(before.availableBoxes).toBe(2);
-    expect(before.occupiedBoxes).toBe(0);
+    const resBefore = await handlePublicHallSummary(makeCtx({ db: db1 }));
+    const before = resBefore.body as Record<string, unknown>;
+    expect(before.availableTables).toBe(2);
+    expect(before.occupiedTables).toBe(0);
 
-    const boxesAfterReg = [
-      { greenhouse_name: "Kronen", state: "available" },
-      { greenhouse_name: "Kronen", state: "occupied" },
+    const tablesAfterReg = [
+      { state: "available" },
+      { state: "occupied" },
     ];
-    const executeFn2 = vi.fn().mockResolvedValue(boxesAfterReg);
+    const executeFn2 = vi.fn().mockResolvedValue(tablesAfterReg);
     const selectFn2 = vi.fn().mockReturnValue({ execute: executeFn2 });
     const selectFromFn2 = vi.fn().mockReturnValue({ select: selectFn2 });
     const db2 = { selectFrom: selectFromFn2 } as unknown as Kysely<Database>;
 
-    const resAfter = await handlePublicGreenhouses(makeCtx({ db: db2 }));
-    const after = (resAfter.body as Array<Record<string, unknown>>).find((g) => g.name === "Kronen")!;
-    expect(after.availableBoxes).toBe(1);
-    expect(after.occupiedBoxes).toBe(1);
+    const resAfter = await handlePublicHallSummary(makeCtx({ db: db2 }));
+    const after = resAfter.body as Record<string, unknown>;
+    expect(after.availableTables).toBe(1);
+    expect(after.occupiedTables).toBe(1);
   });
 
-  it("boxes endpoint reflects state change after switch", async () => {
-    const boxesBefore = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "occupied" },
-      { id: 2, name: "Harebell", greenhouse_name: "Kronen", state: "available" },
+  it("tables endpoint reflects state change after switch", async () => {
+    const tablesBefore = [
+      { id: 1, state: "occupied" },
+      { id: 2, state: "available" },
     ];
-    const exec1 = vi.fn().mockResolvedValue(boxesBefore);
+    const exec1 = vi.fn().mockResolvedValue(tablesBefore);
     const order1 = vi.fn().mockReturnValue({ execute: exec1 });
     const sel1 = vi.fn().mockReturnValue({ orderBy: order1 });
     const from1 = vi.fn().mockReturnValue({ select: sel1 });
     const db1 = { selectFrom: from1 } as unknown as Kysely<Database>;
 
-    const resBefore = await handlePublicBoxes(makeCtx({ db: db1 }));
+    const resBefore = await handlePublicTables(makeCtx({ db: db1 }));
     const before = resBefore.body as Array<Record<string, unknown>>;
     expect(before[0].state).toBe("occupied");
     expect(before[1].state).toBe("available");
 
-    const boxesAfterSwitch = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "available" },
-      { id: 2, name: "Harebell", greenhouse_name: "Kronen", state: "occupied" },
+    const tablesAfterSwitch = [
+      { id: 1, state: "available" },
+      { id: 2, state: "occupied" },
     ];
-    const exec2 = vi.fn().mockResolvedValue(boxesAfterSwitch);
+    const exec2 = vi.fn().mockResolvedValue(tablesAfterSwitch);
     const order2 = vi.fn().mockReturnValue({ execute: exec2 });
     const sel2 = vi.fn().mockReturnValue({ orderBy: order2 });
     const from2 = vi.fn().mockReturnValue({ select: sel2 });
     const db2 = { selectFrom: from2 } as unknown as Kysely<Database>;
 
-    const resAfter = await handlePublicBoxes(makeCtx({ db: db2 }));
+    const resAfter = await handlePublicTables(makeCtx({ db: db2 }));
     const after = resAfter.body as Array<Record<string, unknown>>;
     expect(after[0].state).toBe("available");
     expect(after[1].state).toBe("occupied");
   });
 
-  it("boxes endpoint maps reserved state to occupied for public users", async () => {
+  it("tables endpoint maps reserved state to occupied for public users", async () => {
     const rows = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "reserved" },
+      { id: 1, state: "reserved" },
     ];
     const executeFn = vi.fn().mockResolvedValue(rows);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
@@ -1156,19 +1128,17 @@ describe("stale-state regression", () => {
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+    const res = await handlePublicTables(makeCtx({ db: mockDb }));
     const body = res.body as Array<Record<string, unknown>>;
     expect(body[0].state).toBe("occupied");
   });
 });
 
 describe("role visibility — public endpoints do not expose reserved status or label", () => {
-  it("handlePublicBoxes only returns id, name, greenhouse, and state (reserved mapped to occupied)", async () => {
+  it("handlePublicTables only returns id and state (reserved mapped to occupied)", async () => {
     const mockRows = [
       {
         id: 1,
-        name: "Linaria",
-        greenhouse_name: "Kronen",
         state: "reserved",
       },
     ];
@@ -1178,36 +1148,33 @@ describe("role visibility — public endpoints do not expose reserved status or 
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicBoxes(makeCtx({ db: mockDb }));
+    const res = await handlePublicTables(makeCtx({ db: mockDb }));
     const body = res.body as Array<Record<string, unknown>>;
     const keys = Object.keys(body[0]);
-    expect(keys).toEqual(["id", "name", "greenhouse", "state"]);
+    expect(keys).toEqual(["id", "state"]);
     expect(body[0].state).toBe("occupied");
     expect(body[0]).not.toHaveProperty("reserved_label");
     expect(body[0]).not.toHaveProperty("adminId");
     expect(body[0]).not.toHaveProperty("email");
   });
 
-  it("handlePublicGreenhouses does not include reservedBoxes field", async () => {
-    const mockBoxes = [
-      { greenhouse_name: "Kronen", state: "reserved" },
+  it("handlePublicHallSummary does not include reserved counts", async () => {
+    const mockTables = [
+      { state: "reserved" },
     ];
-    const executeFn = vi.fn().mockResolvedValue(mockBoxes);
+    const executeFn = vi.fn().mockResolvedValue(mockTables);
     const selectFn = vi.fn().mockReturnValue({ execute: executeFn });
     const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
     const mockDb = { selectFrom: selectFromFn } as unknown as Kysely<Database>;
 
-    const res = await handlePublicGreenhouses(makeCtx({ db: mockDb }));
-    const body = res.body as Array<Record<string, unknown>>;
-    const kronen = body.find((g) => g.name === "Kronen")!;
-    const keys = Object.keys(kronen);
-    expect(keys).toEqual([
-      "name", "totalBoxes", "availableBoxes", "occupiedBoxes",
-    ]);
-    expect(kronen.occupiedBoxes).toBe(1);
-    expect(kronen).not.toHaveProperty("reservedBoxes");
-    expect(kronen).not.toHaveProperty("registrations");
-    expect(kronen).not.toHaveProperty("reserved_label");
+    const res = await handlePublicHallSummary(makeCtx({ db: mockDb }));
+    const body = res.body as Record<string, unknown>;
+    const keys = Object.keys(body).sort();
+    expect(keys).toEqual(["availableTables", "occupiedTables", "totalTables"]);
+    expect(body.occupiedTables).toBe(1);
+    expect(body).not.toHaveProperty("reservedTables");
+    expect(body).not.toHaveProperty("registrations");
+    expect(body).not.toHaveProperty("reserved_label");
   });
 });
 
@@ -1237,7 +1204,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
             }),
           };
         }
-        if (table === "planter_boxes") {
+        if (table === "tables") {
           return {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
@@ -1328,7 +1295,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
             }),
           };
         }
-        if (table === "planter_boxes") {
+        if (table === "tables") {
           return {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
@@ -1505,7 +1472,7 @@ describe("handleWaitlistPosition — returns FIFO position", () => {
 interface MockRegisterOpts {
   openingDatetime: Date;
   box?: { id: number; state: string };
-  existingReg?: { id: string; box_id: number; name: string; email: string; status: string };
+  existingReg?: { id: string; table_id: number; name: string; email: string; status: string };
   newRegId?: string;
 }
 
@@ -1522,7 +1489,7 @@ function makeMockDbForRegister(
 
   const mockTrx = {
     selectFrom: vi.fn().mockImplementation((table: string) => {
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -1739,7 +1706,7 @@ function makeMockDbForWaitlist(
           }),
         };
       }
-      if (table === "planter_boxes") {
+      if (table === "tables") {
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -1799,7 +1766,7 @@ interface MockCancelTokenRow {
 
 interface MockRegRow {
   id: string;
-  box_id: number;
+  table_id: number;
   name: string;
   email: string;
   language: "da" | "en";
@@ -1865,13 +1832,13 @@ function makeMockDbForCancellation(opts: {
                 }),
               };
             }
-            if (tbl === "planter_boxes") {
+            if (tbl === "tables") {
               return {
                 select: vi.fn().mockReturnValue({
                   where: vi.fn().mockReturnValue({
                     forUpdate: vi.fn().mockReturnValue({
                       executeTakeFirst: vi.fn().mockResolvedValue({
-                        id: opts.regRow?.box_id,
+                        id: opts.regRow?.table_id,
                         state: "occupied",
                       }),
                     }),
@@ -1980,7 +1947,7 @@ describe("handleCancellationInfo", () => {
       },
       regRow: {
         id: "reg-1",
-        box_id: 3,
+        table_id: 3,
         name: "Anna Jensen",
         email: "anna@example.com",
         language: "da",
@@ -1994,7 +1961,7 @@ describe("handleCancellationInfo", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.alreadyCancelled).toBe(false);
-    expect(body.boxId).toBe(3);
+    expect(body.tableId).toBe(3);
     expect(body.tableLabel).toContain("#3");
     expect(body.recipientNameHint).toBe("A••••• J•••••");
     expect(body.recipientNameHint).toHaveLength(13);
@@ -2012,7 +1979,7 @@ describe("handleCancellationInfo", () => {
       },
       regRow: {
         id: "reg-1",
-        box_id: 3,
+        table_id: 3,
         name: "Bartholomew Featherstonehaugh",
         email: "b@example.com",
         language: "da",
@@ -2028,7 +1995,7 @@ describe("handleCancellationInfo", () => {
       },
       regRow: {
         id: "reg-2",
-        box_id: 3,
+        table_id: 3,
         name: "Bart Fjord",
         email: "bo@example.com",
         language: "da",
@@ -2058,7 +2025,7 @@ describe("handleCancellationInfo", () => {
       },
       regRow: {
         id: "reg-1",
-        box_id: 3,
+        table_id: 3,
         name: "Anna Jensen",
         email: "anna@example.com",
         language: "da",
@@ -2099,7 +2066,7 @@ describe("handleCancellationConfirm", () => {
       },
       regRow: {
         id: "reg-1",
-        box_id: 3,
+        table_id: 3,
         name: "Anna Jensen",
         email: "anna@example.com",
         language: "da",
@@ -2128,7 +2095,7 @@ describe("handleCancellationConfirm", () => {
       },
       regRow: {
         id: "reg-1",
-        box_id: 3,
+        table_id: 3,
         name: "Anna Jensen",
         email: "anna@example.com",
         language: "da",
@@ -2142,7 +2109,7 @@ describe("handleCancellationConfirm", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as Record<string, unknown>;
     expect(body.cancelled).toBe(true);
-    expect(body.boxId).toBe(3);
+    expect(body.tableId).toBe(3);
     expect(body.tableLabel).toContain("#3");
   });
 

@@ -23,7 +23,7 @@ import { NotificationComposer } from "./NotificationComposer";
 
 interface Registration {
   id: string;
-  box_id: number;
+  table_id: number;
   name: string;
   email: string;
   street: string;
@@ -92,11 +92,11 @@ export function AdminRegistrations() {
   const [addHouseNumber, setAddHouseNumber] = useState("");
   const [addFloor, setAddFloor] = useState("");
   const [addDoor, setAddDoor] = useState("");
-  const [addBoxId, setAddBoxId] = useState("");
+  const [addTableId, setAddTableId] = useState("");
   const [addLanguage, setAddLanguage] = useState<"da" | "en">("en");
   const [addNotification, setAddNotification] = useState({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
   const [addErrors, setAddErrors] = useState<string[]>([]);
-  const [moveNewBoxId, setMoveNewBoxId] = useState("");
+  const [moveNewTableId, setMoveNewTableId] = useState("");
   const [moveNotification, setMoveNotification] = useState({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
   const [removeMakePublic, setRemoveMakePublic] = useState(true);
   const [removeNotification, setRemoveNotification] = useState({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
@@ -164,7 +164,7 @@ export function AdminRegistrations() {
     setAddHouseNumber("");
     setAddFloor("");
     setAddDoor("");
-    setAddBoxId("");
+    setAddTableId("");
     setAddLanguage("en");
     setAddNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setAddErrors([]);
@@ -173,7 +173,7 @@ export function AdminRegistrations() {
   }
 
   function openMoveDialog(reg: Registration) {
-    setMoveNewBoxId("");
+    setMoveNewTableId("");
     setMoveNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setMessage(null);
     setActiveDialog({ type: "move", registration: reg });
@@ -193,10 +193,10 @@ export function AdminRegistrations() {
   const enrichedRegistrations = useMemo(
     () =>
       registrations.map((r) => {
-        const table = getTableById(r.box_id);
+        const table = getTableById(r.table_id);
         return {
           ...r,
-          table_number: table?.number ?? r.box_id,
+          table_number: table?.number ?? r.table_id,
           table_size: table?.sizeMeters ?? 0,
         };
       }),
@@ -242,7 +242,7 @@ export function AdminRegistrations() {
       floor: addFloor.trim() || null,
       door: addDoor.trim() || null,
       language: addLanguage,
-      boxId: Number(addBoxId),
+      tableId: Number(addTableId),
     };
 
     const validation = validateRegistrationInput(input);
@@ -255,7 +255,7 @@ export function AdminRegistrations() {
       }
       if (validation.errors["houseNumber"]) fieldErrors.push(t("validation.houseNumberInvalid"));
       if (validation.errors["floorDoor"]) fieldErrors.push(t("validation.floorDoorRequired"));
-      if (validation.errors["boxId"]) fieldErrors.push(t("validation.boxIdInvalid"));
+      if (validation.errors["tableId"]) fieldErrors.push(t("validation.tableIdInvalid"));
       setAddErrors(fieldErrors.length > 0 ? fieldErrors : [t("common.error")]);
       return;
     }
@@ -269,7 +269,7 @@ export function AdminRegistrations() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          boxId: input.boxId,
+          tableId: input.tableId,
           name: input.name,
           email: input.email,
           street: input.street,
@@ -302,7 +302,7 @@ export function AdminRegistrations() {
 
   async function handleMove() {
     if (!activeDialog || activeDialog.type !== "move") return;
-    const newBoxId = Number(moveNewBoxId);
+    const newBoxId = Number(moveNewTableId);
     if (isNaN(newBoxId) || newBoxId < 1) {
       setMessage({ type: "error", text: t("common.error") });
       return;
@@ -461,8 +461,8 @@ export function AdminRegistrations() {
               </>
             )}
             <div>
-              <label htmlFor="add-box-id" style={requiredLabelStyle}>{t("admin.registrations.addTableId")} *</label>
-              <select id="add-box-id" value={addBoxId} onChange={(e) => setAddBoxId(e.target.value)} style={inputStyle}>
+              <label htmlFor="add-table-id" style={requiredLabelStyle}>{t("admin.registrations.addTableId")} *</label>
+              <select id="add-table-id" value={addTableId} onChange={(e) => setAddTableId(e.target.value)} style={inputStyle}>
                 <option value="">{t("admin.registrations.selectTable")}</option>
                 {sortedTableOptions.map((table) => (
                   <option key={table.id} value={String(table.id)} disabled={table.occupied}>
@@ -500,13 +500,13 @@ export function AdminRegistrations() {
             </div>
           )}
 
-          {addName && addEmail && addBoxId && Number(addBoxId) > 0 && (
+          {addName && addEmail && addTableId && Number(addTableId) > 0 && (
             <NotificationComposer
               action="add"
               recipientName={addName}
               recipientEmail={addEmail}
               recipientLanguage={addLanguage}
-              boxId={Number(addBoxId)}
+              tableId={Number(addTableId)}
               value={addNotification}
               onChange={setAddNotification}
             />
@@ -557,16 +557,16 @@ export function AdminRegistrations() {
             {t("admin.registrations.move")} – {activeDialog.registration.name}
           </h3>
           <div style={{ marginBottom: "0.75rem" }}>
-            <label htmlFor="move-new-box-id" style={labelStyle}>{t("admin.registrations.newTableId")}</label>
+            <label htmlFor="move-new-table-id" style={labelStyle}>{t("admin.registrations.newTableId")}</label>
             <select
-              id="move-new-box-id"
-              value={moveNewBoxId}
-              onChange={(e) => setMoveNewBoxId(e.target.value)}
+              id="move-new-table-id"
+              value={moveNewTableId}
+              onChange={(e) => setMoveNewTableId(e.target.value)}
               style={{ ...inputStyle, maxWidth: 300 }}
             >
               <option value="">{t("admin.registrations.selectTable")}</option>
               {sortedTableOptions.map((table) => {
-                const isCurrentTable = activeDialog.type === "move" && table.id === activeDialog.registration.box_id;
+                const isCurrentTable = activeDialog.type === "move" && table.id === activeDialog.registration.table_id;
                 const isOccupied = table.occupied && !isCurrentTable;
                 return (
                   <option key={table.id} value={String(table.id)} disabled={isOccupied}>
@@ -577,14 +577,14 @@ export function AdminRegistrations() {
             </select>
           </div>
 
-          {moveNewBoxId && Number(moveNewBoxId) > 0 && (
+          {moveNewTableId && Number(moveNewTableId) > 0 && (
             <NotificationComposer
               action="move"
               recipientName={activeDialog.registration.name}
               recipientEmail={activeDialog.registration.email}
               recipientLanguage={activeDialog.registration.language}
-              boxId={Number(moveNewBoxId)}
-              oldBoxId={activeDialog.registration.box_id}
+              tableId={Number(moveNewTableId)}
+              oldTableId={activeDialog.registration.table_id}
               value={moveNotification}
               onChange={setMoveNotification}
             />
@@ -664,7 +664,7 @@ export function AdminRegistrations() {
             recipientName={activeDialog.registration.name}
             recipientEmail={activeDialog.registration.email}
             recipientLanguage={activeDialog.registration.language}
-            boxId={activeDialog.registration.box_id}
+            tableId={activeDialog.registration.table_id}
             value={removeNotification}
             onChange={setRemoveNotification}
           />

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ClothingRackSide, PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
+import type { ClothingRackSide, TablePublic, TableCatalogEntry } from "@loppemarked/shared";
 import {
   TABLE_CATALOG,
   TABLE_MAP_VIEWBOX,
@@ -98,12 +98,12 @@ function ClothingRackGlyph({ table, side }: { table: TableCatalogEntry; side: Cl
 }
 
 interface TableMapProps {
-  boxesById: Map<number, PlanterBoxPublic>;
+  tablesById: Map<number, TablePublic>;
   selectedId: number | null;
   onSelect: (table: TableCatalogEntry) => void;
 }
 
-export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
+export function TableMap({ tablesById, selectedId, onSelect }: TableMapProps) {
   const { t } = useLanguage();
   const { width, height } = TABLE_MAP_VIEWBOX;
 
@@ -189,9 +189,9 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
         </text>
 
         {TABLE_CATALOG.map((table) => {
-          const box = boxesById.get(table.id);
+          const entry = tablesById.get(table.id);
           const isSelected = selectedId === table.id;
-          const publicState = box?.state ?? "occupied";
+          const publicState = entry?.state ?? "occupied";
           const mapState: TableMapState = isSelected
             ? "valgt"
             : publicState === "available"

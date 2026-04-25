@@ -18,8 +18,8 @@ interface NotificationComposerProps {
   recipientName: string;
   recipientEmail: string;
   recipientLanguage: string;
-  boxId: number;
-  oldBoxId?: number;
+  tableId: number;
+  oldTableId?: number;
   value: NotificationValue;
   onChange: (value: NotificationValue) => void;
 }
@@ -33,8 +33,8 @@ export function NotificationComposer({
   recipientName,
   recipientEmail,
   recipientLanguage,
-  boxId,
-  oldBoxId,
+  tableId,
+  oldTableId,
   value,
   onChange,
 }: NotificationComposerProps) {
@@ -50,7 +50,7 @@ export function NotificationComposer({
   onChangeRef.current = onChange;
 
   const fetchPreview = useCallback(async () => {
-    if (!recipientName || !recipientEmail || !boxId) return;
+    if (!recipientName || !recipientEmail || !tableId) return;
 
     setPreviewLoading(true);
     setPreviewError(false);
@@ -65,8 +65,8 @@ export function NotificationComposer({
           recipientName,
           recipientEmail,
           language: recipientLanguage,
-          boxId,
-          oldBoxId,
+          tableId,
+          oldTableId,
         }),
       });
 
@@ -88,7 +88,7 @@ export function NotificationComposer({
     } finally {
       setPreviewLoading(false);
     }
-  }, [action, recipientName, recipientEmail, recipientLanguage, boxId, oldBoxId]);
+  }, [action, recipientName, recipientEmail, recipientLanguage, tableId, oldTableId]);
 
   useEffect(() => {
     fetchPreview();

@@ -3,7 +3,7 @@ import type { Kysely } from "kysely";
 import type { Database } from "../../db/types.js";
 import type { RequestContext } from "../../router.js";
 import { AppError } from "../../lib/errors.js";
-import { handleAdminBoxes, handleReserveBox, handleReleaseBox } from "./boxes.js";
+import { handleAdminTables, handleReserveTable, handleReleaseTable } from "./boxes.js";
 
 vi.mock("../../lib/audit.js", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
@@ -26,7 +26,7 @@ function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   };
 }
 
-describe("handleAdminBoxes", () => {
+describe("handleAdminTables", () => {
   function mockListDb(boxRows: unknown[], regRows: unknown[]) {
     const boxExecuteFn = vi.fn().mockResolvedValue(boxRows);
     const boxOrderByFn = vi.fn().mockReturnValue({ execute: boxExecuteFn });
@@ -43,43 +43,43 @@ describe("handleAdminBoxes", () => {
     return { selectFrom: selectFromFn } as unknown as Kysely<Database>;
   }
 
-  it("returns boxes with registration data", async () => {
-    const mockBoxRows = [
-      { id: 1, name: "Linaria", greenhouse_name: "Kronen", state: "available", reserved_label: null },
-      { id: 2, name: "Harebell", greenhouse_name: "Kronen", state: "occupied", reserved_label: null },
-      { id: 15, name: "Robin", greenhouse_name: "Søen", state: "reserved", reserved_label: "Awaiting Admin Review" },
+  it("returns tables with registration data", async () => {
+    const mockTableRows = [
+      { id: 1, state: "available", reserved_label: null },
+      { id: 2, state: "occupied", reserved_label: null },
+      { id: 15, state: "reserved", reserved_label: "Awaiting Admin Review" },
     ];
     const mockRegRows = [
-      { id: "r1", box_id: 2, name: "Alice", email: "alice@test.com", language: "en", status: "active" },
+      { id: "r1", table_id: 2, name: "Alice", email: "alice@test.com", language: "en", status: "active" },
     ];
 
-    const res = await handleAdminBoxes(makeCtx({ db: mockListDb(mockBoxRows, mockRegRows) }));
+    const res = await handleAdminTables(makeCtx({ db: mockListDb(mockTableRows, mockRegRows) }));
     expect(res.statusCode).toBe(200);
     const body = res.body as Array<Record<string, unknown>>;
     expect(body).toHaveLength(3);
 
-    expect(body[0]).toEqual({ id: 1, name: "Linaria", greenhouse: "Kronen", state: "available", reservedLabel: null, registration: null });
+    expect(body[0]).toEqual({ id: 1, state: "available", reservedLabel: null, registration: null });
     expect(body[1]).toEqual({
-      id: 2, name: "Harebell", greenhouse: "Kronen", state: "occupied", reservedLabel: null,
+      id: 2, state: "occupied", reservedLabel: null,
       registration: { id: "r1", name: "Alice", email: "alice@test.com", language: "en" },
     });
     expect(body[2]).toEqual({
-      id: 15, name: "Robin", greenhouse: "Søen", state: "reserved",
+      id: 15, state: "reserved",
       reservedLabel: "Awaiting Admin Review", registration: null,
     });
   });
 
   it("returns empty array when no boxes exist", async () => {
-    const res = await handleAdminBoxes(makeCtx({ db: mockListDb([], []) }));
+    const res = await handleAdminTables(makeCtx({ db: mockListDb([], []) }));
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual([]);
   });
 });
 
-describe("handleReserveBox", () => {
+describe("handleReserveTable", () => {
   it("throws 401 when adminId is missing", async () => {
     try {
-      await handleReserveBox(makeCtx({ adminId: undefined, body: { boxId: 1 } }));
+      await handleReserveTable(makeCtx({ adminId: undefined, body: { tableId: 1 } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -87,9 +87,9 @@ describe("handleReserveBox", () => {
     }
   });
 
-  it("throws 400 when boxId is missing", async () => {
+  it("throws 400 when tableId is missing", async () => {
     try {
-      await handleReserveBox(makeCtx({ body: {} }));
+      await handleReserveTable(makeCtx({ body: {} }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -110,7 +110,7 @@ describe("handleReserveBox", () => {
     const mockDb = { transaction: transactionFn } as unknown as Kysely<Database>;
 
     try {
-      await handleReserveBox(makeCtx({ body: { boxId: 1 }, db: mockDb }));
+      await handleReserveTable(makeCtx({ body: { tableId: 1 }, db: mockDb }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -119,10 +119,10 @@ describe("handleReserveBox", () => {
   });
 });
 
-describe("handleReleaseBox", () => {
+describe("handleReleaseTable", () => {
   it("throws 401 when adminId is missing", async () => {
     try {
-      await handleReleaseBox(makeCtx({ adminId: undefined, body: { boxId: 1 } }));
+      await handleReleaseTable(makeCtx({ adminId: undefined, body: { tableId: 1 } }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -130,9 +130,9 @@ describe("handleReleaseBox", () => {
     }
   });
 
-  it("throws 400 when boxId is missing", async () => {
+  it("throws 400 when tableId is missing", async () => {
     try {
-      await handleReleaseBox(makeCtx({ body: {} }));
+      await handleReleaseTable(makeCtx({ body: {} }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);
@@ -153,7 +153,7 @@ describe("handleReleaseBox", () => {
     const mockDb = { transaction: transactionFn } as unknown as Kysely<Database>;
 
     try {
-      await handleReleaseBox(makeCtx({ body: { boxId: 1 }, db: mockDb }));
+      await handleReleaseTable(makeCtx({ body: { tableId: 1 }, db: mockDb }));
       expect.fail("should have thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(AppError);

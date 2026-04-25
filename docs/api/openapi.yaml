@@ -17,24 +17,24 @@ paths:
       responses:
         '200':
           description: OK
-  /public/greenhouses:
+  /public/hall:
     get:
       tags: [Public]
-      summary: Get greenhouse summary availability.
+      summary: Get aggregate availability counts for the Fælledhuset hall.
       responses:
         '200':
           description: OK
-  /public/boxes:
+  /public/tables:
     get:
       tags: [Public]
-      summary: Get public-safe box states.
+      summary: Get public-safe table states.
       responses:
         '200':
           description: OK
   /public/register:
     post:
       tags: [Public]
-      summary: Register apartment for a planter box.
+      summary: Register an apartment for a flea-market table.
       responses:
         '200':
           description: Registration accepted.
@@ -79,21 +79,21 @@ paths:
   /admin/registrations/move:
     post:
       tags: [Admin]
-      summary: Move registration from one box to another.
+      summary: Move registration from one table to another.
       responses:
         '200':
           description: Updated.
   /admin/registrations/remove:
     post:
       tags: [Admin]
-      summary: Remove registration and choose box availability outcome.
+      summary: Remove registration and choose table availability outcome.
       responses:
         '200':
           description: Removed.
   /admin/waitlist/assign:
     post:
       tags: [Admin]
-      summary: Assign waitlisted apartment to a box.
+      summary: Assign waitlisted apartment to a table.
       responses:
         '200':
           description: Assigned.

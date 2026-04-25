@@ -1,6 +1,4 @@
 import {
-  BOX_CATALOG,
-  GREENHOUSES,
   RESERVED_LABEL_AWAITING_REVIEW,
   effectiveFloorDoor,
   formatTableLabel,
@@ -40,7 +38,7 @@ export async function handlePublicStatus(ctx: RequestContext): Promise<RouteResp
   const openingDatetime = openingDate ? openingDate.toISOString() : null;
 
   const availableCount = await ctx.db
-    .selectFrom("planter_boxes")
+    .selectFrom("tables")
     .select(ctx.db.fn.countAll<number>().as("count"))
     .where("state", "=", "available")
     .executeTakeFirstOrThrow();
@@ -50,51 +48,47 @@ export async function handlePublicStatus(ctx: RequestContext): Promise<RouteResp
     body: {
       isOpen,
       openingDatetime,
-      hasAvailableBoxes: Number(availableCount.count) > 0,
+      hasAvailableTables: Number(availableCount.count) > 0,
       serverTime: new Date().toISOString(),
     },
   };
 }
 
-export async function handlePublicGreenhouses(ctx: RequestContext): Promise<RouteResponse> {
-  const boxes = await ctx.db
-    .selectFrom("planter_boxes")
-    .select(["greenhouse_name", "state"])
+export async function handlePublicHallSummary(ctx: RequestContext): Promise<RouteResponse> {
+  const tables = await ctx.db
+    .selectFrom("tables")
+    .select(["state"])
     .execute();
 
-  const summaries = GREENHOUSES.map((name) => {
-    const ghBoxes = boxes.filter((b) => b.greenhouse_name === name);
-    return {
-      name,
-      totalBoxes: ghBoxes.length,
-      availableBoxes: ghBoxes.filter((b) => b.state === "available").length,
-      occupiedBoxes: ghBoxes.filter((b) => b.state === "occupied" || b.state === "reserved").length,
-    };
-  });
+  const summary = {
+    totalTables: tables.length,
+    availableTables: tables.filter((t) => t.state === "available").length,
+    occupiedTables: tables.filter(
+      (t) => t.state === "occupied" || t.state === "reserved",
+    ).length,
+  };
 
   return {
     statusCode: 200,
-    body: summaries,
+    body: summary,
   };
 }
 
-export async function handlePublicBoxes(ctx: RequestContext): Promise<RouteResponse> {
-  const boxes = await ctx.db
-    .selectFrom("planter_boxes")
-    .select(["id", "name", "greenhouse_name", "state"])
+export async function handlePublicTables(ctx: RequestContext): Promise<RouteResponse> {
+  const tables = await ctx.db
+    .selectFrom("tables")
+    .select(["id", "state"])
     .orderBy("id", "asc")
     .execute();
 
-  const publicBoxes = boxes.map((b) => ({
-    id: b.id,
-    name: b.name,
-    greenhouse: b.greenhouse_name,
-    state: b.state === "reserved" ? "occupied" as const : b.state,
+  const publicTables = tables.map((t) => ({
+    id: t.id,
+    state: t.state === "reserved" ? "occupied" as const : t.state,
   }));
 
   return {
     statusCode: 200,
-    body: publicBoxes,
+    body: publicTables,
   };
 }
 
@@ -223,23 +217,23 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
   );
 
   const result = await ctx.db.transaction().execute(async (trx) => {
-    const box = await trx
-      .selectFrom("planter_boxes")
+    const table = await trx
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", body.boxId)
+      .where("id", "=", body.tableId)
       .forUpdate()
       .executeTakeFirst();
 
-    if (!box) {
-      throw badRequest("Box not found");
+    if (!table) {
+      throw badRequest("Table not found");
     }
-    if (box.state !== "available") {
-      throw conflict("Box is not available", "BOX_UNAVAILABLE");
+    if (table.state !== "available") {
+      throw conflict("Table is not available", "TABLE_UNAVAILABLE");
     }
 
     const existingRegs = await trx
       .selectFrom("registrations")
-      .select(["id", "box_id", "name", "email", "status"])
+      .select(["id", "table_id", "name", "email", "status"])
       .where("apartment_key", "=", apartmentKey)
       .where("status", "=", "active")
       .forUpdate()
@@ -250,16 +244,12 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
       const oldest = existingRegs.reduce((a, b) =>
         (a.id < b.id ? a : b),
       );
-      const existingBox = BOX_CATALOG.find((b) => b.id === oldest.box_id);
-      const newBox = BOX_CATALOG.find((b) => b.id === body.boxId);
       return {
         type: "switch_required" as const,
-        existingBoxId: oldest.box_id,
-        existingBoxName: existingBox?.name ?? `Box ${oldest.box_id}`,
-        existingGreenhouse: existingBox?.greenhouse ?? "Unknown",
-        newBoxId: body.boxId,
-        newBoxName: newBox?.name ?? `Box ${body.boxId}`,
-        newGreenhouse: newBox?.greenhouse ?? "Unknown",
+        existingTableId: oldest.table_id,
+        existingTableLabel: formatTableLabel(oldest.table_id),
+        newTableId: body.tableId,
+        newTableLabel: formatTableLabel(body.tableId),
         totalExistingRegistrations: existingRegs.length,
       };
     }
@@ -278,9 +268,9 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
         .execute();
 
       await trx
-        .updateTable("planter_boxes")
+        .updateTable("tables")
         .set({ state: "available", updated_at: new Date().toISOString() })
-        .where("id", "=", switchedReg.box_id)
+        .where("id", "=", switchedReg.table_id)
         .execute();
 
       await logAuditEvent(trx, {
@@ -289,8 +279,8 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
         action: "registration_switch",
         entity_type: "registration",
         entity_id: switchedReg.id,
-        before: { box_id: switchedReg.box_id, status: "active" },
-        after: { box_id: switchedReg.box_id, status: "switched" },
+        before: { table_id: switchedReg.table_id, status: "active" },
+        after: { table_id: switchedReg.table_id, status: "switched" },
         reason: existingRegs.length > 1
           ? `Replaced oldest of ${existingRegs.length} active registrations for this address`
           : undefined,
@@ -299,9 +289,9 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
       await logAuditEvent(trx, {
         actor_type: "public",
         actor_id: null,
-        action: "box_state_change",
-        entity_type: "planter_box",
-        entity_id: String(switchedReg.box_id),
+        action: "table_state_change",
+        entity_type: "table",
+        entity_id: String(switchedReg.table_id),
         before: { state: "occupied" },
         after: { state: "available" },
       });
@@ -310,7 +300,7 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     const [newReg] = await trx
       .insertInto("registrations")
       .values({
-        box_id: body.boxId,
+        table_id: body.tableId,
         name: body.name,
         email: body.email,
         street: body.street,
@@ -325,9 +315,9 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
       .execute();
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({ state: "occupied", updated_at: new Date().toISOString() })
-      .where("id", "=", body.boxId)
+      .where("id", "=", body.tableId)
       .execute();
 
     await logAuditEvent(trx, {
@@ -337,7 +327,7 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
       entity_type: "registration",
       entity_id: newReg.id,
       after: {
-        box_id: body.boxId,
+        table_id: body.tableId,
         apartment_key: apartmentKey,
         status: "active",
       },
@@ -346,9 +336,9 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     await logAuditEvent(trx, {
       actor_type: "public",
       actor_id: null,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(body.boxId),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(body.tableId),
       before: { state: "available" },
       after: { state: "occupied" },
     });
@@ -356,7 +346,7 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     return {
       type: "created" as const,
       registrationId: newReg.id,
-      switchedFromBoxId: switchedReg?.box_id,
+      switchedFromTableId: switchedReg?.table_id,
     };
   });
 
@@ -366,12 +356,10 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
       body: {
         error: "Apartment already has an active registration",
         code: "SWITCH_REQUIRED",
-        existingBoxId: result.existingBoxId,
-        existingBoxName: result.existingBoxName,
-        existingGreenhouse: result.existingGreenhouse,
-        newBoxId: result.newBoxId,
-        newBoxName: result.newBoxName,
-        newGreenhouse: result.newGreenhouse,
+        existingTableId: result.existingTableId,
+        existingTableLabel: result.existingTableLabel,
+        newTableId: result.newTableId,
+        newTableLabel: result.newTableLabel,
       },
     };
   }
@@ -392,8 +380,8 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     recipientName: body.name,
     recipientEmail: body.email,
     language: body.language,
-    boxId: body.boxId,
-    switchedFromBoxId: result.switchedFromBoxId,
+    tableId: body.tableId,
+    switchedFromTableId: result.switchedFromTableId,
     cancellationUrl,
   });
 
@@ -404,20 +392,20 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     bodyHtml: emailContent.bodyHtml,
   });
 
-  if (result.switchedFromBoxId != null) {
+  if (result.switchedFromTableId != null) {
     await notifyAdmins(ctx.db, {
       type: "user_switch",
       userName: body.name,
       userEmail: body.email,
-      oldBoxId: result.switchedFromBoxId,
-      newBoxId: body.boxId,
+      oldTableId: result.switchedFromTableId,
+      newTableId: body.tableId,
     });
   } else {
     await notifyAdmins(ctx.db, {
       type: "user_registration",
       userName: body.name,
       userEmail: body.email,
-      boxId: body.boxId,
+      tableId: body.tableId,
     });
   }
 
@@ -425,7 +413,7 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     statusCode: 200,
     body: {
       registrationId: result.registrationId,
-      boxId: body.boxId,
+      tableId: body.tableId,
       apartmentKey,
     },
   };
@@ -468,8 +456,8 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
   );
 
   // One-table-per-apartment rule: if this apartment already holds an active
-  // booking, block the waitlist signup. Checked before BOXES_AVAILABLE so the
-  // user gets the specific reason even when free boxes also exist.
+  // booking, block the waitlist signup. Checked before TABLES_AVAILABLE so the
+  // user gets the specific reason even when free tables also exist.
   const existingRegistration = await ctx.db
     .selectFrom("registrations")
     .select("id")
@@ -485,15 +473,15 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
   }
 
   const availableCount = await ctx.db
-    .selectFrom("planter_boxes")
+    .selectFrom("tables")
     .select(ctx.db.fn.countAll<number>().as("count"))
     .where("state", "=", "available")
     .executeTakeFirstOrThrow();
 
   if (Number(availableCount.count) > 0) {
     throw badRequest(
-      "Boxes are still available. Please register for a box instead.",
-      "BOXES_AVAILABLE",
+      "Tables are still available. Please register for a table instead.",
+      "TABLES_AVAILABLE",
     );
   }
 
@@ -540,7 +528,6 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
           door,
           apartment_key: apartmentKey,
           language: body.language!,
-          greenhouse_preference: body.greenhousePreference!,
         })
         .returning("id")
         .executeTakeFirstOrThrow();
@@ -672,7 +659,7 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
 
   const reg = await ctx.db
     .selectFrom("registrations")
-    .select(["id", "box_id", "name", "email", "language", "status"])
+    .select(["id", "table_id", "name", "email", "language", "status"])
     .where("id", "=", resolved.registrationId)
     .executeTakeFirst();
 
@@ -685,8 +672,8 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
       statusCode: 200,
       body: {
         alreadyCancelled: true,
-        boxId: reg.box_id,
-        tableLabel: formatTableLabel(reg.box_id),
+        tableId: reg.table_id,
+        tableLabel: formatTableLabel(reg.table_id),
         language: reg.language,
       },
     };
@@ -696,8 +683,8 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
     statusCode: 200,
     body: {
       alreadyCancelled: false,
-      boxId: reg.box_id,
-      tableLabel: formatTableLabel(reg.box_id),
+      tableId: reg.table_id,
+      tableLabel: formatTableLabel(reg.table_id),
       recipientNameHint: maskName(reg.name),
       language: reg.language,
       expiresAt: resolved.expiresAt.toISOString(),
@@ -729,21 +716,21 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
 
     const reg = await trx
       .selectFrom("registrations")
-      .select(["id", "box_id", "name", "email", "language", "status"])
+      .select(["id", "table_id", "name", "email", "language", "status"])
       .where("id", "=", resolved.registrationId)
       .forUpdate()
       .executeTakeFirst();
 
     if (!reg || reg.status !== "active") {
-      return { type: "no_active_registration" as const, boxId: reg?.box_id };
+      return { type: "no_active_registration" as const, tableId: reg?.table_id };
     }
 
-    // Lock the box row so concurrent admin moves/reserves can't race with
+    // Lock the table row so concurrent admin moves/reserves can't race with
     // the cancellation and leave the table in an inconsistent state.
     await trx
-      .selectFrom("planter_boxes")
+      .selectFrom("tables")
       .select(["id", "state"])
-      .where("id", "=", reg.box_id)
+      .where("id", "=", reg.table_id)
       .forUpdate()
       .executeTakeFirst();
 
@@ -754,13 +741,13 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
       .execute();
 
     await trx
-      .updateTable("planter_boxes")
+      .updateTable("tables")
       .set({
         state: "reserved",
         reserved_label: RESERVED_LABEL_AWAITING_REVIEW,
         updated_at: new Date().toISOString(),
       })
-      .where("id", "=", reg.box_id)
+      .where("id", "=", reg.table_id)
       .execute();
 
     await logAuditEvent(trx, {
@@ -769,7 +756,7 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
       action: "registration_self_cancel",
       entity_type: "registration",
       entity_id: reg.id,
-      before: { box_id: reg.box_id, status: "active" },
+      before: { table_id: reg.table_id, status: "active" },
       after: { status: "removed", source: "magic_link" },
       reason: "Resident self-cancelled via email magic link",
     });
@@ -777,9 +764,9 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
     await logAuditEvent(trx, {
       actor_type: "public",
       actor_id: null,
-      action: "box_state_change",
-      entity_type: "planter_box",
-      entity_id: String(reg.box_id),
+      action: "table_state_change",
+      entity_type: "table",
+      entity_id: String(reg.table_id),
       before: { state: "occupied" },
       after: { state: "reserved", reserved_label: RESERVED_LABEL_AWAITING_REVIEW },
       reason: "Held for admin review after resident self-cancellation",
@@ -787,7 +774,7 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
 
     return {
       type: "cancelled" as const,
-      boxId: reg.box_id,
+      tableId: reg.table_id,
       recipientName: reg.name,
       recipientEmail: reg.email,
       language: reg.language as Language,
@@ -803,7 +790,7 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
       statusCode: 200,
       body: {
         alreadyCancelled: true,
-        boxId: outcome.boxId ?? null,
+        tableId: outcome.tableId ?? null,
       },
     };
   }
@@ -812,15 +799,15 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
     type: "user_cancellation",
     userName: outcome.recipientName,
     userEmail: outcome.recipientEmail,
-    boxId: outcome.boxId,
+    tableId: outcome.tableId,
   });
 
   return {
     statusCode: 200,
     body: {
       cancelled: true,
-      boxId: outcome.boxId,
-      tableLabel: formatTableLabel(outcome.boxId),
+      tableId: outcome.tableId,
+      tableLabel: formatTableLabel(outcome.tableId),
     },
   };
 }

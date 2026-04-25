@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getGreenhouses, createRouter, handler } from "./index.js";
+import { getTableCatalog, createRouter, handler } from "./index.js";
 
 vi.mock("./lib/session.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./lib/session.js")>();
@@ -14,8 +14,11 @@ vi.mock("./db/connection.js", () => ({
 }));
 
 describe("api", () => {
-  it("returns greenhouse list", () => {
-    expect(getGreenhouses()).toEqual(["Kronen", "Søen"]);
+  it("returns the table catalog", () => {
+    const catalog = getTableCatalog();
+    expect(catalog.length).toBeGreaterThan(0);
+    expect(catalog[0]).toHaveProperty("id");
+    expect(catalog[0]).toHaveProperty("number");
   });
 
   it("createRouter returns a router with routes registered", () => {

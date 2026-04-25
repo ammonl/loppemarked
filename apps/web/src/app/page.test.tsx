@@ -1,21 +1,22 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { render, screen, act, cleanup, fireEvent } from "@testing-library/react";
 import {
-  GREENHOUSES,
   DEFAULT_OPENING_DATETIME,
   OPENING_TIMEZONE,
   LANGUAGES,
   LANGUAGE_LABELS,
   ORGANIZER_CONTACTS,
-  BOX_CATALOG,
+  TABLE_CATALOG,
+  TOTAL_TABLE_COUNT,
+  VISIBLE_TABLE_IDS,
   BOX_STATES,
 } from "@loppemarked/shared";
 import { translations, type TranslationKey } from "@/i18n/translations";
 import { isBeforeOpening } from "@/utils/opening";
 
 describe("shared package integration", () => {
-  it("exports greenhouses", () => {
-    expect(GREENHOUSES.length).toBeGreaterThan(0);
+  it("exports the table catalog", () => {
+    expect(TABLE_CATALOG.length).toBeGreaterThan(0);
   });
 
   it("exports opening datetime and timezone", () => {
@@ -128,7 +129,7 @@ describe("translations", () => {
       "audit.detail.address",
       "audit.detail.recipient",
       "audit.detail.subject",
-      "audit.detail.box",
+      "audit.detail.table",
       "audit.detail.stateChange",
       "audit.detail.action",
       "audit.detail.before",
@@ -151,12 +152,12 @@ describe("translations", () => {
       "registration.houseNumberLabel",
       "registration.floorLabel",
       "registration.doorLabel",
-      "registration.boxLabel",
+      "registration.tableLabel",
       "registration.switchWarning",
       "registration.switchConfirm",
       "registration.switchTitle",
-      "registration.switchCurrentBox",
-      "registration.switchNewBox",
+      "registration.switchCurrentTable",
+      "registration.switchNewTable",
       "registration.switchExplainer",
       "registration.switchKeep",
       "registration.success",
@@ -177,7 +178,7 @@ describe("translations", () => {
       "validation.streetInvalid",
       "validation.houseNumberInvalid",
       "validation.floorDoorRequired",
-      "validation.boxIdInvalid",
+      "validation.tableIdInvalid",
     ];
     for (const lang of LANGUAGES) {
       for (const key of validationKeys) {
@@ -249,7 +250,7 @@ describe("translations", () => {
       "admin.settingsSaved",
       "admin.tab.registrations",
       "admin.tab.waitlist",
-      "admin.tab.boxes",
+      "admin.tab.tables",
       "admin.tab.settings",
       "admin.tab.audit",
       "admin.registrations.title",
@@ -289,31 +290,16 @@ describe("translations", () => {
   });
 });
 
-describe("greenhouse data", () => {
-  it("has boxes for each greenhouse", () => {
-    for (const gh of GREENHOUSES) {
-      const boxes = BOX_CATALOG.filter((b) => b.greenhouse === gh);
-      expect(boxes.length).toBeGreaterThan(0);
+describe("table catalog", () => {
+  it("matches the visible table id list", () => {
+    expect(TABLE_CATALOG.map((t) => t.id)).toEqual([...VISIBLE_TABLE_IDS]);
+    expect(TABLE_CATALOG.length).toBe(TOTAL_TABLE_COUNT);
+  });
+
+  it("uses the table number as the display number for every entry", () => {
+    for (const t of TABLE_CATALOG) {
+      expect(t.number).toBe(t.id);
     }
-  });
-
-  it("Kronen has 14 boxes and Søen has 15 boxes", () => {
-    const kronen = BOX_CATALOG.filter((b) => b.greenhouse === "Kronen");
-    const soen = BOX_CATALOG.filter((b) => b.greenhouse === "Søen");
-    expect(kronen.length).toBe(14);
-    expect(soen.length).toBe(15);
-  });
-
-  it("uses global numbering 1-29", () => {
-    const ids = BOX_CATALOG.map((b) => b.id);
-    expect(ids).toEqual(Array.from({ length: 29 }, (_, i) => i + 1));
-  });
-
-  it("Kronen boxes are 1-14 and Søen boxes are 15-29", () => {
-    const kronen = BOX_CATALOG.filter((b) => b.greenhouse === "Kronen");
-    const soen = BOX_CATALOG.filter((b) => b.greenhouse === "Søen");
-    expect(kronen.map((b) => b.id)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
-    expect(soen.map((b) => b.id)).toEqual(Array.from({ length: 15 }, (_, i) => i + 15));
   });
 });
 
@@ -341,8 +327,6 @@ describe("isBeforeOpening", () => {
 
   it("returns true 1 second before Copenhagen opening time (CEST boundary)", () => {
     vi.useFakeTimers();
-    // Opening at 10:00 Copenhagen (CEST = UTC+2) = 08:00 UTC
-    // 1 second before: 07:59:59 UTC
     vi.setSystemTime(new Date("2026-04-01T07:59:59Z"));
     expect(isBeforeOpening("2026-04-01T10:00:00")).toBe(true);
     vi.useRealTimers();
@@ -350,7 +334,6 @@ describe("isBeforeOpening", () => {
 
   it("returns false at Copenhagen opening time (CEST boundary)", () => {
     vi.useFakeTimers();
-    // Opening at 10:00 Copenhagen (CEST = UTC+2) = 08:00 UTC
     vi.setSystemTime(new Date("2026-04-01T08:00:00Z"));
     expect(isBeforeOpening("2026-04-01T10:00:00")).toBe(false);
     vi.useRealTimers();
@@ -426,7 +409,7 @@ describe("Home page render gating", () => {
     expect(screen.queryByTestId("landing-page")).toBeNull();
 
     await act(async () => {
-      resolveStatus(new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }));
+      resolveStatus(new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableTables: true }), { status: 200 }));
     });
 
     expect(screen.queryByTestId("loading-splash")).toBeNull();
@@ -436,7 +419,7 @@ describe("Home page render gating", () => {
 
   it("shows landing page directly when status responds with isOpen: true", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
+      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableTables: true }), { status: 200 }),
     ));
 
     const Home = (await import("./page")).default;
@@ -451,7 +434,7 @@ describe("Home page render gating", () => {
 
   it("shows pre-open page when status responds with isOpen: false", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: false, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
+      new Response(JSON.stringify({ isOpen: false, openingDatetime: "2026-04-01T10:00:00", hasAvailableTables: true }), { status: 200 }),
     ));
 
     const Home = (await import("./page")).default;
@@ -479,7 +462,7 @@ describe("Home page render gating", () => {
 
   it("routes into the registration flow when the landing CTA is clicked", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
+      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableTables: true }), { status: 200 }),
     ));
 
     const Home = (await import("./page")).default;
@@ -500,7 +483,7 @@ describe("Home page render gating", () => {
 
   it("returns to landing page from the registration flow when header home button is clicked", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableBoxes: true }), { status: 200 }),
+      new Response(JSON.stringify({ isOpen: true, openingDatetime: "2026-04-01T10:00:00", hasAvailableTables: true }), { status: 200 }),
     ));
 
     const Home = (await import("./page")).default;

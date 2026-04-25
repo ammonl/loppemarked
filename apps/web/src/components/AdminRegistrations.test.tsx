@@ -32,7 +32,7 @@ vi.mock("./NotificationComposer", () => ({
 const registrations = [
   {
     id: "r1",
-    box_id: 1,
+    table_id: 1,
     name: "Alice",
     email: "alice@test.com",
     street: "Else Alfelts Vej",
@@ -46,7 +46,7 @@ const registrations = [
   },
   {
     id: "r2",
-    box_id: 5,
+    table_id: 5,
     name: "Bob",
     email: "bob@test.com",
     street: "Else Alfelts Vej",
@@ -183,7 +183,7 @@ describe("AdminRegistrations", () => {
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
         { ok: true, body: [] },
-        { ok: true, status: 201, body: { id: "r3", boxId: 10, apartmentKey: "Test" } },
+        { ok: true, status: 201, body: { id: "r3", tableId: 10, apartmentKey: "Test" } },
         { ok: true, body: registrations },
         { ok: true, body: [] },
       ]);
@@ -229,7 +229,7 @@ describe("AdminRegistrations", () => {
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
         { ok: true, body: [] },
-        { ok: true, status: 201, body: { id: "r3", boxId: 10, apartmentKey: "Test" } },
+        { ok: true, status: 201, body: { id: "r3", tableId: 10, apartmentKey: "Test" } },
         { ok: true, body: registrations },
         { ok: true, body: [] },
       ]);
