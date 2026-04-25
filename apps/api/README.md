@@ -25,38 +25,45 @@ Must not contain:
 ```
 src/
 ├── db/
-│   ├── connection.ts        Database connection factory
-│   ├── index.ts             DB module entry point
-│   ├── migrate.ts           Migration runner
-│   ├── migrations/          Kysely migration files
-│   ├── seed.ts              Seed data (tables, admins, system settings)
-│   ├── setup.ts             Combined migrate + seed entry point
-│   └── types.ts             Database table type definitions
+│   ├── connection.ts            Database connection factory
+│   ├── index.ts                 DB module entry point
+│   ├── migrate.ts               Migration runner
+│   ├── migration-registry.ts    Registered migration list
+│   ├── migrations/              Kysely migration files
+│   ├── seed.ts                  Seed data (tables, admins, system settings)
+│   ├── setup.ts                 Combined migrate + seed entry point
+│   └── types.ts                 Database table type definitions
 ├── lib/
-│   ├── admin-email-templates.ts  Admin notification email templates
-│   ├── audit.ts             Audit event recording helpers
-│   ├── email-service.ts     SES email delivery service
-│   ├── email-templates.ts   Public-facing email templates
-│   ├── errors.ts            Typed API error classes
-│   ├── logger.ts            Structured JSON logger (Lambda) / text logger (dev)
-│   ├── password.ts          Argon2id hashing and verification
-│   └── session.ts           Session token generation
+│   ├── admin-email-templates.ts    Admin notification email templates
+│   ├── admin-ops-notifications.ts  Admin ops notification dispatch
+│   ├── audit.ts                    Audit event recording helpers
+│   ├── cancellation-tokens.ts      Self-cancel magic-link token issuance/verification
+│   ├── email-service.ts            SES email delivery service
+│   ├── email-templates.ts          Public-facing email templates
+│   ├── errors.ts                   Typed API error classes
+│   ├── logger.ts                   Structured JSON logger (Lambda) / text logger (dev)
+│   ├── password.ts                 Argon2id hashing and verification
+│   ├── session.ts                  Session token generation
+│   └── waitlist-emails.ts          Waitlist notification emails
 ├── middleware/
-│   └── auth.ts              Admin session authentication middleware
+│   └── auth.ts                  Admin session authentication middleware
 ├── routes/
 │   ├── admin/
-│   │   ├── admins.ts        Admin account CRUD
-│   │   ├── audit.ts         Audit timeline retrieval
-│   │   ├── auth.ts          Admin login and password change
-│   │   ├── registrations.ts Registration management (create, move, remove)
-│   │   ├── settings.ts      System settings (opening time)
-│   │   └── waitlist.ts      Waitlist assignment
-│   ├── health.ts            Health check endpoint
-│   └── public.ts            Public status, tables, register, and waitlist
-├── router.ts                Route registration
-├── dev-server.ts            Local development HTTP server
-├── lambda.ts                AWS Lambda handler entry point
-└── index.ts                 Application entry point
+│   │   ├── admins.ts            Admin account CRUD
+│   │   ├── audit.ts             Audit timeline retrieval
+│   │   ├── auth.ts              Admin login, logout, me, password change
+│   │   ├── messaging.ts         Bulk messaging (template, preview, recipients, send)
+│   │   ├── registrations.ts     Registration management (create, move, remove)
+│   │   ├── settings.ts          Opening time and notification preferences
+│   │   ├── staging.ts           Staging-only test utilities (fill / clear)
+│   │   ├── tables.ts            Admin table reservation control (reserve / release)
+│   │   └── waitlist.ts          Waitlist list, assign, and remove
+│   ├── health.ts                Health check endpoint
+│   └── public.ts                Public status, hall, tables, register, waitlist, validation, cancel
+├── router.ts                    Route registration
+├── dev-server.ts                Local development HTTP server
+├── lambda.ts                    AWS Lambda handler entry point
+└── index.ts                     Application entry point
 ```
 
 ## Database

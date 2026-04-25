@@ -14,16 +14,20 @@ Primary product specification:
 - [`infra/`](infra/) - AWS infrastructure as code.
   - [`infra/terraform`](infra/terraform/) - Terraform modules and environment stacks.
   - [`infra/terraform/modules/loppemarked_stack`](infra/terraform/modules/loppemarked_stack/) - Shared AWS resource module.
-- [`docs/`](docs/) - Product specs, architecture, ADRs, API contracts, and data model docs.
+- [`docs/`](docs/) - Product specs, architecture, ADRs, API contracts, and data model docs. See [`docs/README.md`](docs/README.md) for the docs index.
   - [`docs/architecture.md`](docs/architecture.md) - System architecture with diagrams.
   - [`docs/api/openapi.yaml`](docs/api/openapi.yaml) - OpenAPI 3.1 contract.
   - [`docs/data/schema.md`](docs/data/schema.md) - Data contract and invariants.
+  - [`docs/specs/design-tokens.md`](docs/specs/design-tokens.md) - Web design tokens (TS + CSS).
   - [`docs/adr/`](docs/adr/) - Architecture Decision Records.
   - [`docs/runbooks/`](docs/runbooks/) - Operational runbooks.
     - [`incident-triage.md`](docs/runbooks/incident-triage.md) - Alarm investigation and incident response.
     - [`backup-restore.md`](docs/runbooks/backup-restore.md) - RDS backup and point-in-time restore.
     - [`launch-checklist.md`](docs/runbooks/launch-checklist.md) - Pre-launch verification, production cutover, and go/no-go decision.
 - `.github` - CI workflows and contribution templates.
+  - [`.github/pull_request_template.md`](.github/pull_request_template.md) - Pull request body template.
+  - [`.github/ISSUE_TEMPLATE/feature-slice.md`](.github/ISSUE_TEMPLATE/feature-slice.md) - Feature slice issue template.
+  - [`.github/ISSUE_TEMPLATE/guardrail-task.md`](.github/ISSUE_TEMPLATE/guardrail-task.md) - Guardrail / platform task issue template.
 
 ## Local Development
 
@@ -126,11 +130,12 @@ Each GitHub environment (`staging`, `production`) needs these variables:
 
 ## CI / Terraform Pipeline
 
-Four workflows handle CI, infrastructure, deployment, and drift detection:
+Five workflows handle CI, infrastructure, API and web deployment, and drift detection:
 
 - **CI (`ci.yml`)** - Runs on every PR and push to main. Validates guardrail files, runs app checks (test/lint/build), and performs lightweight `terraform fmt -check` + `terraform validate` with the backend disabled.
 - **Terraform (`terraform.yml`)** - Runs when `infra/terraform/**` files change. Authenticates to AWS via GitHub OIDC and operates per environment.
-- **Deploy (`deploy.yml`)** - Runs when `apps/api/**` or `packages/shared/**` change on main. Builds the Lambda bundle, deploys to staging, runs a health smoke test, then deploys to production.
+- **Deploy API (`deploy.yml`)** - Runs when `apps/api/**` or `packages/shared/**` change on main. Builds the Lambda bundle, deploys to staging, runs a health smoke test, then deploys to production.
+- **Deploy Web (`deploy-web.yml`)** - Runs when `apps/web/**` or `packages/shared/**` change on main. Triggers an Amplify production release job and waits for the build to complete.
 - **Drift Detection (`drift-detection.yml`)** - Runs daily on a cron schedule. Runs `terraform plan` for each environment and creates a GitHub issue if drift is detected.
 
 ### Pull requests (internal)
