@@ -271,13 +271,30 @@
   font-size: 0.85rem;
 }
 
-/* Seller notes: paper card placed above the map. Same material as the other
-   surfaces but with a distinctive heading and a tighter list. */
+/* Seller notes: inline page guidance shown above the legend. Reads as page
+   context rather than a framed card, so no background/padding container. */
 .flea-map__notes {
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 1rem;
   width: min(100%, 44rem);
-  padding: 1rem 1.25rem 1.1rem;
+  padding: 0;
   text-align: left;
+}
+
+/* Hairline divider between the seller notes and the counts/legend. Uses a
+   soft warm gradient so it reads as a subtle paper crease rather than a
+   hard rule. */
+.flea-map__divider {
+  margin: 1.25rem auto;
+  width: min(100%, 44rem);
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--scene-paper-edge) 20%,
+    var(--scene-paper-edge) 80%,
+    transparent
+  );
 }
 
 .flea-map__notes-title {
