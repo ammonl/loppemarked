@@ -99,11 +99,11 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
         </span>
       </div>
 
+      <SellerNotes />
+
       <div className="flea-map__legend">
         <TableStateLegend />
       </div>
-
-      <SellerNotes />
 
       {!hasAvailable && (
         <FullCapacityNotice onJoinWaitlist={() => setPageView("waitlist")} />
@@ -274,7 +274,7 @@ function TableSummary({ boxId, isAvailable }: { boxId: number; isAvailable: bool
 function SellerNotes() {
   const { t } = useLanguage();
   return (
-    <aside className="flea-paper-card flea-map__notes" aria-labelledby="flea-map-notes-title">
+    <aside className="flea-map__notes" aria-labelledby="flea-map-notes-title">
       <h3 id="flea-map-notes-title" className="flea-map__notes-title">
         {t("table.notes.title")}
       </h3>
