@@ -525,14 +525,9 @@ describe("handleJoinWaitlist", () => {
   });
 
   it("throws 400 when boxes are still available", async () => {
-    const executeTakeFirstOrThrowFn = vi.fn().mockResolvedValue({ count: 5 });
-    const asFn = vi.fn().mockReturnValue("count");
-    const countAllFn = vi.fn().mockReturnValue({ as: asFn });
-    const fnObj = { countAll: countAllFn };
-    const whereFn = vi.fn().mockReturnValue({ executeTakeFirstOrThrow: executeTakeFirstOrThrowFn });
-    const selectFn = vi.fn().mockReturnValue({ where: whereFn });
-    const selectFromFn = vi.fn().mockReturnValue({ select: selectFn });
-    const mockDb = { selectFrom: selectFromFn, fn: fnObj } as unknown as Kysely<Database>;
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 5,
+    });
 
     try {
       await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -541,6 +536,49 @@ describe("handleJoinWaitlist", () => {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
       expect((err as AppError).code).toBe("BOXES_AVAILABLE");
+    }
+  });
+
+  it("throws 409 when apartment already has an active registration", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingRegistrationId: "reg-existing",
+    });
+
+    try {
+      await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      expect((err as AppError).statusCode).toBe(409);
+      expect((err as AppError).code).toBe("APARTMENT_HAS_REGISTRATION");
+    }
+  });
+
+  it("does not insert a waitlist entry when apartment already has a registration", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingRegistrationId: "reg-existing",
+    });
+
+    await expect(
+      handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody })),
+    ).rejects.toMatchObject({ code: "APARTMENT_HAS_REGISTRATION" });
+
+    expect(mockDb.transaction).not.toHaveBeenCalled();
+  });
+
+  it("blocks waitlist signup with registration check before BOXES_AVAILABLE check", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 5,
+      existingRegistrationId: "reg-existing",
+    });
+
+    try {
+      await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).code).toBe("APARTMENT_HAS_REGISTRATION");
     }
   });
 });
@@ -881,6 +919,17 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
     let selectCallCount = 0;
     const mockDb = {
       selectFrom: vi.fn().mockImplementation((table: string) => {
+        if (table === "registrations") {
+          return {
+            select: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+                }),
+              }),
+            }),
+          };
+        }
         if (table === "planter_boxes") {
           return {
             select: vi.fn().mockReturnValue({
@@ -961,6 +1010,17 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
     let selectCallCount = 0;
     const mockDb = {
       selectFrom: vi.fn().mockImplementation((table: string) => {
+        if (table === "registrations") {
+          return {
+            select: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+                }),
+              }),
+            }),
+          };
+        }
         if (table === "planter_boxes") {
           return {
             select: vi.fn().mockReturnValue({
@@ -1227,6 +1287,7 @@ function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
 interface MockWaitlistOpts {
   availableCount: number;
   existingEntry?: { id: string; created_at: string };
+  existingRegistrationId?: string;
   newEntryId?: string;
   positionEntryCreatedAt?: string;
   positionCount?: number;
@@ -1313,6 +1374,21 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
 
   return {
     selectFrom: vi.fn().mockImplementation((table: string) => {
+      if (table === "registrations") {
+        return {
+          select: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                executeTakeFirst: vi.fn().mockResolvedValue(
+                  opts.existingRegistrationId
+                    ? { id: opts.existingRegistrationId }
+                    : undefined,
+                ),
+              }),
+            }),
+          }),
+        };
+      }
       if (table === "planter_boxes") {
         return {
           select: vi.fn().mockReturnValue({
