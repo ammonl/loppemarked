@@ -405,13 +405,23 @@ export function AdminTables() {
     }
 
     if (table.state === "reserved") {
+      const reservedColors = TABLE_STATE_COLORS.reserved;
       return (
         <div style={{ display: "flex", gap: "0.25rem" }}>
           <button
             type="button"
             onClick={() => openReleaseDialog(table)}
             disabled={disabled}
-            style={{ ...buttonSecondary, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
+            style={{
+              ...buttonSecondary,
+              padding: "0.25rem 0.75rem",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              background: reservedColors.background,
+              color: reservedColors.text,
+              border: `1px solid ${reservedColors.border}`,
+              cursor: disabledCursor,
+            }}
           >
             {t("admin.tables.release")}
           </button>
@@ -730,16 +740,30 @@ export function AdminTables() {
                   <td style={tableCellStyle}>
                     <span
                       style={{
-                        display: "inline-block",
-                        padding: "0.15rem 0.5rem",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        padding: "0.15rem 0.6rem",
                         borderRadius: 12,
                         fontSize: "0.75rem",
                         fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
                         background: stateColors.background,
                         color: stateColors.text,
                         border: `1px solid ${stateColors.border}`,
                       }}
                     >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          display: "inline-block",
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: stateColors.border,
+                        }}
+                      />
                       {t(`map.state.${row.state}`)}
                     </span>
                   </td>
