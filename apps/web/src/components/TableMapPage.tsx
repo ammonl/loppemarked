@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
-import { getTableById } from "@loppemarked/shared";
+import { getTableById, STANDARD_TABLE_SIZE_LABEL, tableHasClothingRack } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LoadingSplash } from "./LoadingSplash";
@@ -102,6 +102,8 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
       <div className="flea-map__legend">
         <TableStateLegend />
       </div>
+
+      <SellerNotes />
 
       {!hasAvailable && (
         <FullCapacityNotice onJoinWaitlist={() => setPageView("waitlist")} />
@@ -219,7 +221,7 @@ function DetailPanel({
         </header>
 
         {panelMode === "detail" && (
-          <TableSummary boxId={selectedBoxId} />
+          <TableSummary boxId={selectedBoxId} isAvailable={isAvailable} />
         )}
 
         {panelMode === "detail" && isAvailable && (
@@ -246,16 +248,42 @@ function DetailPanel({
   );
 }
 
-function TableSummary({ boxId }: { boxId: number }) {
+function TableSummary({ boxId, isAvailable }: { boxId: number; isAvailable: boolean }) {
   const { t } = useLanguage();
   const table = getTableById(boxId);
   if (!table) return null;
   return (
     <div className="flea-map__summary">
       <p>
-        <strong>{t("table.detailsSize")}:</strong> {table.sizeMeters} {t("table.meters")}
+        <strong>{t("table.detailsSize")}:</strong> {STANDARD_TABLE_SIZE_LABEL}
       </p>
+      {tableHasClothingRack(boxId) && (
+        <p className="flea-map__summary-rack">
+          <span aria-hidden>🧥</span> {t("table.detailsRack")}
+        </p>
+      )}
+      {!isAvailable && (
+        <p className="flea-map__summary-status" role="status">
+          {t("table.detailsBookedStatus")}
+        </p>
+      )}
     </div>
+  );
+}
+
+function SellerNotes() {
+  const { t } = useLanguage();
+  return (
+    <aside className="flea-paper-card flea-map__notes" aria-labelledby="flea-map-notes-title">
+      <h3 id="flea-map-notes-title" className="flea-map__notes-title">
+        {t("table.notes.title")}
+      </h3>
+      <ul className="flea-map__notes-list">
+        <li>{t("table.notes.clothingRackOnlyDesignated")}</li>
+        <li>{t("table.notes.bringYourOwnRack")}</li>
+        <li>{t("table.notes.shareTable")}</li>
+      </ul>
+    </aside>
   );
 }
 

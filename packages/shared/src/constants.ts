@@ -74,6 +74,23 @@ const STANDARD_TABLE_SIZE_METERS = 2;
 const PREMIUM_TABLE_SIZE_METERS = 3;
 
 /**
+ * Public-facing size label shown on the table-map detail panel. Until the
+ * catalog carries individual dimensions, every table is presented at the
+ * standard 100×200 cm.
+ */
+export const STANDARD_TABLE_SIZE_LABEL = "100x200cm" as const;
+
+/**
+ * Tables flagged for an adjacent clothing rack. Sellers without a flagged
+ * table are not permitted to bring a rack of their own.
+ */
+export const CLOTHING_RACK_TABLE_IDS: readonly number[] = [8, 14, 18, 22];
+
+export function tableHasClothingRack(id: number): boolean {
+  return CLOTHING_RACK_TABLE_IDS.includes(id);
+}
+
+/**
  * Fælledhuset hall table layout. Tables 1–22 line the perimeter
  * walls; tables 23–26 form the long center island (premium 3-meter
  * tables); tables 27–29 form a smaller second center aisle.

@@ -5,9 +5,11 @@ import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
-  ORGANIZER_CONTACTS,
+  EVENT_CONTACT,
   getTableById,
   isFloorDoorRequired,
+  STANDARD_TABLE_SIZE_LABEL,
+  tableHasClothingRack,
   validateRegistrationInput,
   type Language,
 } from "@loppemarked/shared";
@@ -204,12 +206,12 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
 
       {table && (
         <div className="flea-paper-card flea-scene-form__summary-card">
-          <p className="flea-scene-form__summary-title">
-            {t("table.detailsTitle").replace("{number}", String(table.number))}
-          </p>
-          <p className="flea-scene-form__summary-meta">
-            {table.sizeMeters} {t("table.meters")}
-          </p>
+          <p className="flea-scene-form__summary-meta">{STANDARD_TABLE_SIZE_LABEL}</p>
+          {tableHasClothingRack(table.id) && (
+            <p className="flea-scene-form__summary-meta">
+              <span aria-hidden>🧥</span> {t("table.detailsRack")}
+            </p>
+          )}
         </div>
       )}
 
@@ -314,13 +316,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
             <li>{t("consent.purpose")}</li>
             <li>{t("consent.retention")}</li>
             <li>
-              {t("consent.contact")}{" "}
-              {ORGANIZER_CONTACTS.map((c, i) => (
-                <span key={c.email}>
-                  {i > 0 && ", "}
-                  <a href={`mailto:${c.email}`}>{c.name}</a>
-                </span>
-              ))}
+              {t("consent.contact")} <a href={`mailto:${EVENT_CONTACT.email}`}>{EVENT_CONTACT.name}</a>.
             </li>
           </ul>
 

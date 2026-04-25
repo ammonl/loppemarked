@@ -129,7 +129,7 @@ describe("TableMapPage", () => {
     expect(form.getAttribute("data-box-id")).toBe("5");
   });
 
-  it("does not open the detail panel when a reserved table is clicked", async () => {
+  it("opens a read-only detail panel showing booked status when a booked table is clicked", async () => {
     vi.stubGlobal("fetch", makeFetchMock(makeAllOccupied()));
 
     const { TableMapPage } = await import("./TableMapPage");
@@ -142,8 +142,10 @@ describe("TableMapPage", () => {
       fireEvent.click(screen.getByTestId("table-tile-7"));
     });
 
-    // Detail panel title should not appear for any table.
-    expect(screen.queryByText(/Table #7/)).toBeNull();
+    // Panel opens with the booked-status label and no Book Now CTA.
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(screen.getByText("table.detailsBookedStatus")).toBeDefined();
+    expect(screen.queryByText("table.bookNow")).toBeNull();
   });
 
   it("shows the full-capacity waitlist notice when no tables are available", async () => {

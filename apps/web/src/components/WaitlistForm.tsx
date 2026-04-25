@@ -5,7 +5,7 @@ import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
-  ORGANIZER_CONTACTS,
+  EVENT_CONTACT,
   isFloorDoorRequired,
   validateWaitlistInput,
   type Language,
@@ -220,13 +220,7 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
             <li>{t("consent.purpose")}</li>
             <li>{t("consent.retention")}</li>
             <li>
-              {t("consent.contact")}{" "}
-              {ORGANIZER_CONTACTS.map((c, i) => (
-                <span key={c.email}>
-                  {i > 0 && ", "}
-                  <a href={`mailto:${c.email}`}>{c.name}</a>
-                </span>
-              ))}
+              {t("consent.contact")} <a href={`mailto:${EVENT_CONTACT.email}`}>{EVENT_CONTACT.name}</a>.
             </li>
           </ul>
 
