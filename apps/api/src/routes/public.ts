@@ -112,10 +112,10 @@ export async function handleValidateAddress(ctx: RequestContext): Promise<RouteR
 
   const street = body.street ?? "";
   const houseNumber = body.houseNumber ?? NaN;
-  const floor = body.floor ?? null;
-  const door = body.door ?? null;
+  const rawFloor = body.floor ?? null;
+  const rawDoor = body.door ?? null;
 
-  const result = validateAddress(street, houseNumber, floor, door);
+  const result = validateAddress(street, houseNumber, rawFloor, rawDoor);
 
   if (!result.valid) {
     return {
@@ -129,6 +129,8 @@ export async function handleValidateAddress(ctx: RequestContext): Promise<RouteR
     };
   }
 
+  const { floor, door } = effectiveFloorDoor(houseNumber, rawFloor, rawDoor);
+
   return {
     statusCode: 200,
     body: {
@@ -138,6 +140,23 @@ export async function handleValidateAddress(ctx: RequestContext): Promise<RouteR
       apartmentKey: normalizeApartmentKey(street, houseNumber, floor, door),
     },
   };
+}
+
+/**
+ * Drop client-supplied floor/door for house numbers that don't require them.
+ * Mirrors the client-side normalization in #95 so a malicious or future buggy
+ * client cannot bypass the one-box-per-apartment dedupe by submitting stray
+ * floor/door values for a row-house address (see #97).
+ */
+function effectiveFloorDoor(
+  houseNumber: number,
+  floor: string | null | undefined,
+  door: string | null | undefined,
+): { floor: string | null; door: string | null } {
+  if (!isFloorDoorRequired(houseNumber)) {
+    return { floor: null, door: null };
+  }
+  return { floor: floor ?? null, door: door ?? null };
 }
 
 export async function handleValidateRegistration(ctx: RequestContext): Promise<RouteResponse> {
@@ -155,6 +174,12 @@ export async function handleValidateRegistration(ctx: RequestContext): Promise<R
     };
   }
 
+  const { floor, door } = effectiveFloorDoor(
+    body.houseNumber!,
+    body.floor,
+    body.door,
+  );
+
   return {
     statusCode: 200,
     body: {
@@ -163,8 +188,8 @@ export async function handleValidateRegistration(ctx: RequestContext): Promise<R
       apartmentKey: normalizeApartmentKey(
         body.street!,
         body.houseNumber!,
-        body.floor ?? null,
-        body.door ?? null,
+        floor,
+        door,
       ),
       floorDoorRequired: isFloorDoorRequired(body.houseNumber!),
     },
@@ -200,11 +225,17 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
     throw badRequest("Registration is not yet open");
   }
 
+  const { floor, door } = effectiveFloorDoor(
+    body.houseNumber,
+    body.floor,
+    body.door,
+  );
+
   const apartmentKey = normalizeApartmentKey(
     body.street,
     body.houseNumber,
-    body.floor ?? null,
-    body.door ?? null,
+    floor,
+    door,
   );
 
   const result = await ctx.db.transaction().execute(async (trx) => {
@@ -300,8 +331,8 @@ export async function handlePublicRegister(ctx: RequestContext): Promise<RouteRe
         email: body.email,
         street: body.street,
         house_number: body.houseNumber,
-        floor: body.floor ?? null,
-        door: body.door ?? null,
+        floor,
+        door,
         apartment_key: apartmentKey,
         language: body.language,
         status: "active",
@@ -439,11 +470,17 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
     };
   }
 
+  const { floor, door } = effectiveFloorDoor(
+    body.houseNumber!,
+    body.floor,
+    body.door,
+  );
+
   const apartmentKey = normalizeApartmentKey(
     body.street!,
     body.houseNumber!,
-    body.floor ?? null,
-    body.door ?? null,
+    floor,
+    door,
   );
 
   // One-table-per-apartment rule: if this apartment already holds an active
@@ -515,8 +552,8 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
           email: body.email!,
           street: body.street!,
           house_number: body.houseNumber!,
-          floor: body.floor ?? null,
-          door: body.door ?? null,
+          floor,
+          door,
           apartment_key: apartmentKey,
           language: body.language!,
           greenhouse_preference: body.greenhousePreference!,
