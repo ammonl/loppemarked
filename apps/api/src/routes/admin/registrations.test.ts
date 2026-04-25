@@ -300,7 +300,7 @@ describe("handleCreateRegistration (happy path)", () => {
     expect(auditCalls.length).toBeGreaterThan(0);
   });
 
-  // Regression for #97: admin tooling must not be able to bypass the
+  // Regression: admin tooling must not be able to bypass the
   // apartment dedupe rule by sending a floor/door for a non-floor-required
   // house number.
   it("drops floor/door from the persisted row for non-floor-required house numbers", async () => {

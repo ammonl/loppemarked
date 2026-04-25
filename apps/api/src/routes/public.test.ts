@@ -716,12 +716,12 @@ describe("handleJoinWaitlist (happy path)", () => {
   });
 });
 
-// Regression tests for #97: a malicious or buggy client can submit a
+// Regression tests: a malicious or buggy client can submit a
 // `floor` / `door` that the address rules don't require (e.g. house 122),
 // which would otherwise produce a different apartment dedupe key than a
 // neighbor at the same address. The server normalizes them to null before
 // computing the apartment key and persisting the row.
-describe("server-side floor/door normalization (issue #97)", () => {
+describe("server-side floor/door normalization", () => {
   describe("handleValidateAddress", () => {
     it("ignores client-supplied floor/door for non-floor-required house numbers", async () => {
       const res = await handleValidateAddress(
