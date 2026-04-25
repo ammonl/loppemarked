@@ -226,7 +226,7 @@ describe("handlePublicRegister — server time gate boundary", () => {
     const pastDate = new Date(openingMs);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "available" },
+      table: { id: 1, state: "available" },
       existingReg: undefined,
       newRegId: "reg-boundary",
     });
@@ -405,11 +405,11 @@ describe("handlePublicRegister", () => {
     }
   });
 
-  it("throws badRequest when box not found", async () => {
+  it("throws badRequest when table not found", async () => {
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: undefined,
+      table: undefined,
     });
 
     try {
@@ -422,11 +422,11 @@ describe("handlePublicRegister", () => {
     }
   });
 
-  it("throws 409 when box is not available", async () => {
+  it("throws 409 when table is not available", async () => {
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "occupied" },
+      table: { id: 1, state: "occupied" },
     });
 
     try {
@@ -443,7 +443,7 @@ describe("handlePublicRegister", () => {
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "available" },
+      table: { id: 1, state: "available" },
       existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
     });
 
@@ -461,7 +461,7 @@ describe("handlePublicRegister", () => {
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "available" },
+      table: { id: 1, state: "available" },
       existingReg: undefined,
       newRegId: "reg-new",
     });
@@ -478,7 +478,7 @@ describe("handlePublicRegister", () => {
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "available" },
+      table: { id: 1, state: "available" },
       existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
       newRegId: "reg-new",
     });
@@ -521,7 +521,7 @@ describe("handleJoinWaitlist", () => {
     expect(body.valid).toBe(false);
   });
 
-  it("throws 400 when boxes are still available", async () => {
+  it("throws 400 when tables are still available", async () => {
     const mockDb = makeMockDbForWaitlist({
       availableCount: 5,
     });
@@ -596,7 +596,7 @@ describe("handleJoinWaitlist (happy path)", () => {
     setSesClient(mockSes as never);
   });
 
-  it("creates a new waitlist entry when no boxes available and apartment not on waitlist", async () => {
+  it("creates a new waitlist entry when no tables available and apartment not on waitlist", async () => {
     const mockDb = makeMockDbForWaitlist({
       availableCount: 0,
       existingEntry: undefined,
@@ -649,7 +649,7 @@ describe("handleJoinWaitlist (happy path)", () => {
     expect(emailCalls.length).toBe(0);
   });
 
-  it("does not queue a confirmation email when boxes are still available", async () => {
+  it("does not queue a confirmation email when tables are still available", async () => {
     const mockDb = makeMockDbForWaitlist({ availableCount: 5 });
 
     await expect(
@@ -792,7 +792,7 @@ describe("server-side floor/door normalization (issue #97)", () => {
       const mockDb = makeMockDbForRegister(
         {
           openingDatetime: pastDate,
-          box: { id: 1, state: "available" },
+          table: { id: 1, state: "available" },
           existingReg: undefined,
           newRegId: "reg-norm",
         },
@@ -832,7 +832,7 @@ describe("server-side floor/door normalization (issue #97)", () => {
       const mockDb = makeMockDbForRegister(
         {
           openingDatetime: pastDate,
-          box: { id: 1, state: "available" },
+          table: { id: 1, state: "available" },
           existingReg: undefined,
           newRegId: "reg-keep",
         },
@@ -1465,7 +1465,7 @@ describe("handleWaitlistPosition — returns FIFO position", () => {
 
 interface MockRegisterOpts {
   openingDatetime: Date;
-  box?: { id: number; state: string };
+  table?: { id: number; state: string };
   existingReg?: { id: string; table_id: number; name: string; email: string; status: string };
   newRegId?: string;
 }
@@ -1488,7 +1488,7 @@ function makeMockDbForRegister(
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(opts.box),
+                executeTakeFirst: vi.fn().mockResolvedValue(opts.table),
               }),
             }),
           }),

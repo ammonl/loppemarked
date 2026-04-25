@@ -1,11 +1,11 @@
 import type {
   ActorType,
   AuditAction,
-  BoxState,
   EmailStatus,
   Language,
-  PublicBoxState,
+  PublicTableState,
   RegistrationStatus,
+  TableState,
   WaitlistEntryStatus,
 } from "./enums.js";
 
@@ -26,12 +26,12 @@ export interface HallSummary {
 /** Flea-market table (public-safe view) */
 export interface TablePublic {
   id: number;
-  state: PublicBoxState;
+  state: PublicTableState;
 }
 
 /** Flea-market table (full admin view) */
 export interface Table extends Omit<TablePublic, "state"> {
-  state: BoxState;
+  state: TableState;
   reservedLabel: string | null;
   createdAt: string;
   updatedAt: string;

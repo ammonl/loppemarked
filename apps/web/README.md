@@ -40,8 +40,7 @@ src/
 │   ├── AdminSettings.tsx           Admin system settings (opening time)
 │   ├── AdminWaitlist.tsx           Admin waitlist management
 │   ├── AuditTimeline.tsx           Audit event timeline display
-│   ├── BoxStateLegend.tsx          Color legend for table states
-│   ├── boxStateColors.ts           Shared color constants for table states
+│   ├── tableStateColors.ts         Shared color constants for table states
 │   ├── DawaAddressInput.tsx        DAWA address autocomplete input
 │   ├── LandingPage.tsx             Public landing page (hero + CTA)
 │   ├── LanguageSelector.tsx        da/en language toggle

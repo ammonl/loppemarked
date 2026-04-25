@@ -17,7 +17,7 @@ function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   };
 }
 
-function createMockDb(rows: unknown[], adminRows: unknown[] = [], boxRows: unknown[] = []) {
+function createMockDb(rows: unknown[], adminRows: unknown[] = [], tableRows: unknown[] = []) {
   const executeFn = vi.fn().mockResolvedValue(rows);
   const limitFn = vi.fn().mockReturnValue({ execute: executeFn, where: vi.fn().mockReturnValue({ execute: executeFn }) });
   const orderBy2 = vi.fn().mockReturnValue({ limit: limitFn });
@@ -28,16 +28,16 @@ function createMockDb(rows: unknown[], adminRows: unknown[] = [], boxRows: unkno
   const adminWhereFn = vi.fn().mockReturnValue({ execute: adminExecuteFn });
   const adminSelectFn = vi.fn().mockReturnValue({ where: adminWhereFn });
 
-  const boxExecuteFn = vi.fn().mockResolvedValue(boxRows);
-  const boxWhereFn = vi.fn().mockReturnValue({ execute: boxExecuteFn });
-  const boxSelectFn = vi.fn().mockReturnValue({ where: boxWhereFn });
+  const tableExecuteFn = vi.fn().mockResolvedValue(tableRows);
+  const tableWhereFn = vi.fn().mockReturnValue({ execute: tableExecuteFn });
+  const tableSelectFn = vi.fn().mockReturnValue({ where: tableWhereFn });
 
   const selectFromFn = vi.fn().mockImplementation((table: string) => {
     if (table === "admins") {
       return { select: adminSelectFn };
     }
     if (table === "tables") {
-      return { select: boxSelectFn };
+      return { select: tableSelectFn };
     }
     return { select: selectFn };
   });
@@ -176,7 +176,7 @@ describe("handleListAuditEvents", () => {
     expect(whereFn).toHaveBeenCalledWith("action", "=", "admin_create");
   });
 
-  it("resolves table labels from planter_box entity events", async () => {
+  it("resolves table labels from table_state_change entity events", async () => {
     const mockEvents = [
       {
         id: "evt-1",
@@ -203,7 +203,7 @@ describe("handleListAuditEvents", () => {
     expect(body.tableLabels).toEqual({ "5": "Table #5" });
   });
 
-  it("resolves table labels from before/after box_id fields", async () => {
+  it("resolves table labels from before/after table_id fields", async () => {
     const mockEvents = [
       {
         id: "evt-1",
@@ -230,7 +230,7 @@ describe("handleListAuditEvents", () => {
     expect(body.tableLabels).toEqual({ "5": "Table #5", "10": "Table #10" });
   });
 
-  it("returns empty tableLabels when no box IDs are present", async () => {
+  it("returns empty tableLabels when no table IDs are present", async () => {
     const mockEvents = [
       {
         id: "evt-1",

@@ -81,7 +81,7 @@ describe("handleFillTables", () => {
     }
   });
 
-  it("fills available boxes with fake registrations", async () => {
+  it("fills available tables with fake registrations", async () => {
     const mockBoxes = [
       { id: 1, state: "available" },
       { id: 2, state: "reserved" },
@@ -167,7 +167,7 @@ describe("handleClearRegistrations", () => {
     }
   });
 
-  it("clears all active registrations and releases boxes", async () => {
+  it("clears all active registrations and releases tables", async () => {
     const mockRegs = [
       { id: "r1", table_id: 1 },
       { id: "r2", table_id: 3 },

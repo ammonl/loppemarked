@@ -84,11 +84,6 @@ export const I18N_KEYS = {
     oneApartmentRule: "policy.oneApartmentRule",
     noSelfUnregister: "policy.noSelfUnregister",
   },
-  email: {
-    confirmationSubject: "email.confirmationSubject",
-    switchNote: "email.switchNote",
-    careGuidelines: "email.careGuidelines",
-  },
   about: {
     title: "about.title",
     description: "about.description",

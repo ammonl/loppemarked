@@ -43,7 +43,7 @@ paths:
   /public/waitlist:
     post:
       tags: [Public]
-      summary: Join waitlist when no public boxes are available.
+      summary: Join waitlist when no public tables are available.
       responses:
         '200':
           description: Added or already tracked on waitlist.

@@ -23,7 +23,7 @@ interface BrandLogoProps {
 
 /**
  * Custom hand-crafted UN17 Village brand mark. Wordmark uses the loaded
- * Caveat signature font with per-letter wobble, paired with a heart + leaf
+ * Caveat signature font with per-letter wobble, paired with a heart-and-leaf
  * doodle drawn as SVG paths so it also works as a favicon.
  */
 export function BrandLogo({
@@ -185,8 +185,8 @@ interface HeartLeafDoodleProps {
 }
 
 /**
- * Hand-drawn heart crossed with a small botanical leaf. Also used as the
- * simplified favicon variant.
+ * Hand-drawn heart with a small leaf accent. Also used as the simplified
+ * favicon variant.
  */
 function HeartLeafDoodle({
   color,
@@ -232,7 +232,7 @@ function HeartLeafDoodle({
           fill={color}
           fillOpacity={0.18}
         />
-        {/* Botanical stem tucked behind the heart */}
+        {/* Stem tucked behind the heart */}
         <path d="M16 11.4 C 16.4 8.2 17.8 5.8 20.2 4.4" />
         {/* Two little leaves on the stem */}
         <path d="M17.4 7.6 C 19 6.8 20.6 7.2 21.4 8.2 C 20.3 9.1 18.6 9 17.4 7.6 Z" fill={color} fillOpacity={0.25} />

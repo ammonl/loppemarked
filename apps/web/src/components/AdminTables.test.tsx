@@ -12,7 +12,7 @@ vi.mock("./NotificationComposer", () => ({
   NotificationComposer: () => <div data-testid="notification-composer" />,
 }));
 
-const mockBoxes = [
+const mockTables = [
   { id: 1, state: "available", registration: null },
   { id: 2, state: "occupied", registration: { id: "r1", name: "Alice", email: "alice@test.com", language: "en" } },
   { id: 3, state: "reserved", registration: null },
@@ -27,7 +27,7 @@ describe("AdminTables", () => {
   it("renders tables with action buttons", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -44,7 +44,7 @@ describe("AdminTables", () => {
   it("shows reserve dialog when Reserve is clicked", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -61,9 +61,9 @@ describe("AdminTables", () => {
 
   it("calls reserve API when confirmed", async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => mockBoxes })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockTables })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ tableId: 1, state: "reserved" }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => mockBoxes });
+      .mockResolvedValueOnce({ ok: true, json: async () => mockTables });
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -87,7 +87,7 @@ describe("AdminTables", () => {
   it("shows release dialog when Release is clicked", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -105,7 +105,7 @@ describe("AdminTables", () => {
   it("shows remove registration dialog with notification composer", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -125,7 +125,7 @@ describe("AdminTables", () => {
   it("shows add registration dialog for available tables", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -145,7 +145,7 @@ describe("AdminTables", () => {
   it("defaults language to English when add-registration dialog opens", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -167,7 +167,7 @@ describe("AdminTables", () => {
 
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -188,7 +188,7 @@ describe("AdminTables", () => {
 
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -205,7 +205,7 @@ describe("AdminTables", () => {
   it("shows registrant name next to booked table", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {
@@ -228,7 +228,7 @@ describe("AdminTables", () => {
   it("disables action buttons when a dialog is open", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockBoxes,
+      json: async () => mockTables,
     }));
 
     await act(async () => {

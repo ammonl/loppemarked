@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { BoxState } from "@loppemarked/shared";
+import type { TableState } from "@loppemarked/shared";
 import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
@@ -27,23 +27,23 @@ import {
 import { useTableControls } from "@/hooks/useTableControls";
 import { TableControls } from "./TableControls";
 import { SortableHeader } from "./SortableHeader";
-import { BOX_STATE_COLORS } from "./boxStateColors";
+import { TABLE_STATE_COLORS } from "./tableStateColors";
 import { NotificationComposer, type NotificationValue } from "./NotificationComposer";
 
-interface BoxRegistration {
+interface TableRegistration {
   id: string;
   name: string;
   email: string;
   language: string;
 }
 
-interface Box {
+interface AdminTable {
   id: number;
-  state: BoxState;
-  registration: BoxRegistration | null;
+  state: TableState;
+  registration: TableRegistration | null;
 }
 
-interface BoxRow extends Box {
+interface AdminTableRow extends AdminTable {
   tableNumber: number;
   sizeMeters: number;
   tableLabel: string;
@@ -51,10 +51,10 @@ interface BoxRow extends Box {
 }
 
 type ActiveDialog =
-  | { type: "reserve"; box: BoxRow }
-  | { type: "release"; box: BoxRow }
-  | { type: "removeRegistration"; box: BoxRow }
-  | { type: "addRegistration"; box: BoxRow }
+  | { type: "reserve"; table: AdminTableRow }
+  | { type: "release"; table: AdminTableRow }
+  | { type: "removeRegistration"; table: AdminTableRow }
+  | { type: "addRegistration"; table: AdminTableRow }
   | null;
 
 const inputStyle: React.CSSProperties = {
@@ -76,21 +76,21 @@ const labelStyle: React.CSSProperties = {
   fontFamily: fonts.body,
 };
 
-function enrichBox(b: Box): BoxRow {
-  const table = getTableById(b.id);
-  const tableNumber = table?.number ?? b.id;
-  const sizeMeters = table?.sizeMeters ?? 0;
-  const tableLabel = formatTableLabel(b.id);
+function enrichTable(t: AdminTable): AdminTableRow {
+  const catalogEntry = getTableById(t.id);
+  const tableNumber = catalogEntry?.number ?? t.id;
+  const sizeMeters = catalogEntry?.sizeMeters ?? 0;
+  const tableLabel = formatTableLabel(t.id);
   return {
-    ...b,
+    ...t,
     tableNumber,
     sizeMeters,
     tableLabel,
     _searchText: [
       tableLabel,
       String(tableNumber),
-      b.registration?.name,
-      b.registration?.email,
+      t.registration?.name,
+      t.registration?.email,
     ]
       .filter(Boolean)
       .join(" "),
@@ -99,7 +99,7 @@ function enrichBox(b: Box): BoxRow {
 
 export function AdminTables() {
   const { t } = useLanguage();
-  const [boxes, setBoxes] = useState<Box[]>([]);
+  const [tables, setTables] = useState<AdminTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -126,15 +126,15 @@ export function AdminTables() {
     }
   }, [activeDialog]);
 
-  const enrichedBoxes = useMemo<BoxRow[]>(() => boxes.map(enrichBox), [boxes]);
+  const enrichedTables = useMemo<AdminTableRow[]>(() => tables.map(enrichTable), [tables]);
 
   const stateOptions = useMemo(() => {
-    const states = [...new Set(enrichedBoxes.map((b) => b.state))];
+    const states = [...new Set(enrichedTables.map((row) => row.state))];
     return [
       { label: t("admin.table.allStates"), value: "__all__" },
       ...states.map((s) => ({ label: t(`map.state.${s}`), value: s })),
     ];
-  }, [enrichedBoxes, t]);
+  }, [enrichedTables, t]);
 
   const {
     sort,
@@ -145,19 +145,19 @@ export function AdminTables() {
     setFilter,
     clearAll,
     hasActiveControls,
-    processedData: filteredBoxes,
+    processedData: filteredTables,
   } = useTableControls({
-    data: enrichedBoxes,
+    data: enrichedTables,
     defaultSort: { key: "tableNumber", direction: "asc" },
     searchableFields: ["tableLabel", "_searchText"],
     filterConfigs: [{ key: "state", allValue: "__all__" }],
   });
 
-  const fetchBoxes = useCallback(async () => {
+  const fetchTables = useCallback(async () => {
     try {
       const res = await fetch("/admin/tables", { credentials: "include" });
       if (res.ok) {
-        setBoxes(await res.json());
+        setTables(await res.json());
       } else {
         setError(true);
       }
@@ -169,31 +169,31 @@ export function AdminTables() {
   }, []);
 
   useEffect(() => {
-    fetchBoxes();
-  }, [fetchBoxes]);
+    fetchTables();
+  }, [fetchTables]);
 
   function closeDialog() {
     setActiveDialog(null);
   }
 
-  function openReserveDialog(box: BoxRow) {
+  function openReserveDialog(table: AdminTableRow) {
     setMessage(null);
-    setActiveDialog({ type: "reserve", box });
+    setActiveDialog({ type: "reserve", table });
   }
 
-  function openReleaseDialog(box: BoxRow) {
+  function openReleaseDialog(table: AdminTableRow) {
     setMessage(null);
-    setActiveDialog({ type: "release", box });
+    setActiveDialog({ type: "release", table });
   }
 
-  function openRemoveRegistrationDialog(box: BoxRow) {
+  function openRemoveRegistrationDialog(table: AdminTableRow) {
     setRemoveMakePublic(true);
     setRemoveNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setMessage(null);
-    setActiveDialog({ type: "removeRegistration", box });
+    setActiveDialog({ type: "removeRegistration", table });
   }
 
-  function openAddRegistrationDialog(box: BoxRow) {
+  function openAddRegistrationDialog(table: AdminTableRow) {
     setAddName("");
     setAddEmail("");
     setAddHouseNumber("");
@@ -203,7 +203,7 @@ export function AdminTables() {
     setAddNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setAddErrors([]);
     setMessage(null);
-    setActiveDialog({ type: "addRegistration", box });
+    setActiveDialog({ type: "addRegistration", table });
   }
 
   async function handleReserve() {
@@ -215,12 +215,12 @@ export function AdminTables() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ tableId: activeDialog.box.id }),
+        body: JSON.stringify({ tableId: activeDialog.table.id }),
       });
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.reserved") });
         setActiveDialog(null);
-        await fetchBoxes();
+        await fetchTables();
       } else {
         const data = await res.json();
         setMessage({ type: "error", text: data.error ?? t("common.error") });
@@ -241,12 +241,12 @@ export function AdminTables() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ tableId: activeDialog.box.id }),
+        body: JSON.stringify({ tableId: activeDialog.table.id }),
       });
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.released") });
         setActiveDialog(null);
-        await fetchBoxes();
+        await fetchTables();
       } else {
         const data = await res.json();
         setMessage({ type: "error", text: data.error ?? t("common.error") });
@@ -260,7 +260,7 @@ export function AdminTables() {
 
   async function handleRemoveRegistration() {
     if (!activeDialog || activeDialog.type !== "removeRegistration") return;
-    const reg = activeDialog.box.registration;
+    const reg = activeDialog.table.registration;
     if (!reg) return;
 
     setSubmitting(true);
@@ -272,7 +272,7 @@ export function AdminTables() {
         credentials: "include",
         body: JSON.stringify({
           registrationId: reg.id,
-          makeBoxPublic: removeMakePublic,
+          makeTablePublic: removeMakePublic,
           notification: {
             sendEmail: removeNotification.sendEmail,
             subject: removeNotification.subject || undefined,
@@ -283,7 +283,7 @@ export function AdminTables() {
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.registrationRemoved") });
         setActiveDialog(null);
-        await fetchBoxes();
+        await fetchTables();
       } else {
         const data = await res.json();
         setMessage({ type: "error", text: data.error ?? t("common.error") });
@@ -310,7 +310,7 @@ export function AdminTables() {
       floor: addFloor.trim() || null,
       door: addDoor.trim() || null,
       language: addLanguage,
-      tableId: activeDialog.box.id,
+      tableId: activeDialog.table.id,
     };
 
     const validation = validateRegistrationInput(input);
@@ -353,7 +353,7 @@ export function AdminTables() {
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.tables.registrationAdded") });
         setActiveDialog(null);
-        await fetchBoxes();
+        await fetchTables();
       } else {
         const data = await res.json();
         setMessage({ type: "error", text: data.error ?? t("common.error") });
@@ -373,20 +373,20 @@ export function AdminTables() {
     return <p style={{ color: colors.dustyRose }}>{t("common.error")}</p>;
   }
 
-  const available = enrichedBoxes.filter((b) => b.state === "available").length;
-  const occupied = enrichedBoxes.filter((b) => b.state === "occupied").length;
-  const reserved = enrichedBoxes.filter((b) => b.state === "reserved").length;
+  const available = enrichedTables.filter((row) => row.state === "available").length;
+  const occupied = enrichedTables.filter((row) => row.state === "occupied").length;
+  const reserved = enrichedTables.filter((row) => row.state === "reserved").length;
 
-  function renderActions(box: BoxRow) {
+  function renderActions(table: AdminTableRow) {
     const disabled = activeDialog !== null;
     const disabledCursor = disabled ? "not-allowed" : undefined;
 
-    if (box.state === "available") {
+    if (table.state === "available") {
       return (
         <div style={{ display: "flex", gap: "0.25rem" }}>
           <button
             type="button"
-            onClick={() => openReserveDialog(box)}
+            onClick={() => openReserveDialog(table)}
             disabled={disabled}
             style={{ ...buttonSecondary, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
           >
@@ -394,7 +394,7 @@ export function AdminTables() {
           </button>
           <button
             type="button"
-            onClick={() => openAddRegistrationDialog(box)}
+            onClick={() => openAddRegistrationDialog(table)}
             disabled={disabled}
             style={{ ...buttonPrimary, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
           >
@@ -404,12 +404,12 @@ export function AdminTables() {
       );
     }
 
-    if (box.state === "reserved") {
+    if (table.state === "reserved") {
       return (
         <div style={{ display: "flex", gap: "0.25rem" }}>
           <button
             type="button"
-            onClick={() => openReleaseDialog(box)}
+            onClick={() => openReleaseDialog(table)}
             disabled={disabled}
             style={{ ...buttonSecondary, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
           >
@@ -417,7 +417,7 @@ export function AdminTables() {
           </button>
           <button
             type="button"
-            onClick={() => openAddRegistrationDialog(box)}
+            onClick={() => openAddRegistrationDialog(table)}
             disabled={disabled}
             style={{ ...buttonPrimary, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
           >
@@ -427,11 +427,11 @@ export function AdminTables() {
       );
     }
 
-    if (box.state === "occupied") {
+    if (table.state === "occupied") {
       return (
         <button
           type="button"
-          onClick={() => openRemoveRegistrationDialog(box)}
+          onClick={() => openRemoveRegistrationDialog(table)}
           disabled={disabled}
           style={{ ...buttonDanger, padding: "0.25rem 0.75rem", fontSize: "0.8rem", cursor: disabledCursor }}
         >
@@ -458,7 +458,7 @@ export function AdminTables() {
           fontFamily: fonts.body,
         }}
       >
-        <strong>{enrichedBoxes.length}</strong> {t("admin.tables.number")}s ·{" "}
+        <strong>{enrichedTables.length}</strong> {t("admin.tables.number")}s ·{" "}
         <span style={{ color: colors.sageDark }}>{available} {t("admin.tables.availableCount")}</span> ·{" "}
         <span style={{ color: colors.warmBrown }}>{occupied} {t("admin.tables.occupiedCount")}</span> ·{" "}
         <span style={{ color: colors.warmBrown }}>{reserved} {t("admin.tables.reservedCount")}</span>
@@ -484,7 +484,7 @@ export function AdminTables() {
       {activeDialog?.type === "reserve" && (
         <div role="dialog" aria-labelledby="reserve-dialog-title" style={{ ...dialogStyle, marginBottom: "1.5rem", maxWidth: "80%", marginLeft: "auto", marginRight: "auto" }}>
           <h3 id="reserve-dialog-title" style={{ margin: "0 0 0.75rem 0", fontSize: "1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
-            {t("admin.tables.confirmReserve")} – {activeDialog.box.tableLabel}
+            {t("admin.tables.confirmReserve")} – {activeDialog.table.tableLabel}
           </h3>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button type="button" onClick={handleReserve} disabled={submitting} style={{ ...buttonTerracotta, cursor: submitting ? "not-allowed" : "pointer" }}>
@@ -501,7 +501,7 @@ export function AdminTables() {
       {activeDialog?.type === "release" && (
         <div role="dialog" aria-labelledby="release-dialog-title" style={{ ...dialogStyle, marginBottom: "1.5rem", maxWidth: "80%", marginLeft: "auto", marginRight: "auto" }}>
           <h3 id="release-dialog-title" style={{ margin: "0 0 0.75rem 0", fontSize: "1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
-            {t("admin.tables.confirmRelease")} – {activeDialog.box.tableLabel}
+            {t("admin.tables.confirmRelease")} – {activeDialog.table.tableLabel}
           </h3>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button type="button" onClick={handleRelease} disabled={submitting} style={{ ...buttonPrimary, cursor: submitting ? "not-allowed" : "pointer" }}>
@@ -515,13 +515,13 @@ export function AdminTables() {
       )}
 
       {/* Remove Registration Dialog */}
-      {activeDialog?.type === "removeRegistration" && activeDialog.box.registration && (
+      {activeDialog?.type === "removeRegistration" && activeDialog.table.registration && (
         <div ref={dialogRef} role="dialog" aria-labelledby="remove-reg-dialog-title" style={{ ...dialogStyle, marginBottom: "1.5rem", maxWidth: "80%", marginLeft: "auto", marginRight: "auto" }}>
           <h3 id="remove-reg-dialog-title" style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
-            {t("admin.tables.confirmRemoveRegistration")} – {activeDialog.box.tableLabel}
+            {t("admin.tables.confirmRemoveRegistration")} – {activeDialog.table.tableLabel}
           </h3>
           <p style={{ fontSize: "0.85rem", color: colors.inkBrown, margin: "0 0 0.75rem" }}>
-            {t("admin.tables.occupiedBy")}: {activeDialog.box.registration.name} ({activeDialog.box.registration.email})
+            {t("admin.tables.occupiedBy")}: {activeDialog.table.registration.name} ({activeDialog.table.registration.email})
           </p>
 
           <fieldset style={{ border: "none", padding: 0, margin: "0 0 0.75rem 0" }}>
@@ -529,21 +529,21 @@ export function AdminTables() {
               {t("admin.tables.releaseType")}
             </legend>
             <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", cursor: "pointer" }}>
-              <input type="radio" name="box-release-type" checked={removeMakePublic} onChange={() => setRemoveMakePublic(true)} />
+              <input type="radio" name="table-release-type" checked={removeMakePublic} onChange={() => setRemoveMakePublic(true)} />
               <span style={{ fontSize: "0.85rem" }}>{t("admin.tables.releasePublic")}</span>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
-              <input type="radio" name="box-release-type" checked={!removeMakePublic} onChange={() => setRemoveMakePublic(false)} />
+              <input type="radio" name="table-release-type" checked={!removeMakePublic} onChange={() => setRemoveMakePublic(false)} />
               <span style={{ fontSize: "0.85rem" }}>{t("admin.tables.releaseReserved")}</span>
             </label>
           </fieldset>
 
           <NotificationComposer
             action="remove"
-            recipientName={activeDialog.box.registration.name}
-            recipientEmail={activeDialog.box.registration.email}
-            recipientLanguage={activeDialog.box.registration.language}
-            tableId={activeDialog.box.id}
+            recipientName={activeDialog.table.registration.name}
+            recipientEmail={activeDialog.table.registration.email}
+            recipientLanguage={activeDialog.table.registration.language}
+            tableId={activeDialog.table.id}
             value={removeNotification}
             onChange={setRemoveNotification}
           />
@@ -574,28 +574,28 @@ export function AdminTables() {
       {activeDialog?.type === "addRegistration" && (
         <div ref={dialogRef} role="dialog" aria-labelledby="add-reg-dialog-title" style={{ ...dialogStyle, marginBottom: "1.5rem", maxWidth: "80%", marginLeft: "auto", marginRight: "auto" }}>
           <h3 id="add-reg-dialog-title" style={{ margin: "0 0 1rem 0", fontSize: "1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
-            {t("admin.tables.addRegistration")} – {activeDialog.box.tableLabel}
+            {t("admin.tables.addRegistration")} – {activeDialog.table.tableLabel}
           </h3>
           <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", color: colors.warmBrown }}>
-            <strong>{t("admin.tables.size")}:</strong> {activeDialog.box.sizeMeters} {t("admin.tables.meters")}
+            <strong>{t("admin.tables.size")}:</strong> {activeDialog.table.sizeMeters} {t("admin.tables.meters")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div>
-              <label htmlFor="box-add-name" style={labelStyle}>{t("admin.registrations.addName")} *</label>
-              <input id="box-add-name" type="text" value={addName} onChange={(e) => setAddName(e.target.value)} style={inputStyle} />
+              <label htmlFor="table-add-name" style={labelStyle}>{t("admin.registrations.addName")} *</label>
+              <input id="table-add-name" type="text" value={addName} onChange={(e) => setAddName(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label htmlFor="box-add-email" style={labelStyle}>{t("admin.registrations.addEmail")} *</label>
-              <input id="box-add-email" type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} style={inputStyle} />
+              <label htmlFor="table-add-email" style={labelStyle}>{t("admin.registrations.addEmail")} *</label>
+              <input id="table-add-email" type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label htmlFor="box-add-street" style={labelStyle}>{t("admin.registrations.addStreet")}</label>
-              <input id="box-add-street" type="text" value={ELIGIBLE_STREET} disabled style={{ ...inputStyle, background: colors.parchment, color: colors.warmBrown }} />
+              <label htmlFor="table-add-street" style={labelStyle}>{t("admin.registrations.addStreet")}</label>
+              <input id="table-add-street" type="text" value={ELIGIBLE_STREET} disabled style={{ ...inputStyle, background: colors.parchment, color: colors.warmBrown }} />
             </div>
             <div>
-              <label htmlFor="box-add-house-number" style={labelStyle}>{t("admin.registrations.addHouseNumber")} *</label>
+              <label htmlFor="table-add-house-number" style={labelStyle}>{t("admin.registrations.addHouseNumber")} *</label>
               <input
-                id="box-add-house-number"
+                id="table-add-house-number"
                 type="number"
                 min={HOUSE_NUMBER_MIN}
                 max={HOUSE_NUMBER_MAX}
@@ -607,18 +607,18 @@ export function AdminTables() {
             {addNeedsUnitFields && (
               <>
                 <div>
-                  <label htmlFor="box-add-floor" style={labelStyle}>{t("admin.registrations.addFloor")} *</label>
-                  <input id="box-add-floor" type="text" value={addFloor} onChange={(e) => setAddFloor(e.target.value)} style={inputStyle} />
+                  <label htmlFor="table-add-floor" style={labelStyle}>{t("admin.registrations.addFloor")} *</label>
+                  <input id="table-add-floor" type="text" value={addFloor} onChange={(e) => setAddFloor(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label htmlFor="box-add-door" style={labelStyle}>{t("admin.registrations.addDoor")}</label>
-                  <input id="box-add-door" type="text" value={addDoor} onChange={(e) => setAddDoor(e.target.value)} style={inputStyle} />
+                  <label htmlFor="table-add-door" style={labelStyle}>{t("admin.registrations.addDoor")}</label>
+                  <input id="table-add-door" type="text" value={addDoor} onChange={(e) => setAddDoor(e.target.value)} style={inputStyle} />
                 </div>
               </>
             )}
             <div>
-              <label htmlFor="box-add-language" style={labelStyle}>{t("admin.registrations.addLanguage")} *</label>
-              <select id="box-add-language" value={addLanguage} onChange={(e) => setAddLanguage(e.target.value as "da" | "en")} style={inputStyle}>
+              <label htmlFor="table-add-language" style={labelStyle}>{t("admin.registrations.addLanguage")} *</label>
+              <select id="table-add-language" value={addLanguage} onChange={(e) => setAddLanguage(e.target.value as "da" | "en")} style={inputStyle}>
                 <option value="da">Dansk</option>
                 <option value="en">English</option>
               </select>
@@ -650,7 +650,7 @@ export function AdminTables() {
               recipientName={addName}
               recipientEmail={addEmail}
               recipientLanguage={addLanguage}
-              tableId={activeDialog.box.id}
+              tableId={activeDialog.table.id}
               value={addNotification}
               onChange={setAddNotification}
             />
@@ -690,8 +690,8 @@ export function AdminTables() {
           ]}
           hasActiveControls={hasActiveControls}
           onClearAll={clearAll}
-          resultCount={filteredBoxes.length}
-          totalCount={enrichedBoxes.length}
+          resultCount={filteredTables.length}
+          totalCount={enrichedTables.length}
         />
       </div>
 
@@ -712,20 +712,20 @@ export function AdminTables() {
             </tr>
           </thead>
           <tbody>
-            {filteredBoxes.map((box) => {
-              const boxColors = BOX_STATE_COLORS[box.state];
+            {filteredTables.map((row) => {
+              const stateColors = TABLE_STATE_COLORS[row.state];
               return (
-                <tr key={box.id} style={tableRowStyle}>
+                <tr key={row.id} style={tableRowStyle}>
                   <td style={tableCellStyle}>
-                    <strong>#{box.tableNumber}</strong>
-                    {box.registration && (
+                    <strong>#{row.tableNumber}</strong>
+                    {row.registration && (
                       <span style={{ fontSize: "0.75rem", color: colors.warmBrown, marginLeft: "0.5rem" }}>
-                        ({box.registration.name})
+                        ({row.registration.name})
                       </span>
                     )}
                   </td>
                   <td style={tableCellStyle}>
-                    {box.sizeMeters} {t("admin.tables.meters")}
+                    {row.sizeMeters} {t("admin.tables.meters")}
                   </td>
                   <td style={tableCellStyle}>
                     <span
@@ -735,16 +735,16 @@ export function AdminTables() {
                         borderRadius: 12,
                         fontSize: "0.75rem",
                         fontWeight: 600,
-                        background: boxColors.background,
-                        color: boxColors.text,
-                        border: `1px solid ${boxColors.border}`,
+                        background: stateColors.background,
+                        color: stateColors.text,
+                        border: `1px solid ${stateColors.border}`,
                       }}
                     >
-                      {t(`map.state.${box.state}`)}
+                      {t(`map.state.${row.state}`)}
                     </span>
                   </td>
                   <td style={tableCellStyle}>
-                    {renderActions(box)}
+                    {renderActions(row)}
                   </td>
                 </tr>
               );

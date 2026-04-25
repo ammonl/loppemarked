@@ -222,13 +222,6 @@ const da = {
   "policy.noSelfUnregister":
     "Du kan afmelde dit bord via linket i din bekræftelsesmail. Kontakt {contact}, hvis linket ikke virker.",
 
-  "email.confirmationSubject":
-    "Bekræftelse af din plantekasse-registrering – UN17 Village Loppemarked",
-  "email.switchNote":
-    "Din tidligere plantekasse er blevet frigivet, og din registrering er flyttet til den nye kasse.",
-  "email.careGuidelines":
-    "Vand regelmæssigt, brug økologisk jord, hold din kasse ren, respektér naboernes planter, og høst kun fra din egen kasse.",
-
   "admin.link": "Admin",
   "admin.login": "Log ind",
   "admin.email": "E-mail",
@@ -435,21 +428,6 @@ const da = {
   "admin.table.showing": "Viser",
   "admin.table.allStatuses": "Alle statusser",
   "admin.table.allStates": "Alle tilstande",
-
-  "guidelines.title": "Retningslinjer for drivhuset",
-  "guidelines.plantingDeadline":
-    "Planter skal være plantet inden for én uge efter reservationens start. Dette sikrer, at den 2 måneders reservation forløber smidigt og er fair over for dem, der venter.",
-  "guidelines.forfeit":
-    " Hvis planterne ikke er startet, mistes pladsen, og den går videre til næste person på ventelisten.",
-  "guidelines.rulesTitle": "Regler og ansvar",
-  "guidelines.ruleWatering": "Hold plantebordet ved at vande og luge regelmæssigt.",
-  "guidelines.ruleOrganic": "Brug kun økologiske og miljøvenlige havebrugsmetoder.",
-  "guidelines.ruleNoHarvest": "Høst ikke fra andre planteborde uden tilladelse.",
-  "guidelines.supportTitle": "Hjælp og ressourcer",
-  "guidelines.supportTools": "Basale haveværktøjer og kompost er til rådighed til fælles brug.",
-  "guidelines.supportContact":
-    "Har du brug for hjælp eller har spørgsmål, kan du kontakte fællesskabskoordinatorerne.",
-  "guidelines.contactTitle": "Kontaktpersoner",
 
   "about.title": "Om loppemarkedet",
   "about.description":
@@ -681,13 +659,6 @@ const en: Record<TranslationKey, string> = {
   "policy.noSelfUnregister":
     "You can cancel your table using the link in your confirmation email. Contact {contact} if the link doesn't work.",
 
-  "email.confirmationSubject":
-    "Confirmation of your planter box registration – UN17 Village Loppemarked",
-  "email.switchNote":
-    "Your previous planter box has been released and your registration has been moved to the new box.",
-  "email.careGuidelines":
-    "Water regularly, use organic soil, keep your box tidy, respect neighbors' plants, and only harvest from your own box.",
-
   "admin.link": "Admin",
   "admin.login": "Log in",
   "admin.email": "Email",
@@ -894,21 +865,6 @@ const en: Record<TranslationKey, string> = {
   "admin.table.showing": "Showing",
   "admin.table.allStatuses": "All statuses",
   "admin.table.allStates": "All states",
-
-  "guidelines.title": "Greenhouse guidelines",
-  "guidelines.plantingDeadline":
-    "Plants must be planted within one week of your reservation start date. This keeps the 2-month reservations moving and ensures fairness for those waiting.",
-  "guidelines.forfeit":
-    "If plants are not started, the spot will be forfeited to the next person in line.",
-  "guidelines.rulesTitle": "Rules & responsibilities",
-  "guidelines.ruleWatering": "Maintain the garden bed by watering and weeding regularly.",
-  "guidelines.ruleOrganic": "Use only organic and eco-friendly gardening methods.",
-  "guidelines.ruleNoHarvest": "Do not harvest from other beds without permission.",
-  "guidelines.supportTitle": "Support & resources",
-  "guidelines.supportTools": "Basic gardening tools and compost are available for shared use.",
-  "guidelines.supportContact":
-    "If you need assistance or have questions, reach out to the community coordinators.",
-  "guidelines.contactTitle": "Contact",
 
   "about.title": "About the flea market",
   "about.description":

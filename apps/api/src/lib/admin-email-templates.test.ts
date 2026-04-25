@@ -170,9 +170,9 @@ describe("buildAdminNotification — remove", () => {
     expect(result.bodyHtml).toContain("#A85544");
   });
 
-  it("does not include box details table for remove action", () => {
+  it("does not include table details section for remove action", () => {
     const result = buildAdminNotification(removeInput);
-    expect(result.bodyHtml).not.toContain("boxDetailsTitle");
+    expect(result.bodyHtml).not.toContain("tableDetailsTitle");
   });
 
   it("includes event contact info", () => {

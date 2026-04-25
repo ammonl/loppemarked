@@ -186,10 +186,10 @@ curl -s "${PROD_API_URL}/public/status" | jq .
 ### 3.2 Public Endpoints
 
 ```bash
-# Greenhouse summaries
+# Hall summary
 curl -s "${PROD_API_URL}/public/hall" | jq .
 
-# All boxes
+# All tables
 curl -s "${PROD_API_URL}/public/tables" | jq .
 ```
 

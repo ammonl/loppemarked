@@ -1,6 +1,6 @@
 export {
-  BOX_STATES,
-  PUBLIC_BOX_STATES,
+  TABLE_STATES,
+  PUBLIC_TABLE_STATES,
   REGISTRATION_STATUSES,
   WAITLIST_ENTRY_STATUSES,
   ACTOR_TYPES,
@@ -10,8 +10,8 @@ export {
 } from "./enums.js";
 
 export type {
-  BoxState,
-  PublicBoxState,
+  TableState,
+  PublicTableState,
   RegistrationStatus,
   WaitlistEntryStatus,
   ActorType,

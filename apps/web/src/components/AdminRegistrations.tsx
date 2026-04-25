@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { BoxState } from "@loppemarked/shared";
+import type { TableState } from "@loppemarked/shared";
 import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
@@ -101,7 +101,7 @@ export function AdminRegistrations() {
   const [removeMakePublic, setRemoveMakePublic] = useState(true);
   const [removeNotification, setRemoveNotification] = useState({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
 
-  const [boxStates, setBoxStates] = useState<Map<number, BoxState>>(new Map());
+  const [tableStates, setTableStates] = useState<Map<number, TableState>>(new Map());
 
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -130,33 +130,33 @@ export function AdminRegistrations() {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
-  const fetchBoxStates = useCallback(async () => {
+  const fetchTableStates = useCallback(async () => {
     try {
       const res = await fetch("/admin/tables", { credentials: "include" });
       if (res.ok) {
-        const boxes: { id: number; state: BoxState }[] = await res.json();
-        setBoxStates(new Map(boxes.map((b) => [b.id, b.state])));
+        const rows: { id: number; state: TableState }[] = await res.json();
+        setTableStates(new Map(rows.map((r) => [r.id, r.state])));
       }
     } catch {
-      // Box states are a UI enhancement; failures are non-critical
+      // Table states are a UI enhancement; failures are non-critical.
     }
   }, []);
 
   useEffect(() => {
-    fetchBoxStates();
-  }, [fetchBoxStates]);
+    fetchTableStates();
+  }, [fetchTableStates]);
 
   const sortedTableOptions = useMemo(() => {
     return [...TABLE_CATALOG]
       .map((table) => ({
         ...table,
-        occupied: boxStates.get(table.id) === "occupied",
+        occupied: tableStates.get(table.id) === "occupied",
       }))
       .sort((a, b) => {
         if (a.occupied !== b.occupied) return a.occupied ? 1 : -1;
         return a.number - b.number;
       });
-  }, [boxStates]);
+  }, [tableStates]);
 
   function openAddDialog() {
     setAddName("");
@@ -288,7 +288,7 @@ export function AdminRegistrations() {
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.registrations.added") });
         setActiveDialog(null);
-        await Promise.all([fetchRegistrations(), fetchBoxStates()]);
+        await Promise.all([fetchRegistrations(), fetchTableStates()]);
       } else {
         const body = await res.json();
         setMessage({ type: "error", text: body.error ?? t("common.error") });
@@ -330,7 +330,7 @@ export function AdminRegistrations() {
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.registrations.moved") });
         setActiveDialog(null);
-        await Promise.all([fetchRegistrations(), fetchBoxStates()]);
+        await Promise.all([fetchRegistrations(), fetchTableStates()]);
       } else {
         const body = await res.json();
         setMessage({ type: "error", text: body.error ?? t("common.error") });
@@ -355,7 +355,7 @@ export function AdminRegistrations() {
         credentials: "include",
         body: JSON.stringify({
           registrationId: activeDialog.registration.id,
-          makeBoxPublic: removeMakePublic,
+          makeTablePublic: removeMakePublic,
           notification: {
             sendEmail: removeNotification.sendEmail,
             subject: removeNotification.subject || undefined,
@@ -367,7 +367,7 @@ export function AdminRegistrations() {
       if (res.ok) {
         setMessage({ type: "success", text: t("admin.registrations.removed") });
         setActiveDialog(null);
-        await Promise.all([fetchRegistrations(), fetchBoxStates()]);
+        await Promise.all([fetchRegistrations(), fetchTableStates()]);
       } else {
         const body = await res.json();
         setMessage({ type: "error", text: body.error ?? t("common.error") });

@@ -10,7 +10,7 @@ import { colors, fonts, shadows } from "@/styles/theme";
 
 interface CancellationInfo {
   alreadyCancelled: boolean;
-  boxId: number;
+  tableId: number;
   tableLabel: string;
   recipientNameHint?: string;
 }

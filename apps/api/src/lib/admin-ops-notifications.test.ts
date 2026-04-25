@@ -272,7 +272,7 @@ describe("notifyAdmins", () => {
     }));
   });
 
-  it("does not notify acting admin about their own box action", async () => {
+  it("does not notify acting admin about their own table action", async () => {
     const mockQueueAndSend = vi.mocked(queueAndSendEmail);
     mockQueueAndSend.mockClear();
 
@@ -293,7 +293,7 @@ describe("notifyAdmins", () => {
     }));
   });
 
-  it("skips admins who opted out of admin box action notifications", async () => {
+  it("skips admins who opted out of admin table action notifications", async () => {
     const mockQueueAndSend = vi.mocked(queueAndSendEmail);
     mockQueueAndSend.mockClear();
 

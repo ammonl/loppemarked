@@ -139,7 +139,7 @@ describe("useHistoryState", () => {
   });
 });
 
-describe("useHistoryState – multi-step flow (greenhouse map scenario)", () => {
+describe("useHistoryState – multi-step flow (map → register → waitlist)", () => {
   beforeEach(() => {
     window.history.replaceState(null, "");
   });

@@ -9,7 +9,7 @@ import {
   TABLE_CATALOG,
   TOTAL_TABLE_COUNT,
   VISIBLE_TABLE_IDS,
-  BOX_STATES,
+  TABLE_STATES,
 } from "@loppemarked/shared";
 import { translations, type TranslationKey } from "@/i18n/translations";
 import { isBeforeOpening } from "@/utils/opening";
@@ -64,9 +64,9 @@ describe("translations", () => {
     expect(LANGUAGE_LABELS.en).toBe("English");
   });
 
-  it("includes map state translations for all box states", () => {
+  it("includes map state translations for all table states", () => {
     for (const lang of LANGUAGES) {
-      for (const state of BOX_STATES) {
+      for (const state of TABLE_STATES) {
         const key = `map.state.${state}` as TranslationKey;
         expect(translations[lang][key], `${lang}.${key} missing`).toBeDefined();
       }
@@ -93,19 +93,6 @@ describe("translations", () => {
     ];
     for (const lang of LANGUAGES) {
       for (const key of waitlistKeys) {
-        expect(translations[lang][key], `${lang}.${key} missing`).toBeTruthy();
-      }
-    }
-  });
-
-  it("includes email translations", () => {
-    const emailKeys: TranslationKey[] = [
-      "email.confirmationSubject",
-      "email.switchNote",
-      "email.careGuidelines",
-    ];
-    for (const lang of LANGUAGES) {
-      for (const key of emailKeys) {
         expect(translations[lang][key], `${lang}.${key} missing`).toBeTruthy();
       }
     }

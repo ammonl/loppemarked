@@ -28,7 +28,7 @@ describe("AdminStagingTools", () => {
     expect(screen.getByText("admin.staging.clearRegistrationsDescription")).toBeDefined();
   });
 
-  it("does not call fetch when confirm is cancelled for fill boxes", async () => {
+  it("does not call fetch when confirm is cancelled for fill tables", async () => {
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -45,7 +45,7 @@ describe("AdminStagingTools", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("shows success message after fill boxes", async () => {
+  it("shows success message after fill tables", async () => {
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
@@ -64,7 +64,7 @@ describe("AdminStagingTools", () => {
     expect(screen.getByRole("alert").textContent).toBe("25 admin.staging.fillTablesSuccess");
   });
 
-  it("shows error message when fill boxes fails", async () => {
+  it("shows error message when fill tables fails", async () => {
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false,

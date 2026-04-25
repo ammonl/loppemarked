@@ -15,7 +15,7 @@ Shared TypeScript code used by `apps/web` and `apps/api`.
 
 ```
 src/
-├── constants.ts        Domain constants and box catalog
+├── constants.ts        Domain constants and table catalog
 ├── constants.test.ts   Constant validation tests
 ├── dawa.ts             DAWA (Danish Address Web API) types and helpers
 ├── dawa.test.ts        DAWA module tests
