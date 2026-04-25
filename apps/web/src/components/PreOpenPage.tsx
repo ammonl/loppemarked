@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
-import {
-  OPENING_TIMEZONE,
-} from "@loppemarked/shared";
+import { useEffect, useState } from "react";
+import { OPENING_TIMEZONE } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { colors, fonts } from "@/styles/theme";
+import { HeroScene } from "@/components/HeroScene";
+import { landingSceneAssets } from "@/components/landing/sceneConfig";
+import "@/styles/landing.css";
 
 function formatOpeningDatetime(iso: string, locale: string): string {
   const date = new Date(iso);
@@ -16,6 +16,22 @@ function formatOpeningDatetime(iso: string, locale: string): string {
   }).format(date);
 }
 
+interface CountdownParts {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+function diffParts(targetMs: number, nowMs: number): CountdownParts {
+  const totalSeconds = Math.max(0, Math.floor((targetMs - nowMs) / 1000));
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds };
+}
+
 interface PreOpenPageProps {
   openingDatetime: string;
 }
@@ -24,92 +40,126 @@ export function PreOpenPage({ openingDatetime }: PreOpenPageProps) {
   const { language, t } = useLanguage();
   const locale = language === "da" ? "da-DK" : "en-GB";
   const formattedDate = formatOpeningDatetime(openingDatetime, locale);
+  const targetMs = new Date(openingDatetime).getTime();
+
+  // Initialize from a deterministic snapshot so the SSR markup matches the
+  // first client paint; the interval below then keeps the diff fresh.
+  const [parts, setParts] = useState<CountdownParts>(() => diffParts(targetMs, targetMs));
+
+  useEffect(() => {
+    const tick = () => setParts(diffParts(targetMs, Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetMs]);
 
   return (
-    <section style={{ fontFamily: fonts.body, color: colors.inkBrown }}>
-      {/* Landing image */}
-      <div style={{
-        maxWidth: 740,
-        margin: "0 auto",
-        padding: "2rem 1.5rem 0",
-      }}>
-        <div style={{
-          position: "relative",
-          width: "100%",
-          aspectRatio: "3.6 / 1",
-        }}>
-          <Image
-            src="/landing.png"
-            alt="Kronen and Søen greenhouses"
-            fill
-            style={{ objectFit: "contain" }}
-            sizes="(max-width: 740px) 100vw, 740px"
-            priority
-          />
+    <section className="flea-landing flea-preopen" aria-labelledby="flea-preopen-title">
+      <HeroScene
+        className="flea-landing__scene"
+        background={landingSceneAssets.background}
+        midground={landingSceneAssets.midground}
+        foreground={landingSceneAssets.foreground}
+      >
+        <div className="flea-landing__overlay" data-testid="flea-preopen-overlay">
+          <div className="flea-landing__copy flea-preopen__copy">
+            <p className="flea-preopen__tagline">{t("status.shareYourTreasures")}</p>
+            <h1 id="flea-preopen-title" className="flea-landing__title">
+              {t("status.preOpenTitle")}
+            </h1>
+            <p className="flea-landing__body">{t("status.preOpenDescription")}</p>
+
+            <FlipBoardCountdown
+              parts={parts}
+              labels={{
+                days: t("status.countdownDays"),
+                hours: t("status.countdownHours"),
+                minutes: t("status.countdownMinutes"),
+                seconds: t("status.countdownSeconds"),
+              }}
+              ariaLabel={t("status.countdownAriaLabel")}
+            />
+
+            <p className="flea-preopen__opens">
+              <span className="flea-preopen__opens-label">{t("status.openingDatetime")}</span>
+              <time className="flea-preopen__opens-value" dateTime={openingDatetime}>
+                {formattedDate}
+              </time>
+            </p>
+
+            <p className="flea-preopen__eligibility">{t("status.eligibility")}</p>
+          </div>
         </div>
-      </div>
-
-      {/* Content area */}
-      <div style={{
-        maxWidth: 600,
-        margin: "0 auto",
-        padding: "2rem 1.5rem",
-        textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: fonts.heading,
-          color: colors.inkBrown,
-          fontSize: "1.5rem",
-          fontWeight: 500,
-          margin: "0 0 1rem",
-        }}>
-          {t("status.preOpenTitle")}
-        </h2>
-
-        <p style={{
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          margin: "0 0 1.25rem",
-          lineHeight: 1.6,
-        }}>
-          {t("status.preOpenDescription")}
-        </p>
-
-        <div style={{
-          display: "inline-block",
-          padding: "0.75rem 2rem",
-          background: colors.overlayWhite,
-          border: `1px solid ${colors.overlayBorder}`,
-          borderRadius: 10,
-          marginBottom: "1.25rem",
-          textAlign: "center",
-        }}>
-          <p style={{
-            fontSize: "0.85rem",
-            fontWeight: 500,
-            margin: "0 0 0.25rem",
-            color: colors.warmBrown,
-          }}>
-            {t("status.openingDatetime")}
-          </p>
-          <p style={{
-            fontSize: "1.25rem",
-            fontWeight: 600,
-            margin: 0,
-            color: colors.inkBrown,
-          }}>
-            <time dateTime={openingDatetime}>{formattedDate}</time>
-          </p>
-        </div>
-
-        <p style={{
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          margin: "0",
-        }}>
-          {t("status.eligibility")}
-        </p>
-      </div>
+      </HeroScene>
     </section>
+  );
+}
+
+interface FlipBoardCountdownProps {
+  parts: CountdownParts;
+  labels: { days: string; hours: string; minutes: string; seconds: string };
+  ariaLabel: string;
+}
+
+function FlipBoardCountdown({ parts, labels, ariaLabel }: FlipBoardCountdownProps) {
+  // Days can exceed two digits for far-out openings; clamp the rest to two
+  // digits so the flip tiles stay aligned.
+  const dayWidth = parts.days >= 100 ? 3 : 2;
+  // role="timer" gives the board an accessible name; we deliberately omit
+  // aria-live so screen readers don't announce every per-second tick.
+  return (
+    <div className="flea-flipboard" role="timer" aria-label={ariaLabel} data-testid="flea-flipboard">
+      <FlipUnit value={parts.days} label={labels.days} digits={dayWidth} />
+      <FlipSeparator />
+      <FlipUnit value={parts.hours} label={labels.hours} digits={2} />
+      <FlipSeparator />
+      <FlipUnit value={parts.minutes} label={labels.minutes} digits={2} />
+      <FlipSeparator />
+      <FlipUnit value={parts.seconds} label={labels.seconds} digits={2} />
+    </div>
+  );
+}
+
+interface FlipUnitProps {
+  value: number;
+  label: string;
+  digits: number;
+}
+
+function FlipUnit({ value, label, digits }: FlipUnitProps) {
+  const display = String(Math.max(0, value)).padStart(digits, "0");
+  return (
+    <div className="flea-flipboard__unit">
+      <div className="flea-flipboard__tiles" aria-hidden="true">
+        {display.split("").map((digit, index) => (
+          <FlipDigit key={`${index}-${digits}`} digit={digit} />
+        ))}
+      </div>
+      <span className="flea-flipboard__label" aria-hidden="true">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function FlipDigit({ digit }: { digit: string }) {
+  // Re-mounting the inner card whenever the digit changes restarts the CSS
+  // flip keyframe; that's cheaper and more reliable than juggling JS state.
+  return (
+    <span className="flea-flipboard__tile">
+      <span key={digit} className="flea-flipboard__card">
+        <span className="flea-flipboard__card-half flea-flipboard__card-half--top">{digit}</span>
+        <span className="flea-flipboard__card-half flea-flipboard__card-half--bottom">{digit}</span>
+      </span>
+    </span>
+  );
+}
+
+function FlipSeparator() {
+  return (
+    <span className="flea-flipboard__sep" aria-hidden="true">
+      <span />
+      <span />
+    </span>
   );
 }

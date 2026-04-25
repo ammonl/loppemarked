@@ -12,10 +12,16 @@ const da = {
 
   "status.preOpenTitle": "Tilmelding åbner snart",
   "status.preOpenDescription":
-    "Tilmelding til plantekasser på taget af UN17 åbner på det angivne tidspunkt. Når tilmeldingen åbner, kan du vælge en plantekasse i et af de to drivhuse.",
+    "Booking af loppeborde til UN17 Village Loppemarked åbner på det angivne tidspunkt. Når tilmeldingen åbner, kan du vælge dit eget bord i Fælledhuset.",
+  "status.shareYourTreasures": "Del dine skatte",
   "status.openingDatetime": "Tilmelding åbner",
   "status.eligibility":
-    "Beboere på UN17 Village kan tilmelde sig. Hver lejlighed kan kun have én aktiv plantekasse.",
+    "Beboere i UN17 Village kan tilmelde sig. Hver lejlighed kan kun booke ét loppebord.",
+  "status.countdownAriaLabel": "Tid tilbage til tilmelding åbner",
+  "status.countdownDays": "Dage",
+  "status.countdownHours": "Timer",
+  "status.countdownMinutes": "Min.",
+  "status.countdownSeconds": "Sek.",
   "status.contactInfo": "Kontakt",
 
   "nav.home": "Forside",
@@ -76,7 +82,8 @@ const da = {
   "table.joinWaitlistCta": "Tilmeld Venteliste",
   "table.mapAriaLabel": "Interaktivt kort over Fælledhusets loppemarked",
   "table.floorPlanEntrance": "Indgang",
-  "table.floorPlanStage": "Scene",
+  "table.floorPlanCourtyard": "Gårdhave",
+  "table.floorPlanPromenade": "Promenade",
   "table.legendClothingRack": "Tøjstativ",
   "table.supportContact": "Spørgsmål? Skriv til {contact}",
 
@@ -470,10 +477,16 @@ const en: Record<TranslationKey, string> = {
 
   "status.preOpenTitle": "Registration opens soon",
   "status.preOpenDescription":
-    "Registration for rooftop planter boxes at UN17 Village opens at the time shown below. Once registration opens, you can choose a planter box in one of the two greenhouses.",
+    "Booking for tables at the UN17 Village Loppemarked opens at the time shown below. Once registration opens, you can pick your own table in Fælledhuset.",
+  "status.shareYourTreasures": "Share your treasures",
   "status.openingDatetime": "Registration opens",
   "status.eligibility":
-    "Residents of UN17 Village are eligible. Each apartment may only have one active planter box.",
+    "Residents of UN17 Village are eligible. Each apartment may only book one table.",
+  "status.countdownAriaLabel": "Time remaining until registration opens",
+  "status.countdownDays": "Days",
+  "status.countdownHours": "Hours",
+  "status.countdownMinutes": "Min.",
+  "status.countdownSeconds": "Sec.",
   "status.contactInfo": "Contact",
 
   "nav.home": "Home",
@@ -534,7 +547,8 @@ const en: Record<TranslationKey, string> = {
   "table.joinWaitlistCta": "Join Waitlist",
   "table.mapAriaLabel": "Interactive map of the Fælledhuset flea market hall",
   "table.floorPlanEntrance": "Entrance",
-  "table.floorPlanStage": "Stage",
+  "table.floorPlanCourtyard": "Courtyard",
+  "table.floorPlanPromenade": "Promenade",
   "table.legendClothingRack": "Clothing rack",
   "table.supportContact": "Questions? Email {contact}",
 

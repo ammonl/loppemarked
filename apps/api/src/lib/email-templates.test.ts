@@ -40,7 +40,7 @@ describe("buildConfirmationEmail", () => {
   it("renders an inline SVG floor plan instead of a textual location", () => {
     const result = buildConfirmationEmail(baseData);
     expect(result.bodyHtml).toContain("<svg");
-    expect(result.bodyHtml).toContain('viewBox="0 0 120 80"');
+    expect(result.bodyHtml).toContain('viewBox="0 0 120 95"');
     // The booking-details location row no longer renders the bare text
     // `Fælledhuset` as a standalone value — it shows a summary line plus an
     // SVG and caption referencing the booked table number.
@@ -64,7 +64,7 @@ describe("buildConfirmationEmail", () => {
     const result = buildConfirmationEmail(baseData);
     const tileMatches = result.bodyHtml.match(/<rect x="\d+(?:\.\d+)?" y="\d+(?:\.\d+)?" width="\d+(?:\.\d+)?" height="\d+(?:\.\d+)?" rx="0\.9"/g);
     expect(tileMatches).not.toBeNull();
-    expect(tileMatches).toHaveLength(29);
+    expect(tileMatches).toHaveLength(23);
   });
 
   it("wraps the SVG in an Outlook-skipping conditional comment", () => {
@@ -103,9 +103,10 @@ describe("buildConfirmationEmail", () => {
     const daResult = buildConfirmationEmail(baseData);
     expect(daResult.bodyHtml).toContain("2 meter");
 
-    const premium = buildConfirmationEmail({ ...baseData, boxId: 23, language: "en" });
-    expect(premium.bodyHtml).toContain("3 meters");
-    expect(premium.bodyHtml).toContain("#23");
+    // Every visible table on the simplified Fælledhuset map is 2 m.
+    const enResult = buildConfirmationEmail({ ...baseData, boxId: 23, language: "en" });
+    expect(enResult.bodyHtml).toContain("2 meters");
+    expect(enResult.bodyHtml).toContain("#23");
   });
 
   it("uses brand green and salmon colors", () => {
