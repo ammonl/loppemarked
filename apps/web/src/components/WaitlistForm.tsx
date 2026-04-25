@@ -30,11 +30,11 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
   const [consentChecked, setConsentChecked] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{
-    alreadyOnWaitlist: boolean;
-    position: number;
-    joinedAt?: string;
-  } | null>(null);
+  const [result, setResult] = useState<
+    | { kind: "joined"; alreadyOnWaitlist: boolean; position: number; joinedAt?: string }
+    | { kind: "alreadyHasTable" }
+    | null
+  >(null);
 
   const parsedHouseNumber = parseInt(houseNumber, 10);
   const needsFloorDoor = !isNaN(parsedHouseNumber) && isFloorDoorRequired(parsedHouseNumber);
@@ -86,11 +86,16 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
+        if (res.status === 409 && body?.code === "APARTMENT_HAS_REGISTRATION") {
+          setResult({ kind: "alreadyHasTable" });
+          return;
+        }
         setErrors([body?.error ?? t("common.error")]);
         return;
       }
 
       setResult({
+        kind: "joined",
         alreadyOnWaitlist: body.alreadyOnWaitlist ?? false,
         position: body.position ?? 0,
         joinedAt: body.joinedAt,
@@ -102,7 +107,27 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
     }
   }
 
-  if (result) {
+  if (result?.kind === "alreadyHasTable") {
+    return (
+      <section className="flea-scene-form">
+        <h2 className="flea-scene-form__success-title">
+          {t("waitlist.alreadyHasTableTitle")}
+        </h2>
+        <p className="flea-scene-form__subtitle">
+          {t("waitlist.alreadyHasTableBody")}
+        </p>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
+        >
+          {t("common.close")}
+        </button>
+      </section>
+    );
+  }
+
+  if (result?.kind === "joined") {
     return (
       <section className="flea-scene-form">
         <h2 className="flea-scene-form__success-title">{t("waitlist.success")}</h2>
