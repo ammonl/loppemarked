@@ -108,7 +108,6 @@ export default function Home() {
   }
 
   const publicView = view === "public";
-  const mainBackground = colors.fleaCream;
 
   const goHome = () => {
     setView("public");
@@ -121,7 +120,7 @@ export default function Home() {
   };
 
   return (
-    <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: mainBackground, minHeight: "100vh" }}>
+    <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: colors.fleaCream, minHeight: "100vh" }}>
       {publicView ? (
         <PublicHeader
           t={t}

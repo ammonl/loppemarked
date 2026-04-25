@@ -8,7 +8,7 @@ import type { CSSProperties } from "react";
 export const colors = {
   backgroundLight: "#FDFBF7",
   cream: "#FDFBF7",
-  parchment: "#F5E6CB",
+  parchment: "#F0E3C9",
   sage: "#8DA88D",
   sageDark: "#6F8A6F",
   terracotta: "#C6705D",
@@ -16,7 +16,7 @@ export const colors = {
   warmBrown: "#5B4636",
   inkBrown: "#2E1F14",
   mutedGold: "#B88A3A",
-  dustyRose: "#A85544",
+  dustyRose: "#B8736A",
   skyMist: "#B8C7B8",
   borderTan: "#E5D3B3",
   white: "#FFFFFF",
