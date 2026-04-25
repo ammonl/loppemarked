@@ -87,6 +87,7 @@ describe("translations", () => {
       "waitlist.joinButton",
       "waitlist.positionLabel",
       "waitlist.alreadyOnWaitlist",
+      "waitlist.emailFollowUp",
       "waitlist.success",
     ];
     for (const lang of LANGUAGES) {

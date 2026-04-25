@@ -97,6 +97,8 @@ const da = {
   "waitlist.positionLabel": "Din plads på ventelisten",
   "waitlist.alreadyOnWaitlist":
     "Din lejlighed er allerede på ventelisten. Din plads i køen er bevaret.",
+  "waitlist.emailFollowUp":
+    "Hvis et bord bliver ledigt, kontakter arrangørerne dig pr. e-mail.",
   "waitlist.success": "Du er nu på ventelisten!",
 
   "audit.title": "Hændelseslog",
@@ -541,6 +543,8 @@ const en: Record<TranslationKey, string> = {
   "waitlist.positionLabel": "Your position on the waitlist",
   "waitlist.alreadyOnWaitlist":
     "Your apartment is already on the waitlist. Your position in the queue has been preserved.",
+  "waitlist.emailFollowUp":
+    "If a table becomes available, the organizers will reach out to you by email.",
   "waitlist.success": "You are now on the waitlist!",
 
   "audit.title": "Audit Log",

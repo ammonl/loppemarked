@@ -25,15 +25,15 @@ export function WaitlistBanner({ position, alreadyOnWaitlist, onJoinWaitlist }: 
       <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
         {t("waitlist.title")}
       </h3>
-      <p style={{ margin: "0 0 0.75rem", color: colors.warmBrown, fontSize: "0.95rem", fontFamily: fonts.body }}>
-        {alreadyOnWaitlist
-          ? t("waitlist.alreadyOnWaitlist")
-          : t("waitlist.description")}
-      </p>
+      {alreadyOnWaitlist && (
+        <p style={{ margin: "0 0 0.75rem", color: colors.warmBrown, fontSize: "0.95rem", fontFamily: fonts.body }}>
+          {t("waitlist.alreadyOnWaitlist")}
+        </p>
+      )}
       {position != null && position > 0 && (
         <p
           style={{
-            margin: 0,
+            margin: "0 0 0.75rem",
             fontWeight: 600,
             fontSize: "1rem",
             fontFamily: fonts.body,
@@ -43,6 +43,9 @@ export function WaitlistBanner({ position, alreadyOnWaitlist, onJoinWaitlist }: 
           {t("waitlist.positionLabel")}: #{position}
         </p>
       )}
+      <p style={{ margin: 0, color: colors.warmBrown, fontSize: "0.95rem", fontFamily: fonts.body }}>
+        {t("waitlist.emailFollowUp")}
+      </p>
       {onJoinWaitlist && (
         <button
           type="button"
