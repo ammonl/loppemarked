@@ -25,9 +25,13 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     db,
   );
 
-  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_id_in_catalog CHECK (id IN (${sql.join(
-    VISIBLE_TABLE_IDS.map((id) => sql`${id}`),
-  )}))`.execute(db);
+  // Postgres CHECK constraints don't accept bind parameters, so the
+  // catalog ids must be inlined as a SQL literal. The values come from a
+  // hardcoded module constant so there is no injection surface.
+  const catalogIdLiterals = VISIBLE_TABLE_IDS.join(", ");
+  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_id_in_catalog CHECK (id IN (${sql.raw(catalogIdLiterals)}))`.execute(
+    db,
+  );
 
   // Admins
   await db.schema
