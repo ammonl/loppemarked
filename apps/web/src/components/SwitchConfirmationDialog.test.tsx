@@ -13,7 +13,7 @@ vi.mock("@/i18n/LanguageProvider", () => ({
         "registration.switchCurrentBox": "Your current table",
         "registration.switchNewBox": "New table",
         "registration.switchExplainer":
-          "Each apartment may only book one flea-market table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
+          "Each apartment may only book one table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
         "registration.switchKeep": "Keep current table",
         "registration.switchConfirm": "Confirm switch",
         "table.detailsTitle": "Table #{number}",

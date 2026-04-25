@@ -9,21 +9,37 @@ vi.mock("@/i18n/LanguageProvider", () => ({
 describe("WaitlistBanner", () => {
   afterEach(cleanup);
 
-  it("renders title and description", () => {
+  it("renders title and email follow-up message", () => {
     render(<WaitlistBanner />);
     expect(screen.getByText("waitlist.title")).toBeDefined();
-    expect(screen.getByText("waitlist.description")).toBeDefined();
+    expect(screen.getByText("waitlist.emailFollowUp")).toBeDefined();
+  });
+
+  it("does not render the all-booked description on the confirmation banner", () => {
+    render(<WaitlistBanner />);
+    expect(screen.queryByText("waitlist.description")).toBeNull();
   });
 
   it("shows already-on-waitlist message when alreadyOnWaitlist is true", () => {
     render(<WaitlistBanner alreadyOnWaitlist />);
     expect(screen.getByText("waitlist.alreadyOnWaitlist")).toBeDefined();
-    expect(screen.queryByText("waitlist.description")).toBeNull();
+    expect(screen.getByText("waitlist.emailFollowUp")).toBeDefined();
+  });
+
+  it("does not render already-on-waitlist message when alreadyOnWaitlist is false", () => {
+    render(<WaitlistBanner />);
+    expect(screen.queryByText("waitlist.alreadyOnWaitlist")).toBeNull();
   });
 
   it("shows position when provided", () => {
     render(<WaitlistBanner position={3} />);
     expect(screen.getByText("waitlist.positionLabel: #3")).toBeDefined();
+  });
+
+  it("renders position alongside the email follow-up on the happy path", () => {
+    render(<WaitlistBanner position={3} />);
+    expect(screen.getByText("waitlist.positionLabel: #3")).toBeDefined();
+    expect(screen.getByText("waitlist.emailFollowUp")).toBeDefined();
   });
 
   it("does not show position when null", () => {

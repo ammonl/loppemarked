@@ -3,7 +3,6 @@ import {
   GREENHOUSES,
   RESERVED_LABEL_AWAITING_REVIEW,
   formatTableLabel,
-  getTableById,
   isFloorDoorRequired,
   normalizeApartmentKey,
   validateAddress,
@@ -596,7 +595,7 @@ export async function handleWaitlistPosition(ctx: RequestContext): Promise<Route
 
 /**
  * Return a minimal summary of the booking tied to a resident cancellation
- * token. Deliberately limited: table id/label, a masked first-name hint, and
+ * token. Deliberately limited: table label, a masked first-name hint, and
  * language. Does not consume the token. Single generic 404 message is used
  * for unknown/expired/consumed tokens so callers cannot enumerate state.
  */
@@ -633,16 +632,12 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
     };
   }
 
-  const table = getTableById(reg.box_id);
-
   return {
     statusCode: 200,
     body: {
       alreadyCancelled: false,
       boxId: reg.box_id,
       tableLabel: formatTableLabel(reg.box_id),
-      tableNumber: table?.number ?? reg.box_id,
-      tableSizeMeters: table?.sizeMeters ?? null,
       recipientNameHint: maskName(reg.name),
       language: reg.language,
       expiresAt: resolved.expiresAt.toISOString(),
@@ -784,15 +779,27 @@ function safeDecodeToken(raw: string | undefined): string {
   }
 }
 
+/** Fixed length of the hidden portion in masked names rendered on the
+ * cancellation page. A constant length avoids leaking the actual name
+ * length through the rendered mask. */
+const MASKED_NAME_HIDDEN_LENGTH = 5;
+
 /**
  * Mask a personal name so the cancellation preview can confirm identity
- * without leaking the full name to anyone who intercepts the link.
- * Keeps the first character of each space-separated part.
+ * without leaking the full name to anyone who intercepts the link. Keeps
+ * the first character of every space-separated part and pads each part's
+ * hidden portion to a fixed length, so the rendered mask never reveals
+ * the real length of any individual name part. The empty-name branch is
+ * deliberately unreachable for valid registrations (name is required
+ * upstream); it is preserved as a length-preserving fallback so an empty
+ * input still does not leak.
  */
-function maskName(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((part) => (part.length <= 1 ? part : `${part[0]}${"•".repeat(Math.min(part.length - 1, 4))}`))
+export function maskName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter((p) => p.length > 0);
+  if (parts.length === 0) {
+    return "•".repeat(MASKED_NAME_HIDDEN_LENGTH);
+  }
+  return parts
+    .map((part) => `${part.charAt(0)}${"•".repeat(MASKED_NAME_HIDDEN_LENGTH)}`)
     .join(" ");
 }

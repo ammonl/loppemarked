@@ -19,6 +19,7 @@ import {
   handleValidateAddress,
   handleValidateRegistration,
   handleWaitlistPosition,
+  maskName,
 } from "./public.js";
 import { hashCancellationToken } from "../lib/cancellation-tokens.js";
 
@@ -1553,9 +1554,56 @@ describe("handleCancellationInfo", () => {
     expect(body.alreadyCancelled).toBe(false);
     expect(body.boxId).toBe(3);
     expect(body.tableLabel).toContain("#3");
-    expect(body.recipientNameHint).not.toContain("nna");
-    expect(typeof body.recipientNameHint).toBe("string");
-    expect((body.recipientNameHint as string).startsWith("A")).toBe(true);
+    expect(body.recipientNameHint).toBe("A••••• J•••••");
+    expect(body.recipientNameHint).toHaveLength(13);
+    expect(body).not.toHaveProperty("tableSizeMeters");
+    expect(body).not.toHaveProperty("tableNumber");
+  });
+
+  it("masks each name part to a fixed-length per-part mask", async () => {
+    const longNameDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Bartholomew Featherstonehaugh",
+        email: "b@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+    const shortNameDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-2",
+        registration_id: "reg-2",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-2",
+        box_id: 3,
+        name: "Bart Fjord",
+        email: "bo@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+
+    const longRes = await handleCancellationInfo(
+      makeCtx({ db: longNameDb, params: { token: "valid" } }),
+    );
+    const shortRes = await handleCancellationInfo(
+      makeCtx({ db: shortNameDb, params: { token: "valid" } }),
+    );
+    const longBody = longRes.body as Record<string, unknown>;
+    const shortBody = shortRes.body as Record<string, unknown>;
+    expect(longBody.recipientNameHint).toBe("B••••• F•••••");
+    expect(shortBody.recipientNameHint).toBe("B••••• F•••••");
   });
 
   it("flags already-cancelled registrations without exposing identity", async () => {
@@ -1658,5 +1706,32 @@ describe("handleCancellationConfirm", () => {
 
   it("hashes tokens deterministically for storage lookup", () => {
     expect(hashCancellationToken("abc")).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("maskName", () => {
+  it("masks each name part with a fixed 5-character hidden portion", () => {
+    expect(maskName("A")).toBe("A•••••");
+    expect(maskName("Bo")).toBe("B•••••");
+    expect(maskName("Anna Jensen")).toBe("A••••• J•••••");
+    expect(maskName("Bartholomew Featherstonehaugh")).toBe("B••••• F•••••");
+    expect(maskName("Anna Marie Jensen")).toBe("A••••• M••••• J•••••");
+  });
+
+  it("renders the same per-part mask regardless of how long each part is", () => {
+    expect(maskName("Anna Jensen")).toBe("A••••• J•••••");
+    expect(maskName("Annabella Jensenovich")).toBe("A••••• J•••••");
+    expect(maskName("A J")).toBe("A••••• J•••••");
+  });
+
+  it("returns a length-preserving fallback for empty or whitespace-only input", () => {
+    expect(maskName("")).toBe("•••••");
+    expect(maskName("   ")).toBe("•••••");
+    expect(maskName("\t\n")).toBe("•••••");
+  });
+
+  it("uses the first character of each space-separated part", () => {
+    expect(maskName("Élise Müller")).toBe("É••••• M•••••");
+    expect(maskName("  Søren  Kierkegaard  ")).toBe("S••••• K•••••");
   });
 });
