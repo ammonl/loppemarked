@@ -585,6 +585,9 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
   };
 }
 
+// Returns a 1-based, user-facing FIFO position. The first person in line is
+// `#1`, never `#0`. Returns 0 only as a sentinel meaning "this apartment is
+// not currently waiting" (callers must guard accordingly).
 async function getWaitlistPosition(
   ctx: RequestContext,
   apartmentKey: string,
@@ -600,12 +603,12 @@ async function getWaitlistPosition(
 
   const result = await ctx.db
     .selectFrom("waitlist_entries")
-    .select(ctx.db.fn.countAll<number>().as("position"))
+    .select(ctx.db.fn.countAll<number>().as("ahead"))
     .where("status", "=", "waiting")
-    .where("created_at", "<=", entry.created_at)
+    .where("created_at", "<", entry.created_at)
     .executeTakeFirstOrThrow();
 
-  return Number(result.position);
+  return Number(result.ahead) + 1;
 }
 
 export async function handleWaitlistPosition(ctx: RequestContext): Promise<RouteResponse> {

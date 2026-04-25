@@ -282,7 +282,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
         existingEntry: undefined,
         newEntryId: "wl-1",
         positionEntryCreatedAt: "2026-03-01T10:00:00Z",
-        positionCount: 1,
+        aheadCount: 0,
       });
 
       const res = await handleJoinWaitlist(
@@ -311,7 +311,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
         availableCount: 0,
         existingEntry: { id: "wl-existing", created_at: "2026-03-01T08:00:00Z" },
         positionEntryCreatedAt: "2026-03-01T08:00:00Z",
-        positionCount: 3,
+        aheadCount: 2,
       });
 
       const res = await handleJoinWaitlist(
@@ -765,7 +765,8 @@ interface MockWaitlistOpts {
   existingRegistrationId?: string;
   newEntryId?: string;
   positionEntryCreatedAt?: string;
-  positionCount?: number;
+  /** Number of waiting entries strictly ahead of the queried entry. */
+  aheadCount?: number;
 }
 
 function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
@@ -795,7 +796,7 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
     }),
   };
 
-  const asFn = vi.fn().mockReturnValue("position");
+  const asFn = vi.fn().mockReturnValue("ahead");
   const countAllFn = vi.fn().mockReturnValue({ as: asFn });
   const fnObj = { countAll: countAllFn };
 
@@ -836,7 +837,7 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
         where: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
-              position: opts.positionCount ?? 0,
+              ahead: opts.aheadCount ?? 0,
             }),
           }),
         }),
