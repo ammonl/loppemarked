@@ -3,8 +3,6 @@
 import { useState } from "react";
 import {
   ELIGIBLE_STREET,
-  HOUSE_NUMBER_MIN,
-  HOUSE_NUMBER_MAX,
   EVENT_CONTACT,
   isFloorDoorRequired,
   validateWaitlistInput,
@@ -200,12 +198,13 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
           </label>
           <input
             id="wl-house"
-            type="number"
+            type="text"
             required
-            min={HOUSE_NUMBER_MIN}
-            max={HOUSE_NUMBER_MAX}
+            inputMode="numeric"
+            pattern="\d{3}"
+            maxLength={3}
             value={houseNumber}
-            onChange={(e) => setHouseNumber(e.target.value)}
+            onChange={(e) => setHouseNumber(e.target.value.replace(/\D/g, ""))}
             className="flea-scene-form__input"
           />
         </div>
