@@ -602,7 +602,7 @@ describe("handleJoinWaitlist (happy path)", () => {
       existingEntry: undefined,
       newEntryId: "wl-1",
       positionEntryCreatedAt: "2026-03-01T10:00:00Z",
-      positionCount: 1,
+      aheadCount: 0,
     });
 
     const res = await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -619,7 +619,7 @@ describe("handleJoinWaitlist (happy path)", () => {
       existingEntry: undefined,
       newEntryId: "wl-1",
       positionEntryCreatedAt: "2026-03-01T10:00:00Z",
-      positionCount: 2,
+      aheadCount: 1,
     });
 
     await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -637,7 +637,7 @@ describe("handleJoinWaitlist (happy path)", () => {
       availableCount: 0,
       existingEntry: { id: "wl-existing", created_at: existingCreatedAt },
       positionEntryCreatedAt: existingCreatedAt,
-      positionCount: 3,
+      aheadCount: 2,
     });
 
     await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -686,7 +686,7 @@ describe("handleJoinWaitlist (happy path)", () => {
       availableCount: 0,
       existingEntry: { id: "wl-existing", created_at: existingCreatedAt },
       positionEntryCreatedAt: existingCreatedAt,
-      positionCount: 3,
+      aheadCount: 2,
     });
 
     const res = await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -703,7 +703,7 @@ describe("handleJoinWaitlist (happy path)", () => {
       availableCount: 0,
       existingEntry: { id: "wl-existing", created_at: existingCreatedAt },
       positionEntryCreatedAt: existingCreatedAt,
-      positionCount: 1,
+      aheadCount: 0,
     });
 
     await handleJoinWaitlist(makeCtx({ db: mockDb, body: validWaitlistBody }));
@@ -878,7 +878,7 @@ describe("server-side floor/door normalization", () => {
           existingEntry: undefined,
           newEntryId: "wl-norm",
           positionEntryCreatedAt: "2026-03-01T10:00:00Z",
-          positionCount: 1,
+          aheadCount: 0,
         },
         captures,
       );
@@ -914,7 +914,7 @@ describe("server-side floor/door normalization", () => {
           existingEntry: undefined,
           newEntryId: "wl-keep",
           positionEntryCreatedAt: "2026-03-01T10:00:00Z",
-          positionCount: 1,
+          aheadCount: 0,
         },
         captures,
       );
@@ -1237,7 +1237,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
                 where: vi.fn().mockReturnValue({
-                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ position: 2 }),
+                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ ahead: 1 }),
                 }),
               }),
             }),
@@ -1246,7 +1246,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
         return {};
       }),
       fn: {
-        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("position") }),
+        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("ahead") }),
       },
       insertInto: vi.fn().mockImplementation(() => ({
         values: vi.fn().mockReturnValue({
@@ -1327,7 +1327,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
                 where: vi.fn().mockReturnValue({
-                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ position: 2 }),
+                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ ahead: 1 }),
                 }),
               }),
             }),
@@ -1336,7 +1336,7 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
         return {};
       }),
       fn: {
-        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("position") }),
+        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("ahead") }),
       },
       transaction: vi.fn().mockReturnValue({
         execute: vi.fn().mockImplementation(async (fn: (trx: unknown) => Promise<unknown>) => {
@@ -1437,7 +1437,7 @@ describe("handleWaitlistPosition — returns FIFO position", () => {
             select: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
                 where: vi.fn().mockReturnValue({
-                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ position: 2 }),
+                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ ahead: 1 }),
                 }),
               }),
             }),
@@ -1446,7 +1446,7 @@ describe("handleWaitlistPosition — returns FIFO position", () => {
         return {};
       }),
       fn: {
-        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("position") }),
+        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("ahead") }),
       },
     } as unknown as Kysely<Database>;
 
@@ -1460,6 +1460,69 @@ describe("handleWaitlistPosition — returns FIFO position", () => {
     const body = res.body as Record<string, unknown>;
     expect(body.onWaitlist).toBe(true);
     expect(body.position).toBe(2);
+  });
+
+  it("returns #1 (one-based) for the only person on the waitlist", async () => {
+    const onlyEntry = {
+      id: "wl-only",
+      created_at: "2026-03-01T10:00:00Z",
+    };
+
+    let selectCallCount = 0;
+    const mockDb = {
+      selectFrom: vi.fn().mockImplementation((table: string) => {
+        if (table === "waitlist_entries") {
+          selectCallCount++;
+          if (selectCallCount === 1) {
+            return {
+              select: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  where: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue(onlyEntry),
+                  }),
+                }),
+              }),
+            };
+          }
+          if (selectCallCount === 2) {
+            return {
+              select: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  where: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue({ created_at: onlyEntry.created_at }),
+                  }),
+                }),
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({ ahead: 0 }),
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      }),
+      fn: {
+        countAll: vi.fn().mockReturnValue({ as: vi.fn().mockReturnValue("ahead") }),
+      },
+    } as unknown as Kysely<Database>;
+
+    const res = await handleWaitlistPosition(
+      makeCtx({
+        db: mockDb,
+        params: { apartmentKey: "else alfelts vej 130" },
+      }),
+    );
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.onWaitlist).toBe(true);
+    expect(body.position).toBe(1);
   });
 });
 
@@ -1591,7 +1654,8 @@ interface MockWaitlistOpts {
   existingRegistrationId?: string;
   newEntryId?: string;
   positionEntryCreatedAt?: string;
-  positionCount?: number;
+  /** Number of waiting entries strictly ahead of the queried entry. */
+  aheadCount?: number;
 }
 
 interface MockWaitlistCaptures {
@@ -1631,7 +1695,7 @@ function makeMockDbForWaitlist(
     }),
   };
 
-  const asFn = vi.fn().mockReturnValue("position");
+  const asFn = vi.fn().mockReturnValue("ahead");
   const countAllFn = vi.fn().mockReturnValue({ as: asFn });
   const fnObj = { countAll: countAllFn };
 
@@ -1669,13 +1733,14 @@ function makeMockDbForWaitlist(
       };
     }
 
-    // Call 3: getWaitlistPosition second query - COUNT (executeTakeFirstOrThrow)
+    // Call 3: getWaitlistPosition second query - COUNT of entries strictly
+    // ahead of self (executeTakeFirstOrThrow). Position is ahead + 1.
     return {
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
-              position: opts.positionCount ?? 0,
+              ahead: opts.aheadCount ?? 0,
             }),
           }),
         }),
