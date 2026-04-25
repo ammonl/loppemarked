@@ -6,13 +6,9 @@ import { colors, fonts } from "@/styles/theme";
 import { AdminLogin } from "./AdminLogin";
 import { AdminDashboard } from "./AdminDashboard";
 
-interface AdminPageProps {
-  onBack: () => void;
-}
-
 type AuthState = "checking" | "authenticated" | "unauthenticated";
 
-export function AdminPage({ onBack }: AdminPageProps) {
+export function AdminPage() {
   const { t } = useLanguage();
   const [authState, setAuthState] = useState<AuthState>("checking");
 
@@ -39,26 +35,8 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
   return (
     <div>
-      <div style={{ padding: "0.5rem 1rem" }}>
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            color: colors.warmBrown,
-            padding: "0.25rem 0",
-            fontFamily: fonts.body,
-          }}
-        >
-          &larr; {t("admin.backToPublic")}
-        </button>
-      </div>
-
       {authState === "checking" && (
-        <p style={{ textAlign: "center", color: colors.warmBrown, padding: "2rem" }}>
+        <p style={{ textAlign: "center", color: colors.fleaPenInk, padding: "2rem", fontFamily: fonts.sans }}>
           {t("common.loading")}
         </p>
       )}

@@ -74,11 +74,7 @@ export default function Home() {
 
   function renderContent() {
     if (view === "admin") {
-      return (
-        <AdminPage
-          onBack={() => setView("public")}
-        />
-      );
+      return <AdminPage />;
     }
     if (preOpen) {
       return <PreOpenPage openingDatetime={openingDatetime} />;
@@ -108,7 +104,6 @@ export default function Home() {
   }
 
   const publicView = view === "public";
-  const mainBackground = publicView ? colors.fleaCream : colors.backgroundLight;
 
   const goHome = () => {
     setView("public");
@@ -121,16 +116,13 @@ export default function Home() {
   };
 
   return (
-    <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: mainBackground, minHeight: "100vh" }}>
-      {publicView ? (
-        <PublicHeader
-          t={t}
-          onHome={goHome}
-          onAdmin={() => setView("admin")}
-        />
-      ) : (
-        <AdminHeader t={t} onHome={goHome} />
-      )}
+    <main style={{ fontFamily: fonts.sans, color: colors.fleaPenInk, background: colors.fleaCream, minHeight: "100vh" }}>
+      <SiteHeader
+        mode={publicView ? "public" : "admin"}
+        t={t}
+        onHome={goHome}
+        onAdmin={() => setView("admin")}
+      />
 
       {renderContent()}
       {publicView && <ProjectAbout />}
@@ -138,13 +130,14 @@ export default function Home() {
   );
 }
 
-interface PublicHeaderProps {
+interface SiteHeaderProps {
+  mode: "public" | "admin";
   t: (key: TranslationKey) => string;
   onHome: () => void;
   onAdmin: () => void;
 }
 
-function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
+function SiteHeader({ mode, t, onHome, onAdmin }: SiteHeaderProps) {
   const handleAboutClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     if (typeof document === "undefined") return;
@@ -205,41 +198,41 @@ function PublicHeader({ t, onHome, onAdmin }: PublicHeaderProps) {
           justifyContent: "flex-end",
         }}
       >
-        <nav aria-label="Primary" style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+        {mode === "public" ? (
+          <>
+            <nav aria-label="Primary" style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+              <button type="button" onClick={onHome} style={siteNavLinkStyle}>
+                {t("nav.home")}
+              </button>
+              <a href="#about" onClick={handleAboutClick} style={siteNavLinkStyle}>
+                {t("nav.about")}
+              </a>
+            </nav>
+            <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaSand }} />
+            <button
+              type="button"
+              onClick={onAdmin}
+              style={{ ...siteNavLinkStyle, fontSize: "0.75rem", opacity: 0.55 }}
+            >
+              {t("admin.link")}
+            </button>
+          </>
+        ) : (
           <button
             type="button"
             onClick={onHome}
-            style={publicNavLinkStyle}
+            style={{ ...siteNavLinkStyle, fontSize: "0.75rem", opacity: 0.7 }}
           >
-            {t("nav.home")}
+            &larr; {t("admin.backToPublic")}
           </button>
-          <a
-            href="#about"
-            onClick={handleAboutClick}
-            style={publicNavLinkStyle}
-          >
-            {t("nav.about")}
-          </a>
-        </nav>
-        <span aria-hidden style={{ width: 1, height: 20, background: colors.fleaSand }} />
-        <button
-          type="button"
-          onClick={onAdmin}
-          style={{
-            ...publicNavLinkStyle,
-            fontSize: "0.75rem",
-            opacity: 0.55,
-          }}
-        >
-          {t("admin.link")}
-        </button>
+        )}
         <LanguageSelector />
       </div>
     </header>
   );
 }
 
-const publicNavLinkStyle: React.CSSProperties = {
+const siteNavLinkStyle: React.CSSProperties = {
   background: "none",
   border: "none",
   padding: 0,
@@ -253,62 +246,3 @@ const publicNavLinkStyle: React.CSSProperties = {
   textDecoration: "none",
   opacity: 0.9,
 };
-
-interface AdminHeaderProps {
-  t: (key: TranslationKey) => string;
-  onHome: () => void;
-}
-
-function AdminHeader({ t, onHome }: AdminHeaderProps) {
-  return (
-    <header
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
-        alignItems: "center",
-        padding: "1rem 1.5rem",
-        borderBottom: `1px solid ${colors.borderTan}`,
-        background: "transparent",
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-      }}
-    >
-      <div />
-      <button
-        type="button"
-        onClick={onHome}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
-          margin: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          color: colors.inkBrown,
-          fontFamily: fonts.heading,
-          fontSize: "1.25rem",
-          lineHeight: 1,
-        }}
-        aria-label={t("common.appName")}
-      >
-        <h1
-          style={{
-            fontSize: "inherit",
-            margin: 0,
-            fontFamily: "inherit",
-            color: "inherit",
-            fontWeight: 700,
-          }}
-        >
-          {t("common.appName")}
-        </h1>
-      </button>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", justifyContent: "flex-end" }}>
-        <LanguageSelector />
-      </div>
-    </header>
-  );
-}

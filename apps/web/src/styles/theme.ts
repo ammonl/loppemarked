@@ -1,30 +1,35 @@
 import type { CSSProperties } from "react";
 
+// Legacy semantic tokens. These are re-bound to the material brand palette
+// (defined in the `flea*` block below) so admin and other surfaces that still
+// reference role-based names re-theme consistently with the redesigned public
+// site without per-component churn. New code should prefer the `flea*` tokens
+// directly.
 export const colors = {
-  backgroundLight: "#F5F4F0",
-  cream: "#FAF6F0",
-  parchment: "#F0EBE1",
-  sage: "#7A8B6F",
-  sageDark: "#5C6B52",
-  terracotta: "#C67D4B",
-  terracottaDark: "#A8623A",
-  warmBrown: "#6B5243",
-  inkBrown: "#4A3728",
-  mutedGold: "#B8A361",
-  dustyRose: "#C9908A",
-  skyMist: "#A8C4C2",
-  borderTan: "#D4C9B8",
+  backgroundLight: "#FDFBF7",
+  cream: "#FDFBF7",
+  parchment: "#F0E3C9",
+  sage: "#8DA88D",
+  sageDark: "#6F8A6F",
+  terracotta: "#C6705D",
+  terracottaDark: "#A85544",
+  warmBrown: "#5B4636",
+  inkBrown: "#2E1F14",
+  mutedGold: "#B88A3A",
+  dustyRose: "#B8736A",
+  skyMist: "#B8C7B8",
+  borderTan: "#E5D3B3",
   white: "#FFFFFF",
-  parchmentDark: "#E5DFD3",
+  parchmentDark: "#E9D3AE",
   lightSage: "#EAF0E5",
-  errorBg: "#FAF0EE",
-  errorText: "#8B4A42",
-  infoBg: "#EEF4F4",
-  infoText: "#4A7572",
-  warningBg: "#FCF8EE",
-  warningText: "#7A6A30",
-  overlayWhite: "rgba(255, 255, 255, 0.92)",
-  overlayBorder: "rgba(200, 200, 195, 0.4)",
+  errorBg: "#F8E2DC",
+  errorText: "#762C21",
+  infoBg: "#EAEFE7",
+  infoText: "#4A6450",
+  warningBg: "#F4E8D4",
+  warningText: "#8A6528",
+  overlayWhite: "rgba(253, 251, 247, 0.94)",
+  overlayBorder: "rgba(110, 82, 48, 0.18)",
 
   fleaTerracotta: "#C6705D",
   fleaTerracottaDark: "#A85544",
@@ -85,10 +90,10 @@ export const fonts = {
 };
 
 export const shadows = {
-  card: "0 2px 8px rgba(74, 55, 40, 0.08)",
-  cardHover: "0 4px 16px rgba(74, 55, 40, 0.14)",
-  soft: "0 1px 4px rgba(74, 55, 40, 0.06)",
-  overlay: "0 1px 8px rgba(0, 0, 0, 0.06)",
+  card: "0 2px 8px rgba(46, 31, 20, 0.08)",
+  cardHover: "0 4px 16px rgba(46, 31, 20, 0.14)",
+  soft: "0 1px 4px rgba(46, 31, 20, 0.06)",
+  overlay: "0 1px 8px rgba(46, 31, 20, 0.06)",
   // Warm material shadows tuned for the scene-based landing redesign. Kept as
   // separate layers so callers can compose drop + ambient cast as needed.
   warmDrop: "0 18px 28px -10px rgba(110, 55, 32, 0.45)",
@@ -103,7 +108,7 @@ export const containerStyle: CSSProperties = {
 };
 
 export const cardStyle: CSSProperties = {
-  background: colors.parchment,
+  background: colors.cream,
   border: `1px solid ${colors.borderTan}`,
   borderRadius: 10,
   padding: "1.5rem",
@@ -233,7 +238,7 @@ export const alertWarning: CSSProperties = {
 };
 
 export const sectionStyle: CSSProperties = {
-  background: colors.parchment,
+  background: colors.cream,
   border: `1px solid ${colors.borderTan}`,
   borderRadius: 10,
   padding: "1.25rem",
@@ -243,8 +248,8 @@ export const dialogStyle: CSSProperties = {
   border: `1px solid ${colors.borderTan}`,
   borderRadius: 10,
   padding: "1.5rem",
-  background: colors.white,
-  boxShadow: "0 4px 20px rgba(74, 55, 40, 0.12)",
+  background: colors.cream,
+  boxShadow: "0 4px 20px rgba(46, 31, 20, 0.14)",
 };
 
 export const tableHeaderStyle: CSSProperties = {

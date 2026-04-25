@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { colors, fonts } from "@/styles/theme";
 import { AdminRegistrations } from "./AdminRegistrations";
@@ -58,13 +57,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1rem", fontFamily: fonts.body }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.25rem 1rem 2rem", fontFamily: fonts.sans }}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "1rem",
+          marginBottom: "1.5rem",
         }}
       >
         <nav
@@ -72,7 +71,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           style={{
             display: "flex",
             gap: "0.25rem",
-            borderBottom: `1px solid ${colors.borderTan}`,
+            borderBottom: `1px solid ${colors.fleaSand}`,
             overflowX: "auto",
             flex: 1,
             justifyContent: "center",
@@ -86,18 +85,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               style={{
-                padding: "0.6rem 1.25rem",
+                padding: "0.6rem 1.25rem 0.75rem",
                 border: "none",
-                borderBottom: activeTab === tab ? `6px solid ${colors.sageDark}` : "6px solid transparent",
+                borderBottom:
+                  activeTab === tab
+                    ? `3px solid ${colors.fleaTerracottaDark}`
+                    : "3px solid transparent",
                 background: "none",
                 cursor: "pointer",
-                fontFamily: fonts.body,
-                fontSize: "0.9rem",
-                fontWeight: activeTab === tab ? 600 : 400,
-                color: activeTab === tab ? colors.sageDark : colors.warmBrown,
+                fontFamily: fonts.sans,
+                fontSize: "0.85rem",
+                fontWeight: activeTab === tab ? 600 : 500,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                color: activeTab === tab ? colors.fleaInk : colors.fleaPenInk,
                 whiteSpace: "nowrap",
-                marginBottom: "-3px",
-                paddingBottom: "0.75rem",
+                marginBottom: "-1px",
               }}
             >
               {t(TAB_KEYS[tab])}
@@ -111,28 +114,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           style={{
             padding: "0.5rem 1rem",
             background: "none",
-            border: `1px solid ${colors.dustyRose}`,
-            color: colors.dustyRose,
-            borderRadius: 4,
+            border: `1px solid ${colors.fleaTerracottaDark}`,
+            color: colors.fleaTerracottaDark,
+            borderRadius: 6,
             cursor: loggingOut ? "not-allowed" : "pointer",
-            fontSize: "0.85rem",
-            fontFamily: fonts.body,
+            fontSize: "0.8rem",
+            fontFamily: fonts.sans,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
             whiteSpace: "nowrap",
             marginLeft: "1rem",
           }}
         >
           {loggingOut ? t("common.loading") : t("admin.logout")}
         </button>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "0.25rem 0 0" }}>
-        <Image
-          src="/plant_separator.png"
-          alt=""
-          width={400}
-          height={80}
-          style={{ objectFit: "contain" }}
-        />
       </div>
 
       <div role="tabpanel" style={{ margin: "0 auto" }}>

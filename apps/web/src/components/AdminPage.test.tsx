@@ -43,7 +43,7 @@ describe("AdminPage", () => {
     ));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     expect(screen.getByText("common.loading")).toBeDefined();
@@ -59,7 +59,7 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", mockFetchResponse(true));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
@@ -73,7 +73,7 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", mockFetchResponse(false));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
@@ -87,7 +87,7 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
@@ -99,7 +99,7 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", mockFetchResponse(false));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
@@ -118,7 +118,7 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", mockFetchResponse(true));
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
@@ -138,26 +138,11 @@ describe("AdminPage", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await act(async () => {
-      render(<AdminPage onBack={vi.fn()} />);
+      render(<AdminPage />);
     });
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/admin/auth/me", { credentials: "include" });
     });
-  });
-
-  it("calls onBack when back button is clicked", async () => {
-    vi.stubGlobal("fetch", mockFetchResponse(false));
-    const onBack = vi.fn();
-
-    await act(async () => {
-      render(<AdminPage onBack={onBack} />);
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText(/admin.backToPublic/));
-    });
-
-    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

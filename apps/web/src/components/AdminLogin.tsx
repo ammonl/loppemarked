@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { colors, fonts, headingStyle, inputStyle as themeInputStyle } from "@/styles/theme";
+import { colors, fonts, inputStyle as themeInputStyle, shadows } from "@/styles/theme";
 
 interface AdminLoginProps {
   onLogin: () => void;
@@ -43,12 +43,43 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
     }
   }
 
+  const labelTextStyle: React.CSSProperties = {
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    fontFamily: fonts.sans,
+    color: colors.fleaPenInk,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+  };
+
   return (
-    <section style={{ maxWidth: 400, margin: "2rem auto", padding: "0 1rem" }}>
-      <h2 style={headingStyle}>{t("admin.login")}</h2>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, fontFamily: fonts.body, color: colors.warmBrown }}>{t("admin.email")}</span>
+    <section
+      style={{
+        maxWidth: 420,
+        margin: "3rem auto",
+        padding: "1.75rem",
+        background: colors.fleaCream,
+        border: `1px solid ${colors.fleaSand}`,
+        borderRadius: 12,
+        boxShadow: shadows.card,
+      }}
+    >
+      <h2
+        style={{
+          margin: "0 0 1.25rem",
+          fontFamily: fonts.sans,
+          fontSize: "1.05rem",
+          fontWeight: 700,
+          color: colors.fleaInk,
+          letterSpacing: "0.05em",
+          textTransform: "uppercase",
+        }}
+      >
+        {t("admin.login")}
+      </h2>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <span style={labelTextStyle}>{t("admin.email")}</span>
           <input
             type="email"
             required
@@ -58,8 +89,8 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             style={{ ...themeInputStyle, fontSize: "1rem" }}
           />
         </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, fontFamily: fonts.body, color: colors.warmBrown }}>{t("admin.password")}</span>
+        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <span style={labelTextStyle}>{t("admin.password")}</span>
           <input
             type="password"
             required
@@ -75,10 +106,10 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
           />
-          <span style={{ fontSize: "0.85rem", fontFamily: fonts.body, color: colors.warmBrown }}>{t("admin.rememberMe")}</span>
+          <span style={{ fontSize: "0.85rem", fontFamily: fonts.sans, color: colors.fleaPenInk }}>{t("admin.rememberMe")}</span>
         </label>
         {error && (
-          <p role="alert" style={{ color: colors.dustyRose, margin: 0, fontSize: "0.85rem" }}>
+          <p role="alert" style={{ color: colors.fleaAccentInk, margin: 0, fontSize: "0.85rem", fontFamily: fonts.sans }}>
             {error}
           </p>
         )}
@@ -86,14 +117,18 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           type="submit"
           disabled={loading}
           style={{
-            padding: "0.5rem 1rem",
-            background: colors.sage,
-            color: colors.white,
+            padding: "0.65rem 1rem",
+            background: colors.fleaTerracottaDark,
+            color: colors.fleaCream,
             border: "none",
-            borderRadius: 4,
+            borderRadius: 6,
             cursor: loading ? "not-allowed" : "pointer",
-            fontSize: "1rem",
-            fontFamily: fonts.body,
+            fontSize: "0.85rem",
+            fontFamily: fonts.sans,
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            marginTop: "0.25rem",
           }}
         >
           {loading ? t("common.loading") : t("admin.login")}
