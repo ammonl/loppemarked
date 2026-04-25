@@ -59,20 +59,20 @@ const translations = {
     teamSignature: "UN17 Village Loppemarked-teamet",
   },
   en: {
-    addSubject: "Confirmation of your flea-market table booking – UN17 Village Loppemarked",
-    moveSubject: "Change to your flea-market table – UN17 Village Loppemarked",
-    removeSubject: "Your flea-market table booking has been removed – UN17 Village Loppemarked",
+    addSubject: "Confirmation of your table booking – UN17 Village Loppemarked",
+    moveSubject: "Change to your table – UN17 Village Loppemarked",
+    removeSubject: "Your table booking has been removed – UN17 Village Loppemarked",
 
     greeting: (name: string) => `Dear ${name},`,
     addIntro: "You have booked a table for UN17 Village Loppemarked. Your booking is now confirmed.",
-    moveIntro: "Your flea-market table booking for UN17 Village Loppemarked has been updated.",
+    moveIntro: "Your table booking for UN17 Village Loppemarked has been updated.",
     moveDetail: (oldLabel: string, newLabel: string) =>
-      `Your flea-market table has been moved from ${oldLabel} to ${newLabel}.`,
-    removeIntro: "We are writing to let you know that your flea-market table booking for UN17 Village Loppemarked has been removed.",
+      `Your table has been moved from ${oldLabel} to ${newLabel}.`,
+    removeIntro: "We are writing to let you know that your table booking for UN17 Village Loppemarked has been removed.",
     removeDetail: (label: string) =>
       `Your booking for ${label} is no longer active.`,
 
-    tableDetailsTitle: "Your flea-market table",
+    tableDetailsTitle: "Your table",
     tableLabel: "Table",
     sizeLabel: "Size",
 
