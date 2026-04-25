@@ -46,6 +46,7 @@ export function AdminWaitlist() {
   const [assignBoxId, setAssignBoxId] = useState("");
   const [assignNotification, setAssignNotification] = useState<NotificationValue>({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
   const [assignDuplicateWarning, setAssignDuplicateWarning] = useState<DuplicateExisting[] | null>(null);
+  const [removingEntry, setRemovingEntry] = useState<WaitlistEntry | null>(null);
 
   const [boxStates, setBoxStates] = useState<Map<number, BoxState>>(new Map());
 
@@ -131,6 +132,50 @@ export function AdminWaitlist() {
 
   function closeAssignDialog() {
     setAssigningEntry(null);
+  }
+
+  function openRemoveDialog(entry: WaitlistEntry) {
+    setMessage(null);
+    setRemovingEntry(entry);
+  }
+
+  function closeRemoveDialog() {
+    setRemovingEntry(null);
+  }
+
+  async function handleRemove() {
+    if (!removingEntry) return;
+
+    setSubmitting(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/admin/waitlist/${encodeURIComponent(removingEntry.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: t("admin.waitlist.removed") });
+        setRemovingEntry(null);
+        await fetchWaitlist();
+      } else {
+        let errorText = t("common.error");
+        try {
+          const body = await res.json();
+          if (body && typeof body.error === "string") {
+            errorText = body.error;
+          }
+        } catch {
+          // ignore JSON parse failure; fall back to default error text
+        }
+        setMessage({ type: "error", text: errorText });
+      }
+    } catch {
+      setMessage({ type: "error", text: t("common.error") });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleAssign(confirmDuplicate = false) {
@@ -354,6 +399,69 @@ export function AdminWaitlist() {
         </div>
       )}
 
+      {/* Remove Dialog */}
+      {removingEntry && (
+        <div
+          role="dialog"
+          aria-labelledby="remove-dialog-title"
+          style={{
+            border: `1px solid ${colors.borderTan}`,
+            borderRadius: 8,
+            padding: "1.25rem",
+            marginBottom: "1.5rem",
+            background: colors.white,
+            boxShadow: shadows.card,
+          }}
+        >
+          <h3 id="remove-dialog-title" style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
+            {t("admin.waitlist.confirmRemove")} – {removingEntry.name}
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: colors.warmBrown, margin: "0 0 0.75rem 0" }}>
+            {removingEntry.email} · {formatAddress(removingEntry.street, removingEntry.house_number, removingEntry.floor, removingEntry.door)}
+          </p>
+          <p style={{ fontSize: "0.85rem", color: colors.warmBrown, margin: "0 0 1rem 0" }}>
+            {t("admin.waitlist.removeConfirmHint")}
+          </p>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              type="button"
+              onClick={() => handleRemove()}
+              disabled={submitting}
+              style={{
+                padding: "0.4rem 1rem",
+                border: "none",
+                borderRadius: 4,
+                background: colors.dustyRose,
+                color: colors.white,
+                cursor: submitting ? "not-allowed" : "pointer",
+                fontSize: "0.85rem",
+                fontFamily: fonts.body,
+                fontWeight: 600,
+              }}
+            >
+              {t("admin.waitlist.remove")}
+            </button>
+            <button
+              type="button"
+              onClick={closeRemoveDialog}
+              disabled={submitting}
+              style={{
+                padding: "0.4rem 1rem",
+                border: `1px solid ${colors.borderTan}`,
+                borderRadius: 4,
+                background: colors.white,
+                color: colors.warmBrown,
+                cursor: submitting ? "not-allowed" : "pointer",
+                fontSize: "0.85rem",
+                fontFamily: fonts.body,
+              }}
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+
       {entries.length === 0 ? (
         <p style={{ color: colors.warmBrown, fontStyle: "italic" }}>
           {t("admin.waitlist.noEntries")}
@@ -423,23 +531,42 @@ export function AdminWaitlist() {
                   </td>
                   <td style={{ padding: "0.5rem" }}>
                     {entry.status === "waiting" && (
-                      <button
-                        type="button"
-                        onClick={() => openAssignDialog(entry)}
-                        disabled={assigningEntry !== null}
-                        style={{
-                          padding: "0.25rem 0.75rem",
-                          border: `1px solid ${colors.sage}`,
-                          borderRadius: 4,
-                          background: colors.white,
-                          color: colors.sage,
-                          cursor: assigningEntry !== null ? "not-allowed" : "pointer",
-                          fontSize: "0.8rem",
-                          fontFamily: fonts.body,
-                        }}
-                      >
-                        {t("admin.waitlist.assign")}
-                      </button>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => openAssignDialog(entry)}
+                          disabled={assigningEntry !== null || removingEntry !== null}
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            border: `1px solid ${colors.sage}`,
+                            borderRadius: 4,
+                            background: colors.white,
+                            color: colors.sage,
+                            cursor: assigningEntry !== null || removingEntry !== null ? "not-allowed" : "pointer",
+                            fontSize: "0.8rem",
+                            fontFamily: fonts.body,
+                          }}
+                        >
+                          {t("admin.waitlist.assign")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openRemoveDialog(entry)}
+                          disabled={assigningEntry !== null || removingEntry !== null}
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            border: `1px solid ${colors.dustyRose}`,
+                            borderRadius: 4,
+                            background: colors.white,
+                            color: colors.dustyRose,
+                            cursor: assigningEntry !== null || removingEntry !== null ? "not-allowed" : "pointer",
+                            fontSize: "0.8rem",
+                            fontFamily: fonts.body,
+                          }}
+                        >
+                          {t("admin.waitlist.remove")}
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

@@ -35,7 +35,7 @@ import {
   handleFillBoxes,
   handleClearRegistrations,
 } from "./routes/admin/staging.js";
-import { handleListWaitlist } from "./routes/admin/waitlist.js";
+import { handleListWaitlist, handleRemoveWaitlist } from "./routes/admin/waitlist.js";
 import { handleHealth } from "./routes/health.js";
 import {
   handleCancellationConfirm,
@@ -88,6 +88,7 @@ export function createRouter(): Router {
   router.post("/admin/registrations/remove", requireAdmin(handleRemoveRegistration));
   router.get("/admin/waitlist", requireAdmin(handleListWaitlist));
   router.post("/admin/waitlist/assign", requireAdmin(handleAssignWaitlist));
+  router.delete("/admin/waitlist/:id", requireAdmin(handleRemoveWaitlist));
   router.post("/admin/notifications/preview", requireAdmin(handleNotificationPreview));
   router.post("/admin/messaging/template", requireAdmin(handleGetBulkEmailTemplate));
   router.post("/admin/messaging/preview", requireAdmin(handleBulkEmailPreview));

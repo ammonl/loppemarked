@@ -346,6 +346,11 @@ const da = {
   "admin.waitlist.confirmDuplicate": "Bekræft duplikat",
   "admin.waitlist.table": "Loppebord",
   "admin.waitlist.selectTable": "Vælg loppebord...",
+  "admin.waitlist.remove": "Fjern",
+  "admin.waitlist.confirmRemove": "Bekræft fjernelse",
+  "admin.waitlist.removeConfirmHint":
+    "Fjern denne ventelisteindgang permanent. Der oprettes ingen booking, og den valgte person får ingen besked.",
+  "admin.waitlist.removed": "Ventelisteindgang fjernet",
 
   "admin.tables.title": "Loppebordsoversigt",
   "admin.tables.number": "Bord",
@@ -791,6 +796,11 @@ const en: Record<TranslationKey, string> = {
   "admin.waitlist.confirmDuplicate": "Confirm Duplicate",
   "admin.waitlist.table": "Table",
   "admin.waitlist.selectTable": "Select table...",
+  "admin.waitlist.remove": "Remove",
+  "admin.waitlist.confirmRemove": "Confirm removal",
+  "admin.waitlist.removeConfirmHint":
+    "Permanently remove this waitlist entry. No booking is created and no notification is sent to the person.",
+  "admin.waitlist.removed": "Waitlist entry removed",
 
   "admin.tables.title": "Table Overview",
   "admin.tables.number": "Table",

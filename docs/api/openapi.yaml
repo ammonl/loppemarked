@@ -97,6 +97,19 @@ paths:
       responses:
         '200':
           description: Assigned.
+  /admin/waitlist/{id}:
+    delete:
+      tags: [Admin]
+      summary: Remove a waitlist entry without assigning a table.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed.
   /admin/settings/opening-time:
     patch:
       tags: [Admin]

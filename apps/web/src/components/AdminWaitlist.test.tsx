@@ -268,4 +268,112 @@ describe("AdminWaitlist", () => {
       expect(screen.getByRole("alert").textContent).toBe("common.error");
     });
   });
+
+  describe("remove flow", () => {
+    it("shows remove button for waiting entries only", async () => {
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: waitlistEntries }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      const removeButtons = screen.getAllByText("admin.waitlist.remove");
+      expect(removeButtons).toHaveLength(1);
+    });
+
+    it("opens confirmation dialog when remove is clicked", async () => {
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: waitlistEntries }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.remove"));
+      });
+
+      expect(screen.getByText("admin.waitlist.confirmRemove – Carol")).toBeDefined();
+      expect(screen.getByText("admin.waitlist.removeConfirmHint")).toBeDefined();
+    });
+
+    it("closes confirmation dialog on cancel without calling DELETE", async () => {
+      const fetchMock = mockFetch([{ ok: true, body: waitlistEntries }]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.remove"));
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("common.cancel"));
+      });
+
+      expect(screen.queryByText("admin.waitlist.confirmRemove – Carol")).toBeNull();
+      expect(fetchMock.mock.calls.every((call) => call[1]?.method !== "DELETE")).toBe(true);
+    });
+
+    it("issues DELETE and refreshes list on successful remove", async () => {
+      const fetchMock = mockFetch([
+        { ok: true, body: waitlistEntries },
+        { ok: true, body: [] },
+        { ok: true, status: 204, body: null },
+        { ok: true, body: [] },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.remove"));
+      });
+
+      const confirmButton = screen.getAllByText("admin.waitlist.remove").find(
+        (el) => el.tagName === "BUTTON" && (el as HTMLButtonElement).type === "button" && el.closest("[role='dialog']") !== null,
+      );
+      expect(confirmButton).toBeDefined();
+
+      await act(async () => {
+        fireEvent.click(confirmButton as HTMLElement);
+      });
+
+      const deleteCall = fetchMock.mock.calls.find((call) => call[1]?.method === "DELETE");
+      expect(deleteCall).toBeDefined();
+      expect(deleteCall?.[0]).toBe("/admin/waitlist/w1");
+      expect(screen.getByText("admin.waitlist.removed")).toBeDefined();
+    });
+
+    it("shows error message and keeps dialog open on remove failure", async () => {
+      const fetchMock = mockFetch([
+        { ok: true, body: waitlistEntries },
+        { ok: true, body: [] },
+        { ok: false, status: 404, body: { error: "Waitlist entry not found" } },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.remove"));
+      });
+
+      const confirmButton = screen.getAllByText("admin.waitlist.remove").find(
+        (el) => el.tagName === "BUTTON" && el.closest("[role='dialog']") !== null,
+      );
+
+      await act(async () => {
+        fireEvent.click(confirmButton as HTMLElement);
+      });
+
+      expect(screen.getByRole("alert").textContent).toBe("Waitlist entry not found");
+      expect(screen.getByText("admin.waitlist.confirmRemove – Carol")).toBeDefined();
+    });
+  });
 });

@@ -1,4 +1,5 @@
-import { unauthorized } from "../../lib/errors.js";
+import { logAuditEvent } from "../../lib/audit.js";
+import { badRequest, notFound, unauthorized } from "../../lib/errors.js";
 import type { RequestContext, RouteResponse } from "../../router.js";
 
 export async function handleListWaitlist(ctx: RequestContext): Promise<RouteResponse> {
@@ -29,5 +30,60 @@ export async function handleListWaitlist(ctx: RequestContext): Promise<RouteResp
   return {
     statusCode: 200,
     body: entries,
+  };
+}
+
+export async function handleRemoveWaitlist(ctx: RequestContext): Promise<RouteResponse> {
+  const adminId = ctx.adminId;
+  if (!adminId) {
+    throw unauthorized();
+  }
+
+  const entryId = ctx.params["id"];
+  if (!entryId) {
+    throw badRequest("Waitlist entry ID is required");
+  }
+
+  await ctx.db.transaction().execute(async (trx) => {
+    const entry = await trx
+      .selectFrom("waitlist_entries")
+      .select([
+        "id",
+        "name",
+        "email",
+        "apartment_key",
+        "status",
+      ])
+      .where("id", "=", entryId)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!entry) {
+      throw notFound("Waitlist entry not found");
+    }
+    if (entry.status !== "waiting") {
+      throw badRequest("Waitlist entry is not in waiting status");
+    }
+
+    await trx.deleteFrom("waitlist_entries").where("id", "=", entryId).execute();
+
+    await logAuditEvent(trx, {
+      actor_type: "admin",
+      actor_id: adminId,
+      action: "waitlist_remove",
+      entity_type: "waitlist_entry",
+      entity_id: entry.id,
+      before: {
+        name: entry.name,
+        email: entry.email,
+        apartment_key: entry.apartment_key,
+        status: entry.status,
+      },
+    });
+  });
+
+  return {
+    statusCode: 204,
+    body: null,
   };
 }
