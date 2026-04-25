@@ -185,32 +185,35 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
           />
         </div>
 
-        <div className="flea-scene-form__field">
-          <label htmlFor="wl-floor" className="flea-scene-form__label">
-            {t("registration.floorLabel")} {needsFloorDoor ? "*" : ""}
-          </label>
-          <input
-            id="wl-floor"
-            type="text"
-            required={needsFloorDoor}
-            value={floor}
-            onChange={(e) => setFloor(e.target.value)}
-            className="flea-scene-form__input"
-          />
-        </div>
-
-        <div className="flea-scene-form__field">
-          <label htmlFor="wl-door" className="flea-scene-form__label">
-            {t("registration.doorLabel")}
-          </label>
-          <input
-            id="wl-door"
-            type="text"
-            value={door}
-            onChange={(e) => setDoor(e.target.value)}
-            className="flea-scene-form__input"
-          />
-        </div>
+        {needsFloorDoor && (
+          <>
+            <div className="flea-scene-form__field">
+              <label htmlFor="wl-floor" className="flea-scene-form__label">
+                {t("registration.floorLabel")} *
+              </label>
+              <input
+                id="wl-floor"
+                type="text"
+                required
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                className="flea-scene-form__input"
+              />
+            </div>
+            <div className="flea-scene-form__field">
+              <label htmlFor="wl-door" className="flea-scene-form__label">
+                {t("registration.doorLabel")}
+              </label>
+              <input
+                id="wl-door"
+                type="text"
+                value={door}
+                onChange={(e) => setDoor(e.target.value)}
+                className="flea-scene-form__input"
+              />
+            </div>
+          </>
+        )}
 
         <fieldset className="flea-scene-form__fieldset">
           <legend className="flea-scene-form__legend">{t("consent.title")}</legend>
