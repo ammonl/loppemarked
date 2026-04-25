@@ -37,7 +37,31 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml.toLowerCase()).not.toContain("drivhus");
   });
 
-  it("includes Fælledhuset as the location", () => {
+  it("renders an inline SVG floor plan instead of a textual location", () => {
+    const result = buildConfirmationEmail(baseData);
+    expect(result.bodyHtml).toContain("<svg");
+    expect(result.bodyHtml).toContain('viewBox="0 0 120 80"');
+    // The booking-details location row no longer renders the bare text
+    // "Fælledhuset" — it shows an SVG plus a localized caption referencing the
+    // booked table number.
+    expect(result.bodyHtml).toContain("Bord #3 markeret med rødt");
+    expect(result.bodyHtml).toContain("plantegningen over Fælledhuset");
+  });
+
+  it("highlights the booked table tile in the SVG", () => {
+    const result = buildConfirmationEmail(baseData);
+    // The booked table is filled with brand salmon; other tiles use brand
+    // greenSoft. Verify the salmon fill appears at least once for the tile.
+    expect(result.bodyHtml).toMatch(/fill="#C6705D"/);
+  });
+
+  it("renders an English caption when language is en", () => {
+    const result = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(result.bodyHtml).toContain("Table #3 highlighted in red");
+    expect(result.bodyHtml).toContain("Fælledhuset floor plan");
+  });
+
+  it("still references Fælledhuset in the email footer and intro", () => {
     const result = buildConfirmationEmail(baseData);
     expect(result.bodyHtml).toContain("Fælledhuset");
   });
@@ -65,6 +89,48 @@ describe("buildConfirmationEmail", () => {
     const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
     expect(enResult.bodyHtml).toContain("pricing");
     expect(enResult.bodyHtml).toContain("electricity");
+  });
+
+  it("renames the guidelines section to Seller Guidelines", () => {
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("Seller Guidelines");
+    expect(enResult.bodyHtml).not.toContain("Practical information");
+
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("Sælgerinformation");
+    expect(daResult.bodyHtml).not.toContain("Praktisk information");
+  });
+
+  it("includes the setup-time guideline (11:00 AM)", () => {
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("Setup begins at 11:00 AM.");
+
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("Opstilling begynder kl. 11.00.");
+  });
+
+  it("includes the attendance guideline with proxy + market hours", () => {
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("have someone stay at your table");
+    expect(enResult.bodyHtml).toContain("12:00–2:30 PM");
+
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("eller sørg for, at en anden er ved dit bord");
+    expect(daResult.bodyHtml).toContain("12.00–14.30");
+  });
+
+  it("includes the clothing-rack guideline", () => {
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain(
+      "only bring a clothing rack if one is included in your booking",
+    );
+    expect(enResult.bodyHtml).toContain("Sellers must bring their own clothing racks.");
+
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain(
+      "kun medbringe et tøjstativ, hvis det indgår i din booking",
+    );
+    expect(daResult.bodyHtml).toContain("Sælgere skal selv medbringe deres tøjstativ.");
   });
 
   it("does not include a community or WhatsApp section", () => {
