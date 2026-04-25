@@ -5,14 +5,15 @@ import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
-  ORGANIZER_CONTACTS,
+  EVENT_CONTACT,
   isFloorDoorRequired,
   validateWaitlistInput,
   type Language,
 } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { colors, fonts, shadows, alertError } from "@/styles/theme";
+import { alertError } from "@/styles/theme";
 import { WaitlistBanner } from "./WaitlistBanner";
+import "@/styles/table-map.css";
 
 interface WaitlistFormProps {
   onCancel: () => void;
@@ -103,27 +104,13 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
 
   if (result) {
     return (
-      <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
-        <h2 style={{ color: colors.mutedGold, fontFamily: fonts.heading }}>{t("waitlist.success")}</h2>
-        <WaitlistBanner
-          position={result.position}
-          alreadyOnWaitlist={result.alreadyOnWaitlist}
-        />
+      <section className="flea-scene-form">
+        <h2 className="flea-scene-form__success-title">{t("waitlist.success")}</h2>
+        <WaitlistBanner position={result.position} alreadyOnWaitlist={result.alreadyOnWaitlist} />
         <button
           type="button"
           onClick={onCancel}
-          style={{
-            marginTop: "1.5rem",
-            padding: "0.5rem 1.25rem",
-            background: colors.mutedGold,
-            color: colors.white,
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-            fontFamily: fonts.body,
-            fontSize: "0.95rem",
-            fontWeight: 600,
-          }}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
         >
           {t("common.close")}
         </button>
@@ -132,82 +119,118 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
   }
 
   return (
-    <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
-      <button
-        type="button"
-        onClick={onCancel}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          padding: "0.25rem 0",
-          marginBottom: "1rem",
-          fontFamily: fonts.body,
-        }}
-      >
+    <section className="flea-scene-form">
+      <button type="button" onClick={onCancel} className="flea-scene-form__back">
         &larr; {t("common.cancel")}
       </button>
 
-      <h2 style={{ margin: "0 0 0.25rem", fontFamily: fonts.heading, color: colors.warmBrown }}>{t("waitlist.title")}</h2>
-      <p style={{ color: colors.warmBrown, margin: "0 0 1.5rem", fontSize: "0.95rem" }}>
-        {t("waitlist.description")}
-      </p>
+      <h2 className="flea-scene-form__title">{t("waitlist.title")}</h2>
+      <p className="flea-scene-form__subtitle">{t("waitlist.description")}</p>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-name" style={labelStyle}>{t("registration.nameLabel")} *</label>
-          <input id="wl-name" type="text" required value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-name" className="flea-scene-form__label">
+            {t("registration.nameLabel")} *
+          </label>
+          <input
+            id="wl-name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-email" style={labelStyle}>{t("registration.emailLabel")} *</label>
-          <input id="wl-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-email" className="flea-scene-form__label">
+            {t("registration.emailLabel")} *
+          </label>
+          <input
+            id="wl-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-street" style={labelStyle}>{t("registration.streetLabel")}</label>
-          <input id="wl-street" type="text" value={ELIGIBLE_STREET} disabled style={{ ...inputStyle, background: colors.parchmentDark, color: colors.warmBrown }} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-street" className="flea-scene-form__label">
+            {t("registration.streetLabel")}
+          </label>
+          <input
+            id="wl-street"
+            type="text"
+            value={ELIGIBLE_STREET}
+            disabled
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-house" style={labelStyle}>{t("registration.houseNumberLabel")} *</label>
-          <input id="wl-house" type="number" required min={HOUSE_NUMBER_MIN} max={HOUSE_NUMBER_MAX} value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} style={inputStyle} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-house" className="flea-scene-form__label">
+            {t("registration.houseNumberLabel")} *
+          </label>
+          <input
+            id="wl-house"
+            type="number"
+            required
+            min={HOUSE_NUMBER_MIN}
+            max={HOUSE_NUMBER_MAX}
+            value={houseNumber}
+            onChange={(e) => setHouseNumber(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-floor" style={labelStyle}>{t("registration.floorLabel")} {needsFloorDoor ? "*" : ""}</label>
-          <input id="wl-floor" type="text" required={needsFloorDoor} value={floor} onChange={(e) => setFloor(e.target.value)} style={inputStyle} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-floor" className="flea-scene-form__label">
+            {t("registration.floorLabel")} {needsFloorDoor ? "*" : ""}
+          </label>
+          <input
+            id="wl-floor"
+            type="text"
+            required={needsFloorDoor}
+            value={floor}
+            onChange={(e) => setFloor(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="wl-door" style={labelStyle}>{t("registration.doorLabel")}</label>
-          <input id="wl-door" type="text" value={door} onChange={(e) => setDoor(e.target.value)} style={inputStyle} />
+        <div className="flea-scene-form__field">
+          <label htmlFor="wl-door" className="flea-scene-form__label">
+            {t("registration.doorLabel")}
+          </label>
+          <input
+            id="wl-door"
+            type="text"
+            value={door}
+            onChange={(e) => setDoor(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <fieldset style={{ border: `1px solid ${colors.borderTan}`, borderRadius: 8, padding: "1rem", marginBottom: "1.25rem" }}>
-          <legend style={{ fontWeight: 600, fontSize: "0.95rem", padding: "0 0.25rem", color: colors.warmBrown }}>
-            {t("consent.title")}
-          </legend>
+        <fieldset className="flea-scene-form__fieldset">
+          <legend className="flea-scene-form__legend">{t("consent.title")}</legend>
 
-          <ul style={{ margin: "0.5rem 0", paddingLeft: "1.25rem", fontSize: "0.9rem", lineHeight: 1.6 }}>
+          <ul className="flea-scene-form__consent-list">
             <li>{t("consent.dataCollected")}</li>
             <li>{t("consent.purpose")}</li>
             <li>{t("consent.retention")}</li>
             <li>
-              {t("consent.contact")}{" "}
-              {ORGANIZER_CONTACTS.map((c, i) => (
-                <span key={c.email}>
-                  {i > 0 && ", "}
-                  <a href={`mailto:${c.email}`} style={{ color: colors.sage }}>{c.name}</a>
-                </span>
-              ))}
+              {t("consent.contact")} <a href={`mailto:${EVENT_CONTACT.email}`}>{EVENT_CONTACT.name}</a>.
             </li>
           </ul>
 
-          <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", marginTop: "0.75rem", fontSize: "0.9rem", cursor: "pointer" }}>
-            <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} style={{ marginTop: "0.2rem" }} />
+          <label className="flea-scene-form__consent-row">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              style={{ marginTop: "0.2rem" }}
+            />
             <span>{t("consent.acknowledgment")}</span>
           </label>
         </fieldset>
@@ -215,7 +238,9 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
         {errors.length > 0 && (
           <div role="alert" style={{ ...alertError, marginBottom: "1rem" }}>
             {errors.map((err) => (
-              <p key={err} style={{ margin: "0.25rem 0" }}>{err}</p>
+              <p key={err} style={{ margin: "0.25rem 0" }}>
+                {err}
+              </p>
             ))}
           </div>
         )}
@@ -223,19 +248,7 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          style={{
-            width: "100%",
-            padding: "0.75rem",
-            background: submitting ? colors.borderTan : colors.mutedGold,
-            color: colors.white,
-            border: "none",
-            borderRadius: 6,
-            cursor: submitting ? "default" : "pointer",
-            fontFamily: fonts.body,
-            fontSize: "1rem",
-            fontWeight: 600,
-            boxShadow: shadows.soft,
-          }}
+          className="flea-scene-cta flea-scene-cta--full"
         >
           {submitting ? t("common.loading") : t("waitlist.joinButton")}
         </button>
@@ -243,24 +256,3 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
     </section>
   );
 }
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "0.9rem",
-  fontWeight: 500,
-  marginBottom: "0.25rem",
-  color: colors.warmBrown,
-  fontFamily: fonts.body,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.5rem 0.75rem",
-  border: `1px solid ${colors.borderTan}`,
-  borderRadius: 6,
-  fontFamily: fonts.body,
-  fontSize: "0.95rem",
-  boxSizing: "border-box",
-  color: colors.inkBrown,
-  background: colors.white,
-};

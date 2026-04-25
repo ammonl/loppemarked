@@ -2,15 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
-import { getTableById } from "@loppemarked/shared";
+import { getTableById, STANDARD_TABLE_SIZE_LABEL, tableHasClothingRack } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { renderWithContact } from "@/i18n/contactLink";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LoadingSplash } from "./LoadingSplash";
 import { RegistrationForm } from "./RegistrationForm";
 import { WaitlistForm } from "./WaitlistForm";
 import { TableMap, TableStateLegend } from "./TableMap";
-import { colors, fonts } from "@/styles/theme";
+import "@/styles/table-map.css";
 
 interface TableMapPageProps {
   onBack: () => void;
@@ -78,100 +77,39 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
   }
 
   return (
-    <section
-      style={{
-        maxWidth: 1100,
-        margin: "0 auto",
-        padding: "1.5rem 1rem 3rem",
-        color: colors.inkBrown,
-      }}
-    >
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          padding: "0.25rem 0",
-          marginBottom: "1rem",
-          fontFamily: fonts.body,
-        }}
-      >
+    <section className="flea-map">
+      <button type="button" onClick={onBack} className="flea-map__back">
         &larr; {t("map.back")}
       </button>
 
-      <header style={{ textAlign: "center", marginBottom: "1.25rem" }}>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: fonts.display,
-            fontSize: "2.25rem",
-            color: colors.fleaTerracottaDark,
-            letterSpacing: "0.02em",
-          }}
-        >
-          {t("table.pageTitle")}
-        </h2>
-        <p
-          style={{
-            margin: "0.5rem auto 0",
-            maxWidth: 640,
-            fontSize: "0.95rem",
-            color: colors.warmBrown,
-            fontFamily: fonts.body,
-          }}
-        >
-          {t("table.pageIntro")}
-        </p>
+      <header className="flea-paper-card flea-map__header">
+        <h2 className="flea-map__title">{t("table.pageTitle")}</h2>
+        <p className="flea-map__intro">{t("table.pageIntro")}</p>
       </header>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "1.5rem",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          fontSize: "0.9rem",
-          color: colors.warmBrown,
-          fontFamily: fonts.body,
-          marginBottom: "0.75rem",
-        }}
-      >
+      <div className="flea-map__counts">
         <span>
           {t("table.totalLabel")}: <strong>{total}</strong>
         </span>
         <span>
-          {t("table.availableLabel")}: <strong style={{ color: colors.fleaSageDark }}>{available}</strong>
+          {t("table.availableLabel")}: <strong className="is-available">{available}</strong>
         </span>
         <span>
-          {t("table.reservedLabel")}: <strong style={{ color: colors.fleaTerracottaDark }}>{reserved}</strong>
+          {t("table.reservedLabel")}: <strong className="is-reserved">{reserved}</strong>
         </span>
       </div>
 
-      <div style={{ marginBottom: "1rem" }}>
+      <div className="flea-map__legend">
         <TableStateLegend />
       </div>
 
-      {!hasAvailable ? (
+      <SellerNotes />
+
+      {!hasAvailable && (
         <FullCapacityNotice onJoinWaitlist={() => setPageView("waitlist")} />
-      ) : (
-        <p style={{ textAlign: "center", fontSize: "0.85rem", color: colors.warmBrown, margin: "0 0 0.5rem" }}>
-          {t("table.selectHint")}
-        </p>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 360px)",
-          gap: "1.5rem",
-          alignItems: "start",
-        }}
-        className="flea-table-layout"
-      >
+      <div className="flea-map__layout">
         <TableMap
           boxesById={boxesById}
           selectedId={selectedBoxId}
@@ -194,20 +132,6 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
           }}
         />
       </div>
-
-      <p
-        style={{
-          marginTop: "2rem",
-          textAlign: "center",
-          fontSize: "0.85rem",
-          color: colors.warmBrown,
-          fontFamily: fonts.body,
-        }}
-      >
-        {renderWithContact(t("table.supportContact"), { color: colors.warmBrown, fontWeight: 600 })}
-      </p>
-
-      <style>{mobilePanelStyles}</style>
     </section>
   );
 }
@@ -254,12 +178,9 @@ function DetailPanel({
     return (
       <aside
         aria-hidden
-        className="flea-table-detail flea-table-detail--empty"
-        style={emptyPanelStyle}
+        className="flea-paper-card flea-map__detail flea-map__detail--empty"
       >
-        <p style={{ margin: 0, color: colors.warmBrown, fontSize: "0.9rem", fontFamily: fonts.body }}>
-          {t("table.selectHint")}
-        </p>
+        <p className="flea-map__detail-empty">{t("table.selectHint")}</p>
       </aside>
     );
   }
@@ -272,36 +193,20 @@ function DetailPanel({
   return (
     <>
       <div
-        className="flea-table-detail__backdrop"
+        className="flea-map__detail-backdrop"
         role="presentation"
         onClick={onClose}
       />
       <aside
         ref={panelRef}
-        className="flea-table-detail flea-table-detail--open"
+        className="flea-paper-card flea-map__detail flea-map__detail--open"
         role="dialog"
         aria-modal="true"
         aria-labelledby="table-detail-title"
         tabIndex={-1}
-        style={openPanelStyle}
       >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "0.75rem",
-          }}
-        >
-          <h3
-            id="table-detail-title"
-            style={{
-              margin: 0,
-              fontFamily: fonts.display,
-              fontSize: "1.6rem",
-              color: colors.fleaTerracottaDark,
-            }}
-          >
+        <header className="flea-map__detail-header">
+          <h3 id="table-detail-title" className="flea-map__detail-title">
             {t("table.detailsTitle").replace("{number}", String(headerNumber))}
           </h3>
           <button
@@ -309,29 +214,21 @@ function DetailPanel({
             type="button"
             onClick={onClose}
             aria-label={t("table.closePanel")}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "1.4rem",
-              lineHeight: 1,
-              color: colors.warmBrown,
-              cursor: "pointer",
-              padding: "0.25rem 0.5rem",
-            }}
+            className="flea-map__detail-close"
           >
             ×
           </button>
         </header>
 
         {panelMode === "detail" && (
-          <TableSummary boxId={selectedBoxId} />
+          <TableSummary boxId={selectedBoxId} isAvailable={isAvailable} />
         )}
 
         {panelMode === "detail" && isAvailable && (
           <button
             type="button"
             onClick={onOpenForm}
-            style={bookNowStyle}
+            className="flea-scene-cta flea-scene-cta--full"
           >
             {t("table.bookNow")}
           </button>
@@ -351,135 +248,58 @@ function DetailPanel({
   );
 }
 
-function TableSummary({ boxId }: { boxId: number }) {
+function TableSummary({ boxId, isAvailable }: { boxId: number; isAvailable: boolean }) {
   const { t } = useLanguage();
   const table = getTableById(boxId);
   if (!table) return null;
   return (
-    <div
-      style={{
-        background: colors.fleaNotePaper,
-        border: `1px solid ${colors.fleaCork}`,
-        borderRadius: 10,
-        padding: "0.85rem 1rem",
-        marginBottom: "1rem",
-        color: colors.warmBrown,
-        fontFamily: fonts.body,
-        fontSize: "0.95rem",
-      }}
-    >
-      <p style={{ margin: 0 }}>
-        <strong>{t("table.detailsSize")}:</strong> {table.sizeMeters} {t("table.meters")}
+    <div className="flea-map__summary">
+      <p>
+        <strong>{t("table.detailsSize")}:</strong> {STANDARD_TABLE_SIZE_LABEL}
       </p>
+      {tableHasClothingRack(boxId) && (
+        <p className="flea-map__summary-rack">
+          <span aria-hidden>🧥</span> {t("table.detailsRack")}
+        </p>
+      )}
+      {!isAvailable && (
+        <p className="flea-map__summary-status" role="status">
+          {t("table.detailsBookedStatus")}
+        </p>
+      )}
     </div>
+  );
+}
+
+function SellerNotes() {
+  const { t } = useLanguage();
+  return (
+    <aside className="flea-paper-card flea-map__notes" aria-labelledby="flea-map-notes-title">
+      <h3 id="flea-map-notes-title" className="flea-map__notes-title">
+        {t("table.notes.title")}
+      </h3>
+      <ul className="flea-map__notes-list">
+        <li>{t("table.notes.clothingRackOnlyDesignated")}</li>
+        <li>{t("table.notes.bringYourOwnRack")}</li>
+        <li>{t("table.notes.shareTable")}</li>
+      </ul>
+    </aside>
   );
 }
 
 function FullCapacityNotice({ onJoinWaitlist }: { onJoinWaitlist: () => void }) {
   const { t } = useLanguage();
   return (
-    <section
-      style={{
-        background: colors.fleaNotePaperWarm,
-        border: `1px solid ${colors.fleaCork}`,
-        borderRadius: 12,
-        padding: "1.25rem 1.25rem",
-        textAlign: "center",
-        marginBottom: "1.25rem",
-        color: colors.warmBrown,
-        fontFamily: fonts.body,
-      }}
-    >
-      <h3
-        style={{
-          margin: 0,
-          fontFamily: fonts.display,
-          fontSize: "1.4rem",
-          color: colors.fleaTerracottaDark,
-        }}
-      >
-        {t("table.allBookedTitle")}
-      </h3>
-      <p style={{ margin: "0.5rem 0 1rem" }}>{t("table.allBookedBody")}</p>
+    <section className="flea-paper-card flea-map__full-notice">
+      <h3 className="flea-map__full-notice-title">{t("table.allBookedTitle")}</h3>
+      <p className="flea-map__full-notice-body">{t("table.allBookedBody")}</p>
       <button
         type="button"
         onClick={onJoinWaitlist}
-        style={{
-          padding: "0.6rem 1.5rem",
-          background: colors.fleaSage,
-          color: colors.fleaCream,
-          border: "none",
-          borderRadius: 8,
-          cursor: "pointer",
-          fontFamily: fonts.body,
-          fontSize: "1rem",
-          fontWeight: 600,
-          boxShadow: "0 1px 4px rgba(74, 55, 40, 0.12)",
-        }}
+        className="flea-scene-cta"
       >
         {t("table.joinWaitlistCta")}
       </button>
     </section>
   );
 }
-
-const bookNowStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.75rem",
-  background: colors.fleaSage,
-  color: colors.fleaCream,
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-  fontFamily: fonts.body,
-  fontSize: "1rem",
-  fontWeight: 600,
-  boxShadow: "0 1px 4px rgba(74, 55, 40, 0.12)",
-};
-
-const basePanelStyle: React.CSSProperties = {
-  background: colors.fleaCream,
-  border: `1px solid ${colors.fleaCork}`,
-  borderRadius: 12,
-  padding: "1rem",
-  boxShadow: "0 2px 10px rgba(74, 55, 40, 0.08)",
-  fontFamily: fonts.body,
-};
-
-const emptyPanelStyle: React.CSSProperties = {
-  ...basePanelStyle,
-  position: "sticky",
-  top: "1rem",
-};
-
-const openPanelStyle: React.CSSProperties = {
-  ...basePanelStyle,
-  position: "sticky",
-  top: "1rem",
-};
-
-const mobilePanelStyles = `
-.flea-table-detail__backdrop { display: none; }
-@media (max-width: 860px) {
-  .flea-table-layout { grid-template-columns: 1fr !important; }
-  .flea-table-detail--empty { display: none; }
-  .flea-table-detail--open {
-    position: fixed !important;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: auto !important;
-    border-radius: 16px 16px 0 0 !important;
-    max-height: 85vh;
-    overflow-y: auto;
-    z-index: 40;
-  }
-  .flea-table-detail__backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 20, 14, 0.35);
-    z-index: 39;
-  }
-}
-`;

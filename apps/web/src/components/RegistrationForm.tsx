@@ -5,17 +5,20 @@ import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
   HOUSE_NUMBER_MAX,
-  ORGANIZER_CONTACTS,
+  EVENT_CONTACT,
   getTableById,
   isFloorDoorRequired,
+  STANDARD_TABLE_SIZE_LABEL,
+  tableHasClothingRack,
   validateRegistrationInput,
   type Language,
 } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { renderWithContact } from "@/i18n/contactLink";
-import { colors, fonts, shadows, alertError } from "@/styles/theme";
+import { colors, alertError } from "@/styles/theme";
 import { emitBookingSuccess } from "@/utils/brandEvents";
 import { SwitchConfirmationDialog, type SwitchDetails } from "./SwitchConfirmationDialog";
+import "@/styles/table-map.css";
 
 interface RegistrationFormProps {
   boxId: number;
@@ -156,9 +159,11 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
     setSwitchDetails(null);
   }
 
+  const sectionClass = `flea-scene-form${embedded ? " flea-scene-form--embedded" : ""}`;
+
   if (switchDetails) {
     return (
-      <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
+      <section className={sectionClass}>
         <SwitchConfirmationDialog
           switchDetails={switchDetails}
           onConfirm={handleConfirmSwitch}
@@ -171,26 +176,15 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
 
   if (success) {
     return (
-      <section style={{ maxWidth: 560, margin: "0 auto", padding: "2rem 1rem", fontFamily: fonts.body, color: colors.inkBrown }}>
-        <h2 style={{ color: colors.sageDark, fontFamily: fonts.heading }}>{t("registration.success")}</h2>
-        <p style={{ marginTop: "1rem" }}>
-          {renderWithContact(t("registration.unregisterInfo"), { color: colors.sageDark, fontWeight: 600 })}
+      <section className={sectionClass}>
+        <h2 className="flea-scene-form__success-title">{t("registration.success")}</h2>
+        <p className="flea-scene-form__success-body">
+          {renderWithContact(t("registration.unregisterInfo"), { color: colors.fleaTerracottaDark, fontWeight: 600 })}
         </p>
         <button
           type="button"
           onClick={onSuccess ?? onCancel}
-          style={{
-            marginTop: "1.5rem",
-            padding: "0.5rem 1.25rem",
-            background: colors.sage,
-            color: colors.white,
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-            fontFamily: fonts.body,
-            fontSize: "0.95rem",
-            fontWeight: 600,
-          }}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
         >
           {t("common.close")}
         </button>
@@ -199,137 +193,140 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
   }
 
   return (
-    <section
-      style={{
-        maxWidth: embedded ? "100%" : 560,
-        margin: "0 auto",
-        padding: embedded ? 0 : "2rem 1rem",
-        fontFamily: fonts.body,
-        color: colors.inkBrown,
-      }}
-    >
+    <section className={sectionClass}>
       {!embedded && (
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            color: colors.warmBrown,
-            padding: "0.25rem 0",
-            marginBottom: "1rem",
-            fontFamily: fonts.body,
-          }}
-        >
+        <button type="button" onClick={onCancel} className="flea-scene-form__back">
           &larr; {t("common.cancel")}
         </button>
       )}
 
       {!embedded && (
-        <h2 style={{ textAlign: "center", margin: "0 0 1.25rem", fontFamily: fonts.heading, color: colors.warmBrown }}>
-          {t("registration.formTitle")}
-        </h2>
+        <h2 className="flea-scene-form__title">{t("registration.formTitle")}</h2>
       )}
+
       {table && (
-        <div
-          style={{
-            textAlign: embedded ? "left" : "center",
-            margin: embedded ? "0 0 1rem" : "0 0 1.25rem",
-            background: colors.fleaNotePaper,
-            border: `1px solid ${colors.fleaCork}`,
-            borderRadius: 10,
-            padding: "0.85rem 1rem",
-          }}
-        >
-          <p style={{ margin: 0, fontFamily: fonts.display, fontSize: "1.5rem", color: colors.fleaTerracottaDark }}>
-            {t("table.detailsTitle").replace("{number}", String(table.number))}
-          </p>
-          <p style={{ margin: "0.15rem 0 0", fontSize: "0.95rem", color: colors.warmBrown }}>
-            {table.sizeMeters} {t("table.meters")}
-          </p>
+        <div className="flea-paper-card flea-scene-form__summary-card">
+          <p className="flea-scene-form__summary-meta">{STANDARD_TABLE_SIZE_LABEL}</p>
+          {tableHasClothingRack(table.id) && (
+            <p className="flea-scene-form__summary-meta">
+              <span aria-hidden>🧥</span> {t("table.detailsRack")}
+            </p>
+          )}
         </div>
       )}
 
-      <div style={infoCardStyle}>
-        <p style={{ margin: "0 0 0.5rem" }}>{t("policy.oneApartmentRule")}</p>
-        <p style={{ margin: 0 }}>
-          {renderWithContact(t("policy.noSelfUnregister"), { color: colors.sageDark, fontWeight: 600 })}
-        </p>
+      <div className="flea-paper-card flea-scene-form__info-card">
+        <p>{t("policy.oneApartmentRule")}</p>
+        <p>{renderWithContact(t("policy.noSelfUnregister"), { color: colors.fleaTerracottaDark, fontWeight: 600 })}</p>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="reg-name" style={labelStyle}>
+        <div className="flea-scene-form__field">
+          <label htmlFor="reg-name" className="flea-scene-form__label">
             {t("registration.nameLabel")} *
           </label>
-          <input id="reg-name" type="text" required value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+          <input
+            id="reg-name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="reg-email" style={labelStyle}>
+        <div className="flea-scene-form__field">
+          <label htmlFor="reg-email" className="flea-scene-form__label">
             {t("registration.emailLabel")} *
           </label>
-          <input id="reg-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+          <input
+            id="reg-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="reg-street" style={labelStyle}>
+        <div className="flea-scene-form__field">
+          <label htmlFor="reg-street" className="flea-scene-form__label">
             {t("registration.streetLabel")}
           </label>
-          <input id="reg-street" type="text" value={ELIGIBLE_STREET} disabled style={{ ...inputStyle, background: colors.parchmentDark, color: colors.warmBrown }} />
+          <input
+            id="reg-street"
+            type="text"
+            value={ELIGIBLE_STREET}
+            disabled
+            className="flea-scene-form__input"
+          />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="reg-house" style={labelStyle}>
+        <div className="flea-scene-form__field">
+          <label htmlFor="reg-house" className="flea-scene-form__label">
             {t("registration.houseNumberLabel")} *
           </label>
-          <input id="reg-house" type="number" required min={HOUSE_NUMBER_MIN} max={HOUSE_NUMBER_MAX} value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} style={inputStyle} />
+          <input
+            id="reg-house"
+            type="number"
+            required
+            min={HOUSE_NUMBER_MIN}
+            max={HOUSE_NUMBER_MAX}
+            value={houseNumber}
+            onChange={(e) => setHouseNumber(e.target.value)}
+            className="flea-scene-form__input"
+          />
         </div>
 
         {needsUnitFields && (
           <>
-            <div style={{ marginBottom: "1rem" }}>
-              <label htmlFor="reg-floor" style={labelStyle}>{t("registration.floorLabel")} *</label>
-              <input id="reg-floor" type="text" required value={floor} onChange={(e) => setFloor(e.target.value)} style={inputStyle} />
+            <div className="flea-scene-form__field">
+              <label htmlFor="reg-floor" className="flea-scene-form__label">
+                {t("registration.floorLabel")} *
+              </label>
+              <input
+                id="reg-floor"
+                type="text"
+                required
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                className="flea-scene-form__input"
+              />
             </div>
-            <div style={{ marginBottom: "1rem" }}>
-              <label htmlFor="reg-door" style={labelStyle}>{t("registration.doorLabel")}</label>
-              <input id="reg-door" type="text" value={door} onChange={(e) => setDoor(e.target.value)} style={inputStyle} />
+            <div className="flea-scene-form__field">
+              <label htmlFor="reg-door" className="flea-scene-form__label">
+                {t("registration.doorLabel")}
+              </label>
+              <input
+                id="reg-door"
+                type="text"
+                value={door}
+                onChange={(e) => setDoor(e.target.value)}
+                className="flea-scene-form__input"
+              />
             </div>
           </>
         )}
 
-        <fieldset
-          style={{
-            border: `1px solid ${colors.borderTan}`,
-            borderRadius: 8,
-            padding: "1rem",
-            marginBottom: "1.25rem",
-          }}
-        >
-          <legend style={{ fontWeight: 600, fontSize: "0.95rem", padding: "0 0.25rem", color: colors.warmBrown }}>
-            {t("consent.title")}
-          </legend>
+        <fieldset className="flea-scene-form__fieldset">
+          <legend className="flea-scene-form__legend">{t("consent.title")}</legend>
 
-          <ul style={{ margin: "0.5rem 0", paddingLeft: "1.25rem", fontSize: "0.9rem", lineHeight: 1.6 }}>
+          <ul className="flea-scene-form__consent-list">
             <li>{t("consent.dataCollected")}</li>
             <li>{t("consent.purpose")}</li>
             <li>{t("consent.retention")}</li>
             <li>
-              {t("consent.contact")}{" "}
-              {ORGANIZER_CONTACTS.map((c, i) => (
-                <span key={c.email}>
-                  {i > 0 && ", "}
-                  <a href={`mailto:${c.email}`} style={{ color: colors.sage }}>{c.name}</a>
-                </span>
-              ))}
+              {t("consent.contact")} <a href={`mailto:${EVENT_CONTACT.email}`}>{EVENT_CONTACT.name}</a>.
             </li>
           </ul>
 
-          <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", marginTop: "0.75rem", fontSize: "0.9rem", cursor: "pointer" }}>
-            <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} style={{ marginTop: "0.2rem" }} />
+          <label className="flea-scene-form__consent-row">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              style={{ marginTop: "0.2rem" }}
+            />
             <span>{t("consent.acknowledgment")}</span>
           </label>
         </fieldset>
@@ -337,7 +334,9 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
         {errors.length > 0 && (
           <div role="alert" style={{ ...alertError, marginBottom: "1rem" }}>
             {errors.map((err) => (
-              <p key={err} style={{ margin: "0.25rem 0" }}>{err}</p>
+              <p key={err} style={{ margin: "0.25rem 0" }}>
+                {err}
+              </p>
             ))}
           </div>
         )}
@@ -345,19 +344,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
         <button
           type="submit"
           disabled={submitting}
-          style={{
-            width: "100%",
-            padding: "0.75rem",
-            background: submitting ? colors.borderTan : colors.sage,
-            color: colors.white,
-            border: "none",
-            borderRadius: 6,
-            cursor: submitting ? "default" : "pointer",
-            fontFamily: fonts.body,
-            fontSize: "1rem",
-            fontWeight: 600,
-            boxShadow: shadows.soft,
-          }}
+          className="flea-scene-cta flea-scene-cta--full"
         >
           {submitting ? t("common.loading") : t("table.bookNow")}
         </button>
@@ -365,34 +352,3 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
     </section>
   );
 }
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "0.9rem",
-  fontWeight: 500,
-  marginBottom: "0.25rem",
-  color: colors.warmBrown,
-  fontFamily: fonts.body,
-};
-
-const infoCardStyle: React.CSSProperties = {
-  background: colors.parchment,
-  border: `1px solid ${colors.borderTan}`,
-  borderRadius: 8,
-  padding: "1rem",
-  marginBottom: "1.25rem",
-  fontSize: "0.9rem",
-  lineHeight: 1.5,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.5rem 0.75rem",
-  border: `1px solid ${colors.borderTan}`,
-  borderRadius: 6,
-  fontFamily: fonts.body,
-  fontSize: "0.95rem",
-  boxSizing: "border-box",
-  color: colors.inkBrown,
-  background: colors.white,
-};

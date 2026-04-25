@@ -1,0 +1,635 @@
+/*
+ * Table-map page styling — shares the landing page's material vocabulary.
+ *
+ * The page is framed as a warm, paper-and-wood scene: aged-paper cards sit
+ * on a subtle wood-floor wash, primary actions use the same pressed
+ * terracotta CTA treatment as the landing hero, and the map itself reads as
+ * a floor plan tacked to a cork frame. All local aliases resolve back to
+ * global `--flea-*` tokens so landing and map stay in lockstep.
+ */
+
+.flea-map {
+  --scene-ink: var(--flea-ink);
+  --scene-ink-soft: var(--flea-ink-soft);
+  --scene-cream: var(--flea-cream);
+  --scene-paper: var(--flea-paper-aged);
+  --scene-paper-shade: var(--flea-paper-aged-shade);
+  --scene-paper-edge: var(--flea-paper-edge);
+  --scene-note-paper: var(--flea-note-paper);
+  --scene-accent: var(--flea-terracotta-dark);
+  --scene-accent-ink: var(--flea-accent-ink);
+  --scene-accent-glow: var(--flea-accent-glow);
+  --scene-accent-pressed: var(--flea-accent-pressed);
+  --scene-accent-edge: var(--flea-accent-edge);
+  --scene-sage: var(--flea-sage);
+  --scene-sage-dark: var(--flea-sage-dark);
+  --scene-cork: var(--flea-cork);
+  --scene-cork-frame: var(--flea-cork-frame);
+  --scene-shadow-warm: var(--flea-shadow-warm);
+  --scene-shadow-deep: var(--flea-shadow-deep);
+  --scene-light-warm: var(--flea-scene-light-warm);
+
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 4vw, 2rem) 0;
+  color: var(--scene-ink-soft);
+  font-family: "Montserrat", "Inter", system-ui, sans-serif;
+}
+
+.flea-map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--scene-light-warm), transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(120, 82, 48, 0.18), transparent 70%);
+}
+
+.flea-map__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.2rem;
+  color: var(--scene-accent);
+  padding: 0.25rem 0;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.flea-map__back:hover {
+  color: var(--scene-accent-ink);
+  transform: translateX(-2px);
+}
+
+/* Header card mirrors the landing copy card: aged paper, centered content,
+   display title in the brand display font. Sits inside the page width so
+   the title commands the same focal weight as on the landing page. */
+.flea-map__header {
+  text-align: center;
+  margin: 0 auto 1.5rem;
+  width: min(100%, 44rem);
+  padding: 1.35rem 1.75rem 1.5rem;
+}
+
+.flea-map__title {
+  margin: 0;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: clamp(2.25rem, 5.5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 245, 225, 0.65);
+}
+
+.flea-map__intro {
+  margin: 0.5rem auto 0;
+  max-width: 40rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--scene-ink-soft);
+}
+
+.flea-map__counts {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--scene-ink-soft);
+  margin-bottom: 0.75rem;
+}
+
+.flea-map__counts strong {
+  font-weight: 700;
+  color: var(--scene-ink);
+}
+
+.flea-map__counts .is-available {
+  color: var(--scene-sage-dark);
+}
+
+.flea-map__counts .is-reserved {
+  color: var(--scene-accent);
+}
+
+.flea-map__legend {
+  margin-bottom: 1rem;
+}
+
+/* Map frame: paper card-style surface that wraps the SVG floor plan. The
+   class lives next to .flea-paper-card so both share the same material
+   vocabulary, but adds a thicker inset stripe to read as a framed plan. */
+.flea-map__frame {
+  position: relative;
+  background:
+    linear-gradient(170deg, var(--scene-paper) 0%, var(--scene-paper-shade) 100%);
+  border: 2px solid var(--scene-cork-frame);
+  border-radius: 14px;
+  padding: 0.85rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 3px var(--scene-paper-shade),
+    var(--flea-shadow-warm-contact),
+    var(--flea-shadow-warm-drop);
+}
+
+.flea-map__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Aged-paper card: shared surface for detail panel, info cards, and notices. */
+.flea-paper-card {
+  position: relative;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.28), transparent 55%),
+    linear-gradient(170deg, var(--scene-paper) 0%, var(--scene-paper-shade) 100%);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  color: var(--scene-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px var(--scene-paper-edge),
+    var(--flea-shadow-warm-contact),
+    var(--flea-shadow-warm-drop);
+}
+
+.flea-paper-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 45%),
+    linear-gradient(315deg, rgba(138, 95, 62, 0.18), transparent 40%);
+  mix-blend-mode: overlay;
+  opacity: 0.8;
+}
+
+.flea-paper-card > * {
+  position: relative;
+}
+
+/* Detail panel sits sticky on desktop; slides up as a sheet on mobile. */
+.flea-map__detail {
+  position: sticky;
+  top: 1rem;
+  font-family: "Montserrat", "Inter", system-ui, sans-serif;
+}
+
+.flea-map__detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.flea-map__detail-title {
+  margin: 0;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: 1.8rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-map__detail-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--scene-ink-soft);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.flea-map__detail-close:hover {
+  background: rgba(120, 82, 48, 0.1);
+  color: var(--scene-accent-ink);
+}
+
+.flea-map__detail-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--scene-cream), 0 0 0 4px var(--scene-accent-ink);
+}
+
+.flea-map__detail-empty {
+  margin: 0;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--scene-ink-soft);
+}
+
+.flea-map__summary {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(253, 251, 247, 0.6);
+  border: 1px dashed var(--scene-paper-edge);
+  border-radius: 10px;
+  color: var(--scene-ink);
+  font-size: 0.95rem;
+}
+
+.flea-map__summary p {
+  margin: 0;
+}
+
+.flea-map__summary p + p {
+  margin-top: 0.4rem;
+}
+
+.flea-map__summary-rack {
+  color: var(--flea-brass-dark);
+  font-weight: 600;
+}
+
+.flea-map__summary-status {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  background: rgba(168, 85, 68, 0.12);
+  border: 1px solid var(--scene-accent);
+  border-radius: 999px;
+  color: var(--scene-accent-ink);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Seller notes: paper card placed above the map. Same material as the other
+   surfaces but with a distinctive heading and a tighter list. */
+.flea-map__notes {
+  margin: 0 auto 1.25rem;
+  width: min(100%, 44rem);
+  padding: 1rem 1.25rem 1.1rem;
+  text-align: left;
+}
+
+.flea-map__notes-title {
+  margin: 0 0 0.4rem;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.4rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-map__notes-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--scene-ink);
+}
+
+.flea-map__notes-list li + li {
+  margin-top: 0.3rem;
+}
+
+.flea-map__full-notice {
+  text-align: center;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.flea-map__full-notice-title {
+  margin: 0;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: 1.8rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-map__full-notice-body {
+  margin: 0.5rem auto 1.15rem;
+  max-width: 44ch;
+  color: var(--scene-ink-soft);
+  line-height: 1.5;
+}
+
+/* Pressed terracotta CTA — mirrors the landing hero button so primary
+   actions feel identical across the public flow. */
+.flea-scene-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background:
+    linear-gradient(180deg, var(--scene-accent-glow) 0%, var(--scene-accent) 55%, var(--scene-accent-pressed) 100%);
+  color: var(--scene-cream);
+  border: 1px solid rgba(110, 35, 24, 0.8);
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 2px 0 var(--scene-accent-edge),
+    0 8px 14px -2px rgba(110, 35, 24, 0.5),
+    0 18px 28px -10px rgba(18, 12, 6, 0.35);
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+.flea-scene-cta--full {
+  width: 100%;
+}
+
+.flea-scene-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.28),
+    0 3px 0 var(--scene-accent-edge),
+    0 12px 20px -2px rgba(110, 35, 24, 0.55),
+    0 24px 36px -12px rgba(18, 12, 6, 0.4);
+}
+
+.flea-scene-cta:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.28),
+    0 0 0 var(--scene-accent-edge),
+    0 4px 8px -2px rgba(110, 35, 24, 0.4);
+}
+
+.flea-scene-cta:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.28),
+    0 2px 0 var(--scene-accent-edge),
+    0 0 0 3px var(--scene-cream),
+    0 0 0 6px var(--scene-accent-ink),
+    0 12px 20px -2px rgba(110, 35, 24, 0.55);
+}
+
+.flea-scene-cta:disabled {
+  cursor: default;
+  opacity: 0.55;
+  filter: saturate(0.5) brightness(0.95);
+}
+
+.flea-scene-cta--mt-lg {
+  margin-top: 1.5rem;
+}
+
+/* Form card styling used by both RegistrationForm and WaitlistForm.
+   Aliases are redeclared (mirrors .flea-map) so the form can render outside
+   the .flea-map container — e.g. WaitlistForm when shown standalone. */
+.flea-scene-form {
+  --scene-ink: var(--flea-ink);
+  --scene-ink-soft: var(--flea-ink-soft);
+  --scene-cream: var(--flea-cream);
+  --scene-paper: var(--flea-paper-aged);
+  --scene-paper-shade: var(--flea-paper-aged-shade);
+  --scene-paper-edge: var(--flea-paper-edge);
+  --scene-accent: var(--flea-terracotta-dark);
+  --scene-accent-ink: var(--flea-accent-ink);
+  --scene-accent-glow: var(--flea-accent-glow);
+  --scene-accent-pressed: var(--flea-accent-pressed);
+  --scene-accent-edge: var(--flea-accent-edge);
+
+  max-width: 560px;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vh, 2rem) 1rem;
+  color: var(--scene-ink-soft);
+  font-family: "Montserrat", "Inter", system-ui, sans-serif;
+}
+
+.flea-scene-form--embedded {
+  max-width: 100%;
+  padding: 0;
+}
+
+.flea-scene-form__title {
+  margin: 0 0 1.25rem;
+  text-align: center;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: 2rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-scene-form__subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--scene-ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.flea-scene-form__field {
+  margin-bottom: 1rem;
+}
+
+.flea-scene-form__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: var(--scene-ink);
+}
+
+.flea-scene-form__input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--scene-paper-edge);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  color: var(--scene-ink);
+  background: rgba(253, 251, 247, 0.9);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.flea-scene-form__input:focus {
+  outline: none;
+  border-color: var(--scene-accent);
+  box-shadow: 0 0 0 3px rgba(168, 85, 68, 0.2);
+}
+
+.flea-scene-form__input:disabled {
+  background: rgba(233, 211, 174, 0.45);
+  color: var(--flea-pen-ink);
+  cursor: not-allowed;
+}
+
+.flea-scene-form__fieldset {
+  border: 1px solid var(--scene-paper-edge);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background: rgba(253, 251, 247, 0.55);
+}
+
+.flea-scene-form__legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0 0.35rem;
+  color: var(--scene-accent-ink);
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.15rem;
+}
+
+.flea-scene-form__consent-list {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--scene-ink-soft);
+}
+
+.flea-scene-form__consent-list a {
+  color: var(--scene-accent);
+  text-decoration: none;
+}
+
+.flea-scene-form__consent-list a:hover {
+  text-decoration: underline;
+}
+
+.flea-scene-form__consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--scene-ink);
+}
+
+.flea-scene-form__summary-card {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  font-family: inherit;
+}
+
+.flea-scene-form__summary-title {
+  margin: 0;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: 1.45rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-scene-form__summary-meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  color: var(--scene-ink-soft);
+}
+
+.flea-scene-form__info-card {
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--scene-ink);
+}
+
+.flea-scene-form__info-card p {
+  margin: 0 0 0.5rem;
+}
+
+.flea-scene-form__info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.flea-scene-form__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.15rem;
+  color: var(--scene-accent);
+  padding: 0.25rem 0;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.flea-scene-form__back:hover {
+  color: var(--scene-accent-ink);
+}
+
+.flea-scene-form__success-title {
+  margin: 0 0 1rem;
+  font-family: "Amatic SC", "Caveat", cursive;
+  font-size: 2.1rem;
+  color: var(--scene-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.flea-scene-form__success-body {
+  margin-top: 1rem;
+  line-height: 1.55;
+}
+
+/* Mobile sheet behavior for the detail panel. */
+.flea-map__detail-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .flea-map__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .flea-map__detail--empty {
+    display: none;
+  }
+
+  .flea-map__detail--open {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    border-radius: 18px 18px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    z-index: 40;
+    padding: 1.15rem 1.25rem 1.75rem;
+  }
+
+  .flea-map__detail-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 20, 14, 0.5);
+    z-index: 39;
+    backdrop-filter: blur(2px);
+  }
+}
+
+@media (max-width: 560px) {
+  .flea-scene-cta {
+    font-size: 1.3rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .flea-map__title {
+    font-size: 2rem;
+  }
+}

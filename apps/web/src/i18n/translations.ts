@@ -39,27 +39,36 @@ const da = {
   "landing.vignetteBlanketLabel": "Tæpper & tekstiler",
 
   "map.viewMap": "Se kort",
-  "map.back": "Tilbage til forsiden",
+  "map.back": "Tilbage",
   "map.legend": "Forklaring",
   "map.state.available": "Ledig",
   "map.state.occupied": "Optaget",
   "map.state.reserved": "Reserveret",
 
-  "table.pageTitle": "Book Dit Loppebord - Fælledhuset Hallen",
+  "table.pageTitle": "Book dit loppemarked-bord",
   "table.pageIntro":
-    "Vælg et ledigt loppebord på planen over Fælledhusets hal. Tryk på et bord for at se størrelsen og reservere det.",
+    "Vælg et ledigt bord på planen over Fælledhuset. Alle borde er ca. 100x200 cm. Tryk på et bord for at se detaljer og reservere det.",
   "table.state.ledigt": "Ledigt",
-  "table.state.reserveret": "Reserveret",
+  "table.state.reserveret": "Booket",
   "table.state.valgt": "Valgt",
   "table.totalLabel": "Loppeborde i alt",
   "table.availableLabel": "Ledige",
-  "table.reservedLabel": "Reserverede",
+  "table.reservedLabel": "Bookede",
   "table.meters": "meter",
   "table.detailsTitle": "Bord #{number}",
   "table.detailsSize": "Størrelse",
-  "table.selectHint": "Tryk på et ledigt bord for at se detaljer.",
+  "table.detailsRack": "Tøjstativ ved siden af",
+  "table.detailsBookedStatus": "Dette bord er allerede booket.",
+  "table.selectHint": "Tryk på et bord for at se detaljer.",
   "table.closePanel": "Luk",
   "table.bookNow": "Book Nu",
+  "table.notes.title": "Inden du booker",
+  "table.notes.clothingRackOnlyDesignated":
+    "Kun borde markeret med tøjstativ må have et tøjstativ ved siden af.",
+  "table.notes.bringYourOwnRack":
+    "Tøjstativer udleveres ikke — sælgere skal selv medbringe deres eget.",
+  "table.notes.shareTable":
+    "Hvis du ikke har brug for hele bordet, opfordrer vi dig til at dele det med en nabo.",
   "table.ariaTile": "Bord {number} – {state}",
   "table.allBookedTitle": "Hov! Alle loppeborde er allerede booket af dine naboer!",
   "table.allBookedBody":
@@ -68,6 +77,7 @@ const da = {
   "table.mapAriaLabel": "Interaktivt kort over Fælledhusets loppemarked",
   "table.floorPlanEntrance": "Indgang",
   "table.floorPlanStage": "Scene",
+  "table.legendClothingRack": "Tøjstativ",
   "table.supportContact": "Spørgsmål? Skriv til {contact}",
 
   "address.searchPlaceholder": "Søg din adresse...",
@@ -143,7 +153,7 @@ const da = {
   "registration.switchCurrentBox": "Dit nuværende bord",
   "registration.switchNewBox": "Nyt bord",
   "registration.switchExplainer":
-    "Hver lejlighed kan kun booke ét loppebord. Hvis du fortsætter, vil dit nuværende bord blive frigivet, og du vil blive tilmeldt det nye bord. Denne handling kan ikke fortrydes.",
+    "Hver lejlighed kan kun booke ét bord. Hvis du fortsætter, vil dit nuværende bord blive frigivet, og du vil blive tilmeldt det nye bord. Denne handling kan ikke fortrydes.",
   "registration.switchKeep": "Behold nuværende bord",
   "registration.success": "Du er nu tilmeldt!",
   "registration.unregisterInfo":
@@ -189,20 +199,20 @@ const da = {
 
   "consent.title": "Databeskyttelse og samtykke",
   "consent.dataCollected":
-    "Vi indsamler dit navn, din e-mailadresse, din lejlighedsadresse samt tilmeldings- og ventelisteoplysninger.",
+    "Vi indsamler dit navn, din e-mailadresse og din lejlighedsadresse til tilmeldings- og ventelisteoplysninger.",
   "consent.purpose":
-    "Dine oplysninger bruges udelukkende til administration af loppemarkedet 2026 og kommunikation om ændringer i din tilmelding.",
+    "Dine oplysninger bruges udelukkende til administration af loppemarkedet 2026 og kommunikation om arrangementet.",
   "consent.retention":
     "Driftsdata og revisionshistorik opbevares med henblik på administrativ sporbarhed.",
   "consent.contact":
-    "Har du spørgsmål om dine data, kan du kontakte arrangørerne.",
+    "Har du spørgsmål om dine data, kan du kontakte arrangøren:",
   "consent.acknowledgment":
     "Jeg har læst og accepterer ovenstående vilkår for dataindsamling og brug.",
   "consent.required":
     "Du skal acceptere vilkårene for databeskyttelse for at fortsætte.",
 
   "policy.oneApartmentRule":
-    "Hver lejlighed kan kun booke ét loppebord. Hvis din lejlighed allerede har en booking, vil en ny tilmelding erstatte den eksisterende.",
+    "Hver lejlighed kan kun booke ét bord. Hvis din lejlighed allerede har en booking, vil en ny tilmelding erstatte den eksisterende.",
   "policy.noSelfUnregister":
     "Du kan afmelde dit bord via linket i din bekræftelsesmail. Kontakt {contact}, hvis linket ikke virker.",
 
@@ -473,27 +483,36 @@ const en: Record<TranslationKey, string> = {
   "landing.vignetteBlanketLabel": "Blankets & textiles",
 
   "map.viewMap": "View map",
-  "map.back": "Back to landing",
+  "map.back": "Back",
   "map.legend": "Legend",
   "map.state.available": "Available",
   "map.state.occupied": "Occupied",
   "map.state.reserved": "Reserved",
 
-  "table.pageTitle": "Book Your Flea-Market Table — Fælledhuset Hall",
+  "table.pageTitle": "Book your loppemarked table",
   "table.pageIntro":
-    "Pick an available flea-market table on the Fælledhuset hall map. Tap a table to see its size and reserve it.",
+    "Pick an available table on the Fælledhuset map. All tables are approximately 100x200cm. Tap a table to see its details and reserve it.",
   "table.state.ledigt": "Available",
-  "table.state.reserveret": "Reserved",
+  "table.state.reserveret": "Booked",
   "table.state.valgt": "Selected",
   "table.totalLabel": "Total tables",
   "table.availableLabel": "Available",
-  "table.reservedLabel": "Reserved",
+  "table.reservedLabel": "Booked",
   "table.meters": "meters",
   "table.detailsTitle": "Table #{number}",
   "table.detailsSize": "Size",
-  "table.selectHint": "Tap an available table to see details.",
+  "table.detailsRack": "Clothing rack alongside",
+  "table.detailsBookedStatus": "This table is already booked.",
+  "table.selectHint": "Tap a table to see details.",
   "table.closePanel": "Close",
   "table.bookNow": "Book Now",
+  "table.notes.title": "Before you book",
+  "table.notes.clothingRackOnlyDesignated":
+    "Only tables marked with a clothing rack are allowed to bring one alongside.",
+  "table.notes.bringYourOwnRack":
+    "Clothing racks are not provided — sellers must bring their own.",
+  "table.notes.shareTable":
+    "If you don't need the whole table, consider sharing it with a neighbor.",
   "table.ariaTile": "Table {number} – {state}",
   "table.allBookedTitle": "Oh no! Every flea-market table has already been booked by your neighbors!",
   "table.allBookedBody":
@@ -502,6 +521,7 @@ const en: Record<TranslationKey, string> = {
   "table.mapAriaLabel": "Interactive map of the Fælledhuset flea market hall",
   "table.floorPlanEntrance": "Entrance",
   "table.floorPlanStage": "Stage",
+  "table.legendClothingRack": "Clothing rack",
   "table.supportContact": "Questions? Email {contact}",
 
   "address.searchPlaceholder": "Search your address...",
@@ -577,7 +597,7 @@ const en: Record<TranslationKey, string> = {
   "registration.switchCurrentBox": "Your current table",
   "registration.switchNewBox": "New table",
   "registration.switchExplainer":
-    "Each apartment may only book one flea-market table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
+    "Each apartment may only book one table. If you continue, your current table will be released and you will be booked for the new table. This action cannot be undone.",
   "registration.switchKeep": "Keep current table",
   "registration.success": "You are now booked!",
   "registration.unregisterInfo":
@@ -623,20 +643,20 @@ const en: Record<TranslationKey, string> = {
 
   "consent.title": "Data protection and consent",
   "consent.dataCollected":
-    "We collect your name, email address, apartment address, and registration and waitlist records.",
+    "We collect your name, email address, and apartment address for registration and waitlist records.",
   "consent.purpose":
-    "Your information is used solely for administration of the 2026 flea market and communication regarding changes to your booking.",
+    "Your information is used solely for administration of the 2026 loppemarked and communication regarding the event.",
   "consent.retention":
     "Operational data and audit history are retained for administrative traceability.",
   "consent.contact":
-    "If you have questions about your data, please contact the organizers.",
+    "If you have questions about your data, please contact the organizer:",
   "consent.acknowledgment":
     "I have read and accept the above terms for data collection and use.",
   "consent.required":
     "You must accept the data protection terms to continue.",
 
   "policy.oneApartmentRule":
-    "Each apartment may only book one flea-market table. If your apartment already has a booking, a new booking will replace the existing one.",
+    "Each apartment may only book one table. If your apartment already has a booking, a new booking will replace the existing one.",
   "policy.noSelfUnregister":
     "You can cancel your table using the link in your confirmation email. Contact {contact} if the link doesn't work.",
 
