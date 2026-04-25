@@ -34,9 +34,16 @@ function diffParts(targetMs: number, nowMs: number): CountdownParts {
 
 interface PreOpenPageProps {
   openingDatetime: string;
+  /**
+   * Offset in milliseconds to add to `Date.now()` so countdown math runs
+   * against the server clock instead of the (potentially drifted) client
+   * clock. Negative when the client clock is running ahead of the server.
+   * Defaults to 0 when no server time is available yet.
+   */
+  serverTimeOffsetMs?: number;
 }
 
-export function PreOpenPage({ openingDatetime }: PreOpenPageProps) {
+export function PreOpenPage({ openingDatetime, serverTimeOffsetMs = 0 }: PreOpenPageProps) {
   const { language, t } = useLanguage();
   const locale = language === "da" ? "da-DK" : "en-GB";
   const formattedDate = formatOpeningDatetime(openingDatetime, locale);
@@ -53,7 +60,7 @@ export function PreOpenPage({ openingDatetime }: PreOpenPageProps) {
     let wasRunning = false;
     let refreshed = false;
     const tick = () => {
-      const now = Date.now();
+      const now = Date.now() + serverTimeOffsetMs;
       const remaining = targetMs - now;
       setParts(diffParts(targetMs, now));
       if (remaining > 0) {
@@ -68,7 +75,7 @@ export function PreOpenPage({ openingDatetime }: PreOpenPageProps) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [targetMs]);
+  }, [targetMs, serverTimeOffsetMs]);
 
   return (
     <section className="flea-landing flea-preopen" aria-labelledby="flea-preopen-title">
