@@ -1,4 +1,4 @@
-import { normalizeApartmentKey, ADMIN_DEFAULT_LANGUAGE } from "@loppemarked/shared";
+import { effectiveFloorDoor, normalizeApartmentKey, ADMIN_DEFAULT_LANGUAGE } from "@loppemarked/shared";
 import type { Language } from "@loppemarked/shared";
 import type { Kysely, Transaction } from "kysely";
 import { logAuditEvent } from "../../lib/audit.js";
@@ -158,12 +158,9 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
     throw badRequest("language must be 'da' or 'en'");
   }
 
-  const apartmentKey = normalizeApartmentKey(
-    street,
-    houseNumber,
-    body.floor ?? null,
-    body.door ?? null,
-  );
+  const { floor, door } = effectiveFloorDoor(houseNumber, body.floor, body.door);
+
+  const apartmentKey = normalizeApartmentKey(street, houseNumber, floor, door);
 
   let result: { type: "duplicate_warning"; existingRegistrations: { id: string; boxId: number; name: string; email: string }[] } | { type: "created"; id: string };
 
@@ -245,8 +242,8 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
           email,
           street,
           house_number: houseNumber,
-          floor: body.floor ?? null,
-          door: body.door ?? null,
+          floor,
+          door,
           apartment_key: apartmentKey,
           language: language as "da" | "en",
           status: "active",

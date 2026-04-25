@@ -720,6 +720,236 @@ describe("handleJoinWaitlist (happy path)", () => {
   });
 });
 
+// Regression tests for #97: a malicious or buggy client can submit a
+// `floor` / `door` that the address rules don't require (e.g. house 122),
+// which would otherwise produce a different apartment dedupe key than a
+// neighbor at the same address. The server normalizes them to null before
+// computing the apartment key and persisting the row.
+describe("server-side floor/door normalization (issue #97)", () => {
+  describe("handleValidateAddress", () => {
+    it("ignores client-supplied floor/door for non-floor-required house numbers", async () => {
+      const res = await handleValidateAddress(
+        makeCtx({
+          body: {
+            street: "Else Alfelts Vej",
+            houseNumber: 122,
+            floor: "2",
+            door: "th",
+          },
+        }),
+      );
+      expect(res.statusCode).toBe(200);
+      const body = res.body as Record<string, unknown>;
+      expect(body.eligible).toBe(true);
+      expect(body.floorDoorRequired).toBe(false);
+      expect(body.apartmentKey).toBe("else alfelts vej 122");
+    });
+
+    it("preserves floor/door for floor-required house numbers", async () => {
+      const res = await handleValidateAddress(
+        makeCtx({
+          body: {
+            street: "Else Alfelts Vej",
+            houseNumber: 138,
+            floor: "2",
+            door: "th",
+          },
+        }),
+      );
+      const body = res.body as Record<string, unknown>;
+      expect(body.apartmentKey).toBe("else alfelts vej 138/2-th");
+    });
+  });
+
+  describe("handleValidateRegistration", () => {
+    it("ignores client-supplied floor/door for non-floor-required house numbers", async () => {
+      const res = await handleValidateRegistration(
+        makeCtx({
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 122,
+            floor: "2",
+            door: "th",
+            boxId: 1,
+            language: "da",
+          },
+        }),
+      );
+      expect(res.statusCode).toBe(200);
+      const body = res.body as Record<string, unknown>;
+      expect(body.valid).toBe(true);
+      expect(body.apartmentKey).toBe("else alfelts vej 122");
+    });
+  });
+
+  describe("handlePublicRegister", () => {
+    beforeEach(() => {
+      const mockSes = { send: vi.fn().mockResolvedValue({}) };
+      setSesClient(mockSes as never);
+    });
+
+    it("normalizes apartment key and persisted floor/door for non-floor-required house number", async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      const captures: MockRegisterCaptures = {};
+      const mockDb = makeMockDbForRegister(
+        {
+          openingDatetime: pastDate,
+          box: { id: 1, state: "available" },
+          existingReg: undefined,
+          newRegId: "reg-norm",
+        },
+        captures,
+      );
+
+      const res = await handlePublicRegister(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 122,
+            floor: "2",
+            door: "th",
+            boxId: 1,
+            language: "da",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(200);
+      const body = res.body as Record<string, unknown>;
+      expect(body.apartmentKey).toBe("else alfelts vej 122");
+
+      expect(captures.registrationInsertValues).toMatchObject({
+        floor: null,
+        door: null,
+        apartment_key: "else alfelts vej 122",
+      });
+    });
+
+    it("preserves floor/door for floor-required house numbers", async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      const captures: MockRegisterCaptures = {};
+      const mockDb = makeMockDbForRegister(
+        {
+          openingDatetime: pastDate,
+          box: { id: 1, state: "available" },
+          existingReg: undefined,
+          newRegId: "reg-keep",
+        },
+        captures,
+      );
+
+      const res = await handlePublicRegister(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 138,
+            floor: "2",
+            door: "th",
+            boxId: 1,
+            language: "da",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(200);
+      expect(captures.registrationInsertValues).toMatchObject({
+        floor: "2",
+        door: "th",
+        apartment_key: "else alfelts vej 138/2-th",
+      });
+    });
+  });
+
+  describe("handleJoinWaitlist", () => {
+    beforeEach(() => {
+      const mockSes = { send: vi.fn().mockResolvedValue({}) };
+      setSesClient(mockSes as never);
+    });
+
+    it("normalizes apartment key and persisted floor/door for non-floor-required house number", async () => {
+      const captures: MockWaitlistCaptures = {};
+      const mockDb = makeMockDbForWaitlist(
+        {
+          availableCount: 0,
+          existingEntry: undefined,
+          newEntryId: "wl-norm",
+          positionEntryCreatedAt: "2026-03-01T10:00:00Z",
+          positionCount: 1,
+        },
+        captures,
+      );
+
+      const res = await handleJoinWaitlist(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 122,
+            floor: "2",
+            door: "th",
+            language: "da",
+            greenhousePreference: "any",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(201);
+      expect(captures.waitlistInsertValues).toMatchObject({
+        floor: null,
+        door: null,
+        apartment_key: "else alfelts vej 122",
+      });
+    });
+
+    it("preserves floor/door for floor-required house numbers", async () => {
+      const captures: MockWaitlistCaptures = {};
+      const mockDb = makeMockDbForWaitlist(
+        {
+          availableCount: 0,
+          existingEntry: undefined,
+          newEntryId: "wl-keep",
+          positionEntryCreatedAt: "2026-03-01T10:00:00Z",
+          positionCount: 1,
+        },
+        captures,
+      );
+
+      const res = await handleJoinWaitlist(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 138,
+            floor: "2",
+            door: "th",
+            language: "da",
+            greenhousePreference: "any",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(201);
+      expect(captures.waitlistInsertValues).toMatchObject({
+        floor: "2",
+        door: "th",
+        apartment_key: "else alfelts vej 138/2-th",
+      });
+    });
+  });
+});
+
 describe("handleWaitlistPosition", () => {
   it("throws badRequest when apartmentKey param is missing", async () => {
     try {
@@ -1279,7 +1509,14 @@ interface MockRegisterOpts {
   newRegId?: string;
 }
 
-function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
+interface MockRegisterCaptures {
+  registrationInsertValues?: Record<string, unknown>;
+}
+
+function makeMockDbForRegister(
+  opts: MockRegisterOpts,
+  captures?: MockRegisterCaptures,
+): Kysely<Database> {
   const settingsResult = { opening_datetime: opts.openingDatetime };
   const existingRegs = opts.existingReg ? [opts.existingReg] : [];
 
@@ -1321,10 +1558,13 @@ function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
     insertInto: vi.fn().mockImplementation((table: string) => {
       if (table === "registrations") {
         return {
-          values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockReturnValue({
-              execute: vi.fn().mockResolvedValue([{ id: opts.newRegId ?? "reg-id" }]),
-            }),
+          values: vi.fn().mockImplementation((vals: Record<string, unknown>) => {
+            if (captures) captures.registrationInsertValues = vals;
+            return {
+              returning: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue([{ id: opts.newRegId ?? "reg-id" }]),
+              }),
+            };
           }),
         };
       }
@@ -1393,19 +1633,29 @@ interface MockWaitlistOpts {
   positionCount?: number;
 }
 
-function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
+interface MockWaitlistCaptures {
+  waitlistInsertValues?: Record<string, unknown>;
+}
+
+function makeMockDbForWaitlist(
+  opts: MockWaitlistOpts,
+  captures?: MockWaitlistCaptures,
+): Kysely<Database> {
   let waitlistCallNum = 0;
 
   const mockTrx = {
     insertInto: vi.fn().mockImplementation((table: string) => {
       if (table === "waitlist_entries") {
         return {
-          values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockReturnValue({
-              executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
-                id: opts.newEntryId ?? "wl-id",
+          values: vi.fn().mockImplementation((vals: Record<string, unknown>) => {
+            if (captures) captures.waitlistInsertValues = vals;
+            return {
+              returning: vi.fn().mockReturnValue({
+                executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
+                  id: opts.newEntryId ?? "wl-id",
+                }),
               }),
-            }),
+            };
           }),
         };
       }

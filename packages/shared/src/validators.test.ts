@@ -6,6 +6,7 @@ import {
   isFloorDoorRequired,
   validateFloorDoor,
   validateAddress,
+  effectiveFloorDoor,
   normalizeApartmentKey,
   formatAddress,
   validateName,
@@ -146,6 +147,25 @@ describe("validateAddress", () => {
     expect(validateAddress("Else Alfelts Vej", 170, null, null).valid).toBe(
       false,
     );
+  });
+});
+
+describe("effectiveFloorDoor", () => {
+  it("drops floor and door for non-floor-required house numbers", () => {
+    expect(effectiveFloorDoor(122, "2", "th")).toEqual({ floor: null, door: null });
+    expect(effectiveFloorDoor(130, "ST", "TV")).toEqual({ floor: null, door: null });
+  });
+
+  it("preserves floor and door for floor-required house numbers", () => {
+    expect(effectiveFloorDoor(138, "2", "th")).toEqual({ floor: "2", door: "th" });
+    expect(effectiveFloorDoor(170, "ST", null)).toEqual({ floor: "ST", door: null });
+  });
+
+  it("normalizes undefined to null", () => {
+    expect(effectiveFloorDoor(138, undefined, undefined)).toEqual({
+      floor: null,
+      door: null,
+    });
   });
 });
 

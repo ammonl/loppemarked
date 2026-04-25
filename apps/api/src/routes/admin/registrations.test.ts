@@ -299,6 +299,79 @@ describe("handleCreateRegistration (happy path)", () => {
     );
     expect(auditCalls.length).toBeGreaterThan(0);
   });
+
+  // Regression for #97: admin tooling must not be able to bypass the
+  // apartment dedupe rule by sending a floor/door for a non-floor-required
+  // house number.
+  it("drops floor/door from the persisted row for non-floor-required house numbers", async () => {
+    const captures: MockCreateRegCaptures = {};
+    const mockDb = makeMockTrxDb(
+      {
+        boxResult: { id: 1, state: "available" },
+        existingReg: undefined,
+      },
+      captures,
+    );
+
+    const result = await handleCreateRegistration(
+      makeCtx({
+        db: mockDb,
+        body: {
+          boxId: 1,
+          name: "Alice",
+          email: "a@b.com",
+          street: "Else Alfelts Vej",
+          houseNumber: 122,
+          floor: "2",
+          door: "th",
+          language: "da",
+        },
+      }),
+    );
+
+    expect(result.statusCode).toBe(201);
+    const body = result.body as Record<string, unknown>;
+    expect(body.apartmentKey).toBe("else alfelts vej 122");
+    expect(captures.registrationInsertValues).toMatchObject({
+      floor: null,
+      door: null,
+      apartment_key: "else alfelts vej 122",
+    });
+  });
+
+  it("preserves floor/door for floor-required house numbers", async () => {
+    const captures: MockCreateRegCaptures = {};
+    const mockDb = makeMockTrxDb(
+      {
+        boxResult: { id: 1, state: "available" },
+        existingReg: undefined,
+      },
+      captures,
+    );
+
+    const result = await handleCreateRegistration(
+      makeCtx({
+        db: mockDb,
+        body: {
+          boxId: 1,
+          name: "Alice",
+          email: "a@b.com",
+          street: "Else Alfelts Vej",
+          houseNumber: 138,
+          floor: "2",
+          door: "th",
+          language: "da",
+        },
+      }),
+    );
+
+    expect(result.statusCode).toBe(201);
+    expect(captures.registrationInsertValues).toMatchObject({
+      floor: "2",
+      door: "th",
+      apartment_key: "else alfelts vej 138/2-th",
+    });
+  });
 });
 
 describe("handleMoveRegistration", () => {
@@ -1215,10 +1288,17 @@ function makeMockAssignDb(opts: {
   } as unknown as Kysely<Database>;
 }
 
-function makeMockTrxDb(opts: {
-  boxResult?: { id: number; state: string };
-  existingReg?: { id: string };
-}): Kysely<Database> {
+interface MockCreateRegCaptures {
+  registrationInsertValues?: Record<string, unknown>;
+}
+
+function makeMockTrxDb(
+  opts: {
+    boxResult?: { id: number; state: string };
+    existingReg?: { id: string };
+  },
+  captures?: MockCreateRegCaptures,
+): Kysely<Database> {
   const existingRegs = opts.existingReg ? [opts.existingReg] : [];
   const mockTrx = {
     selectFrom: vi.fn().mockImplementation((table: string) => {
@@ -1255,12 +1335,17 @@ function makeMockTrxDb(opts: {
         }),
       }),
     }),
-    insertInto: vi.fn().mockImplementation(() => ({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockReturnValue({
-          execute: vi.fn().mockResolvedValue([{ id: "new-reg-id" }]),
-        }),
-        execute: vi.fn().mockResolvedValue(undefined),
+    insertInto: vi.fn().mockImplementation((table: string) => ({
+      values: vi.fn().mockImplementation((vals: Record<string, unknown>) => {
+        if (captures && table === "registrations") {
+          captures.registrationInsertValues = vals;
+        }
+        return {
+          returning: vi.fn().mockReturnValue({
+            execute: vi.fn().mockResolvedValue([{ id: "new-reg-id" }]),
+          }),
+          execute: vi.fn().mockResolvedValue(undefined),
+        };
       }),
     })),
   };
