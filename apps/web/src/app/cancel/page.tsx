@@ -12,8 +12,6 @@ interface CancellationInfo {
   alreadyCancelled: boolean;
   boxId: number;
   tableLabel: string;
-  tableNumber?: number;
-  tableSizeMeters?: number | null;
   recipientNameHint?: string;
 }
 
@@ -345,16 +343,10 @@ function DetailsBlock({ info, t }: DetailsProps) {
           <dd style={value}>{info.recipientNameHint}</dd>
         </div>
       ) : null}
-      <div style={row}>
+      <div style={{ ...row, borderBottom: "none" }}>
         <dt style={label}>{t("cancel.bookingTable")}</dt>
         <dd style={value}>{info.tableLabel}</dd>
       </div>
-      {info.tableSizeMeters != null ? (
-        <div style={{ ...row, borderBottom: "none" }}>
-          <dt style={label}>{t("cancel.bookingSize")}</dt>
-          <dd style={value}>{info.tableSizeMeters} m</dd>
-        </div>
-      ) : null}
     </dl>
   );
 }

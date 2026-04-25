@@ -1553,9 +1553,55 @@ describe("handleCancellationInfo", () => {
     expect(body.alreadyCancelled).toBe(false);
     expect(body.boxId).toBe(3);
     expect(body.tableLabel).toContain("#3");
-    expect(body.recipientNameHint).not.toContain("nna");
-    expect(typeof body.recipientNameHint).toBe("string");
-    expect((body.recipientNameHint as string).startsWith("A")).toBe(true);
+    expect(body.recipientNameHint).toBe("A•••••");
+    expect(body).not.toHaveProperty("tableSizeMeters");
+    expect(body).not.toHaveProperty("tableNumber");
+  });
+
+  it("renders the same fixed-length mask regardless of name length", async () => {
+    const longNameDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        box_id: 3,
+        name: "Bartholomew Featherstonehaugh",
+        email: "b@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+    const shortNameDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-2",
+        registration_id: "reg-2",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-2",
+        box_id: 3,
+        name: "Bo",
+        email: "bo@example.com",
+        language: "da",
+        status: "active",
+      },
+    });
+
+    const longRes = await handleCancellationInfo(
+      makeCtx({ db: longNameDb, params: { token: "valid" } }),
+    );
+    const shortRes = await handleCancellationInfo(
+      makeCtx({ db: shortNameDb, params: { token: "valid" } }),
+    );
+    const longBody = longRes.body as Record<string, unknown>;
+    const shortBody = shortRes.body as Record<string, unknown>;
+    expect(longBody.recipientNameHint).toBe("B•••••");
+    expect(shortBody.recipientNameHint).toBe("B•••••");
   });
 
   it("flags already-cancelled registrations without exposing identity", async () => {

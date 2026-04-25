@@ -3,7 +3,6 @@ import {
   GREENHOUSES,
   RESERVED_LABEL_AWAITING_REVIEW,
   formatTableLabel,
-  getTableById,
   isFloorDoorRequired,
   normalizeApartmentKey,
   validateAddress,
@@ -596,7 +595,7 @@ export async function handleWaitlistPosition(ctx: RequestContext): Promise<Route
 
 /**
  * Return a minimal summary of the booking tied to a resident cancellation
- * token. Deliberately limited: table id/label, a masked first-name hint, and
+ * token. Deliberately limited: table label, a masked first-name hint, and
  * language. Does not consume the token. Single generic 404 message is used
  * for unknown/expired/consumed tokens so callers cannot enumerate state.
  */
@@ -633,16 +632,12 @@ export async function handleCancellationInfo(ctx: RequestContext): Promise<Route
     };
   }
 
-  const table = getTableById(reg.box_id);
-
   return {
     statusCode: 200,
     body: {
       alreadyCancelled: false,
       boxId: reg.box_id,
       tableLabel: formatTableLabel(reg.box_id),
-      tableNumber: table?.number ?? reg.box_id,
-      tableSizeMeters: table?.sizeMeters ?? null,
       recipientNameHint: maskName(reg.name),
       language: reg.language,
       expiresAt: resolved.expiresAt.toISOString(),
@@ -784,15 +779,20 @@ function safeDecodeToken(raw: string | undefined): string {
   }
 }
 
+/** Fixed length of the hidden portion in masked names rendered on the
+ * cancellation page. A constant length avoids leaking the actual name
+ * length through the rendered mask. */
+const MASKED_NAME_HIDDEN_LENGTH = 5;
+
 /**
  * Mask a personal name so the cancellation preview can confirm identity
- * without leaking the full name to anyone who intercepts the link.
- * Keeps the first character of each space-separated part.
+ * without leaking the full name to anyone who intercepts the link. Keeps
+ * the first character of the first name part and pads the hidden portion
+ * to a fixed length so the rendered mask never reveals the real name's
+ * length.
  */
 function maskName(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((part) => (part.length <= 1 ? part : `${part[0]}${"•".repeat(Math.min(part.length - 1, 4))}`))
-    .join(" ");
+  const firstPart = name.trim().split(/\s+/)[0] ?? "";
+  const lead = firstPart.charAt(0);
+  return `${lead}${"•".repeat(MASKED_NAME_HIDDEN_LENGTH)}`;
 }

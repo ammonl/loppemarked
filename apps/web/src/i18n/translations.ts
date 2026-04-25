@@ -170,7 +170,6 @@ const da = {
     "Du er ved at afmelde følgende bordbooking. Læs venligst beskrivelsen igennem, før du bekræfter.",
   "cancel.bookingHolder": "Booket af",
   "cancel.bookingTable": "Loppebord",
-  "cancel.bookingSize": "Størrelse",
   "cancel.effectsTitle": "Hvad sker der, når du afmelder?",
   "cancel.effectEmail": "Din bordbooking bliver straks gjort inaktiv.",
   "cancel.effectHold":
@@ -616,7 +615,6 @@ const en: Record<TranslationKey, string> = {
     "You are about to cancel the following table booking. Please read through the details before confirming.",
   "cancel.bookingHolder": "Booked by",
   "cancel.bookingTable": "Table",
-  "cancel.bookingSize": "Size",
   "cancel.effectsTitle": "What happens when you cancel?",
   "cancel.effectEmail": "Your table booking is immediately deactivated.",
   "cancel.effectHold":
