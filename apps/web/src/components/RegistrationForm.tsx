@@ -182,8 +182,7 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
         <button
           type="button"
           onClick={onSuccess ?? onCancel}
-          className="flea-scene-cta"
-          style={{ marginTop: "1.5rem" }}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
         >
           {t("common.close")}
         </button>

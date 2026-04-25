@@ -4,13 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
 import { getTableById } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import { renderWithContact } from "@/i18n/contactLink";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LoadingSplash } from "./LoadingSplash";
 import { RegistrationForm } from "./RegistrationForm";
 import { WaitlistForm } from "./WaitlistForm";
 import { TableMap, TableStateLegend } from "./TableMap";
-import { colors } from "@/styles/theme";
 import "@/styles/table-map.css";
 
 interface TableMapPageProps {
@@ -84,7 +82,7 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
         &larr; {t("map.back")}
       </button>
 
-      <header className="flea-map__header">
+      <header className="flea-paper-card flea-map__header">
         <h2 className="flea-map__title">{t("table.pageTitle")}</h2>
         <p className="flea-map__intro">{t("table.pageIntro")}</p>
       </header>
@@ -105,10 +103,8 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
         <TableStateLegend />
       </div>
 
-      {!hasAvailable ? (
+      {!hasAvailable && (
         <FullCapacityNotice onJoinWaitlist={() => setPageView("waitlist")} />
-      ) : (
-        <p className="flea-map__select-hint">{t("table.selectHint")}</p>
       )}
 
       <div className="flea-map__layout">
@@ -134,10 +130,6 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
           }}
         />
       </div>
-
-      <p className="flea-map__support">
-        {renderWithContact(t("table.supportContact"), { color: colors.fleaTerracottaDark, fontWeight: 600 })}
-      </p>
     </section>
   );
 }

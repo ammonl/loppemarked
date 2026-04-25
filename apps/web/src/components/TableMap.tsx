@@ -10,7 +10,9 @@ export type TableMapState = "ledigt" | "reserveret" | "valgt";
 const STATE_COLORS: Record<TableMapState, { fill: string; stroke: string; text: string }> = {
   ledigt: { fill: colors.fleaSage, stroke: colors.fleaSageDark, text: colors.fleaCream },
   reserveret: { fill: colors.fleaTerracotta, stroke: colors.fleaTerracottaDark, text: colors.fleaCream },
-  valgt: { fill: colors.fleaTerracottaDark, stroke: colors.fleaAccentEdge, text: colors.fleaCream },
+  // Selected reuses the available fill (only available tiles are clickable)
+  // and switches to a brass border so it never reads as reserved/terracotta.
+  valgt: { fill: colors.fleaSage, stroke: colors.fleaBrass, text: colors.fleaCream },
 };
 
 interface TableMapProps {
@@ -24,23 +26,7 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
   const { width, height } = TABLE_MAP_VIEWBOX;
 
   return (
-    <div
-      role="img"
-      aria-label={t("table.mapAriaLabel")}
-      style={{
-        position: "relative",
-        background: `linear-gradient(170deg, ${colors.fleaPaperAged} 0%, ${colors.fleaPaperAgedShade} 100%)`,
-        border: `2px solid ${colors.fleaCorkFrame}`,
-        borderRadius: 14,
-        padding: "0.85rem",
-        boxShadow: [
-          "inset 0 1px 0 rgba(255, 255, 255, 0.45)",
-          `inset 0 0 0 3px ${colors.fleaPaperAgedShade}`,
-          "0 1px 2px rgba(0, 0, 0, 0.1)",
-          "0 18px 28px -10px rgba(110, 55, 32, 0.35)",
-        ].join(", "),
-      }}
-    >
+    <div role="img" aria-label={t("table.mapAriaLabel")} className="flea-map__frame">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         width="100%"
@@ -155,8 +141,8 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
                   width={table.width + 2.8}
                   height={table.height + 2.8}
                   rx={2}
-                  fill={colors.fleaAccentGlow}
-                  opacity={0.45}
+                  fill={colors.fleaBrass}
+                  opacity={0.4}
                 />
               )}
               <rect

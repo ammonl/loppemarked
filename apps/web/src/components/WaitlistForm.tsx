@@ -110,8 +110,7 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="flea-scene-cta"
-          style={{ marginTop: "1.5rem" }}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
         >
           {t("common.close")}
         </button>
