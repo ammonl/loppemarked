@@ -13,6 +13,8 @@ the staging and production environment stacks.
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
 | `dns.tf`         | Route 53 hosted zone, SES verification/DKIM DNS records    |
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key                  |
+| `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
+| `amplify.tf`     | Amplify app, branch, and custom domain association         |
 
 ## Least-privilege IAM
 
@@ -45,6 +47,23 @@ are managed by Terraform. After the first `terraform apply`:
    nameservers.
 3. SES will verify the domain and enable DKIM signing automatically once DNS
    propagates.
+
+## API Lambda runtime configuration
+
+The API Lambda receives database, email, and public-URL configuration through
+its `environment.variables` block:
+
+| Variable         | Source                                                                 |
+|------------------|------------------------------------------------------------------------|
+| `ENVIRONMENT`    | `var.environment` (e.g. `staging`, `prod`)                             |
+| `EMAIL_FROM`     | `var.ses_sender_email` or `loppemarked@<ses_sender_domain>`            |
+| `EMAIL_REPLY_TO` | `var.ses_reply_to_email`                                               |
+| `PUBLIC_WEB_URL` | `https://<amplify_domain_prefix>.<ses_sender_domain>`                  |
+
+`PUBLIC_WEB_URL` anchors outbound email links such as the resident
+self-cancellation magic link. With the current variable defaults this resolves
+to `https://loppemarked.staging.un17hub.com` for staging and
+`https://loppemarked.un17hub.com` for production.
 
 ## Key variables
 

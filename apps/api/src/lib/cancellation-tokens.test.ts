@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buildCancellationUrl,
   generateCancellationToken,
+  getPublicWebBaseUrl,
   hashCancellationToken,
 } from "./cancellation-tokens.js";
 
@@ -51,5 +52,32 @@ describe("buildCancellationUrl", () => {
   it("URL-encodes special characters in the token", () => {
     const url = buildCancellationUrl("https://example.test", "a b/c?d");
     expect(url).toBe("https://example.test/cancel?token=a%20b%2Fc%3Fd");
+  });
+});
+
+describe("getPublicWebBaseUrl", () => {
+  const originalPublicWebUrl = process.env["PUBLIC_WEB_URL"];
+
+  beforeEach(() => {
+    delete process.env["PUBLIC_WEB_URL"];
+  });
+
+  afterEach(() => {
+    if (originalPublicWebUrl === undefined) delete process.env["PUBLIC_WEB_URL"];
+    else process.env["PUBLIC_WEB_URL"] = originalPublicWebUrl;
+  });
+
+  it("returns PUBLIC_WEB_URL when set", () => {
+    process.env["PUBLIC_WEB_URL"] = "https://loppemarked.staging.un17hub.com";
+    expect(getPublicWebBaseUrl()).toBe("https://loppemarked.staging.un17hub.com");
+  });
+
+  it("ignores an empty PUBLIC_WEB_URL and falls back to localhost", () => {
+    process.env["PUBLIC_WEB_URL"] = "";
+    expect(getPublicWebBaseUrl()).toBe("http://localhost:3000");
+  });
+
+  it("falls back to localhost when PUBLIC_WEB_URL is unset", () => {
+    expect(getPublicWebBaseUrl()).toBe("http://localhost:3000");
   });
 });

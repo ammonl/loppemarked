@@ -19,8 +19,17 @@ export function buildCancellationUrl(baseUrl: string, token: string): string {
   return `${trimmed}/cancel?token=${encodeURIComponent(token)}`;
 }
 
+/**
+ * Resolve the public web base URL used to anchor outbound email links.
+ *
+ * `PUBLIC_WEB_URL` is set on the Lambda by the deploy workflow from the
+ * matching GitHub environment variable; the localhost fallback only
+ * applies to local development.
+ */
 export function getPublicWebBaseUrl(): string {
-  return process.env["PUBLIC_WEB_URL"] ?? "http://localhost:3000";
+  const explicit = process.env["PUBLIC_WEB_URL"];
+  if (explicit && explicit.length > 0) return explicit;
+  return "http://localhost:3000";
 }
 
 interface CreateTokenInput {

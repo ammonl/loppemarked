@@ -26,6 +26,7 @@ resource "aws_lambda_function" "api" {
       ENVIRONMENT    = var.environment
       EMAIL_FROM     = coalesce(var.ses_sender_email, "loppemarked@${var.ses_sender_domain}")
       EMAIL_REPLY_TO = var.ses_reply_to_email
+      PUBLIC_WEB_URL = "https://${var.amplify_domain_prefix}.${var.ses_sender_domain}"
     }
   }
 
