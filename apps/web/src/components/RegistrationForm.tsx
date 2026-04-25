@@ -49,13 +49,16 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
   const needsUnitFields = !isNaN(parsedHouseNumber) && isFloorDoorRequired(parsedHouseNumber);
 
   function buildPayload(opts?: { confirmSwitch?: boolean }) {
+    // Drop floor/door from the payload when the house number doesn't require
+    // them. Otherwise stale values (typed for a previous house number) would
+    // leak through and corrupt the apartment dedupe key.
     return {
       name: name.trim(),
       email: email.trim(),
       street: ELIGIBLE_STREET,
       houseNumber: parsedHouseNumber,
-      floor: floor.trim() || null,
-      door: door.trim() || null,
+      floor: needsUnitFields ? floor.trim() || null : null,
+      door: needsUnitFields ? door.trim() || null : null,
       language: language as Language,
       boxId,
       ...opts,
