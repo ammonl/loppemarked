@@ -213,7 +213,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
       const pastDate = new Date(Date.now() - 86400000);
       const mockDb = makeMockDbForRegister({
         openingDatetime: pastDate,
-        box: { id: 1, state: "available" },
+        table: { id: 1, state: "available" },
         existingReg: undefined,
         newRegId: "reg-new",
       });
@@ -248,7 +248,7 @@ describe("PII redaction — public endpoints never return personal data", () => 
       const pastDate = new Date(Date.now() - 86400000);
       const mockDb = makeMockDbForRegister({
         openingDatetime: pastDate,
-        box: { id: 1, state: "available" },
+        table: { id: 1, state: "available" },
         existingReg: { id: "reg-old", table_id: 5, name: "Alice", email: "a@b.com", status: "active" },
       });
 
@@ -592,7 +592,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
     const pastDate = new Date(Date.now() - 86400000);
     const mockDb = makeMockDbForRegister({
       openingDatetime: pastDate,
-      box: { id: 1, state: "available" },
+      table: { id: 1, state: "available" },
       existingReg: undefined,
       newRegId: "reg-new",
     });
@@ -649,7 +649,7 @@ describe("DTO contract — public response shapes are strict and PII-free", () =
 
 interface MockRegisterOpts {
   openingDatetime: Date;
-  box?: { id: number; state: string };
+  table?: { id: number; state: string };
   existingReg?: { id: string; table_id: number; name: string; email: string; status: string };
   newRegId?: string;
 }
@@ -665,7 +665,7 @@ function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(opts.box),
+                executeTakeFirst: vi.fn().mockResolvedValue(opts.table),
               }),
             }),
           }),

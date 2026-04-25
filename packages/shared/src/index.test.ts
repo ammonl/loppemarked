@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   TABLE_CATALOG,
   TOTAL_TABLE_COUNT,
-  BOX_STATES,
+  TABLE_STATES,
   LANGUAGES,
   AUDIT_ACTIONS,
   validateEmail,
@@ -17,7 +17,7 @@ describe("barrel exports", () => {
   });
 
   it("exports table states", () => {
-    expect(BOX_STATES).toEqual(["available", "occupied", "reserved"]);
+    expect(TABLE_STATES).toEqual(["available", "occupied", "reserved"]);
   });
 
   it("exports languages", () => {

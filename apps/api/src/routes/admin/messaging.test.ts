@@ -184,7 +184,7 @@ describe("handleGetRecipients", () => {
     expect(body.count).toBe(1);
   });
 
-  it("rejects greenhouse-specific audience values", async () => {
+  it("rejects unknown audience values", async () => {
     try {
       await handleGetRecipients(
         makeCtx({ body: { audience: "kronen" } }),

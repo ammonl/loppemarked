@@ -419,14 +419,14 @@ describe("AdminRegistrations", () => {
     });
 
     it("disables occupied tables and appends (occupied) suffix in add dialog", async () => {
-      const boxesData = [
+      const tablesData = [
         { id: 1, state: "occupied" },
         { id: 7, state: "available" },
         { id: 15, state: "available" },
       ];
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
-        { ok: true, body: boxesData },
+        { ok: true, body: tablesData },
       ]);
       vi.stubGlobal("fetch", fetchMock);
 
@@ -451,13 +451,13 @@ describe("AdminRegistrations", () => {
     });
 
     it("sorts available tables before occupied tables in add dialog", async () => {
-      const boxesData = Array.from({ length: 29 }, (_, i) => ({
+      const tablesData = Array.from({ length: 29 }, (_, i) => ({
         id: i + 1,
         state: i === 0 ? "occupied" : "available",
       }));
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
-        { ok: true, body: boxesData },
+        { ok: true, body: tablesData },
       ]);
       vi.stubGlobal("fetch", fetchMock);
 
@@ -589,14 +589,14 @@ describe("AdminRegistrations", () => {
     });
 
     it("does not disable the current table in move dialog", async () => {
-      const boxesData = [
+      const tablesData = [
         { id: 1, state: "occupied" },
         { id: 3, state: "occupied" },
         { id: 7, state: "available" },
       ];
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
-        { ok: true, body: boxesData },
+        { ok: true, body: tablesData },
       ]);
       vi.stubGlobal("fetch", fetchMock);
 
@@ -668,7 +668,7 @@ describe("AdminRegistrations", () => {
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
         { ok: true, body: [] },
-        { ok: true, body: { registrationId: "r1", boxReleased: true } },
+        { ok: true, body: { registrationId: "r1", tableReleased: true } },
         { ok: true, body: registrations },
         { ok: true, body: [] },
       ]);
@@ -695,7 +695,7 @@ describe("AdminRegistrations", () => {
       expect(removeCall[0]).toBe("/admin/registrations/remove");
       const removeBody = JSON.parse(removeCall[1].body);
       expect(removeBody.registrationId).toBe("r1");
-      expect(removeBody.makeBoxPublic).toBe(true);
+      expect(removeBody.makeTablePublic).toBe(true);
       expect(screen.getByText("admin.registrations.removed")).toBeDefined();
     });
 
@@ -703,7 +703,7 @@ describe("AdminRegistrations", () => {
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
         { ok: true, body: [] },
-        { ok: true, body: { registrationId: "r1", boxReleased: false } },
+        { ok: true, body: { registrationId: "r1", tableReleased: false } },
         { ok: true, body: registrations },
         { ok: true, body: [] },
       ]);
@@ -724,7 +724,7 @@ describe("AdminRegistrations", () => {
       });
 
       const removeBody = JSON.parse(fetchMock.mock.calls[2][1].body);
-      expect(removeBody.makeBoxPublic).toBe(false);
+      expect(removeBody.makeTablePublic).toBe(false);
     });
 
     it("closes remove dialog on cancel", async () => {

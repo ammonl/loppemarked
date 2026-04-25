@@ -111,7 +111,7 @@ describe("AdminWaitlist", () => {
   });
 
   describe("assign flow", () => {
-    it("opens assign dialog with box ID input and notification composer", async () => {
+    it("opens assign dialog with table ID input and notification composer", async () => {
       vi.stubGlobal("fetch", mockFetch([{ ok: true, body: waitlistEntries }]));
 
       await act(async () => {
@@ -126,7 +126,7 @@ describe("AdminWaitlist", () => {
       expect(screen.getByLabelText("admin.waitlist.assignTableId")).toBeDefined();
     });
 
-    it("shows notification composer when box ID is entered", async () => {
+    it("shows notification composer when table ID is entered", async () => {
       vi.stubGlobal("fetch", mockFetch([{ ok: true, body: waitlistEntries }]));
 
       await act(async () => {
@@ -141,14 +141,14 @@ describe("AdminWaitlist", () => {
       expect(screen.getByTestId("notification-composer")).toBeDefined();
     });
 
-    it("disables occupied boxes and appends (occupied) suffix in assign dialog", async () => {
-      const boxesData = [
+    it("disables occupied tables and appends (occupied) suffix in assign dialog", async () => {
+      const tablesData = [
         { id: 1, state: "occupied" },
         { id: 5, state: "available" },
       ];
       const fetchMock = mockFetch([
         { ok: true, body: waitlistEntries },
-        { ok: true, body: boxesData },
+        { ok: true, body: tablesData },
       ]);
       vi.stubGlobal("fetch", fetchMock);
 
@@ -244,7 +244,7 @@ describe("AdminWaitlist", () => {
     it("shows error on assign failure", async () => {
       const fetchMock = mockFetch([
         { ok: true, body: waitlistEntries },
-        { ok: false, body: { error: "Box is already occupied" } },
+        { ok: false, body: { error: "Table is already occupied" } },
       ]);
       vi.stubGlobal("fetch", fetchMock);
 
@@ -262,7 +262,7 @@ describe("AdminWaitlist", () => {
         fireEvent.click(screen.getByText("common.confirm"));
       });
 
-      expect(screen.getByRole("alert").textContent).toBe("Box is already occupied");
+      expect(screen.getByRole("alert").textContent).toBe("Table is already occupied");
     });
 
     it("closes dialog on cancel", async () => {
@@ -285,7 +285,7 @@ describe("AdminWaitlist", () => {
       expect(screen.queryByLabelText("admin.waitlist.assignTableId")).toBeNull();
     });
 
-    it("shows validation error for invalid box ID", async () => {
+    it("shows validation error for invalid table ID", async () => {
       vi.stubGlobal("fetch", mockFetch([{ ok: true, body: waitlistEntries }]));
 
       await act(async () => {

@@ -86,9 +86,9 @@ describe("handleCreateRegistration", () => {
     }
   });
 
-  it("throws 400 when box not found", async () => {
+  it("throws 400 when table not found", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: undefined,
+      tableResult: undefined,
     });
 
     try {
@@ -113,9 +113,9 @@ describe("handleCreateRegistration", () => {
     }
   });
 
-  it("throws 409 when box is occupied", async () => {
+  it("throws 409 when table is occupied", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "occupied" },
+      tableResult: { id: 1, state: "occupied" },
     });
 
     try {
@@ -144,7 +144,7 @@ describe("handleCreateRegistration", () => {
 describe("handleCreateRegistration (happy path)", () => {
   it("creates registration and returns 201", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: undefined,
     });
 
@@ -192,7 +192,7 @@ describe("handleCreateRegistration (happy path)", () => {
 
   it("defaults language to English when not provided", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: undefined,
     });
 
@@ -217,7 +217,7 @@ describe("handleCreateRegistration (happy path)", () => {
     mockSendEmail.mockResolvedValue("email-123");
 
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 3, state: "available" },
+      tableResult: { id: 3, state: "available" },
       existingReg: undefined,
     });
 
@@ -251,7 +251,7 @@ describe("handleCreateRegistration (happy path)", () => {
     mockSendEmail.mockClear();
 
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: undefined,
     });
 
@@ -274,7 +274,7 @@ describe("handleCreateRegistration (happy path)", () => {
 
   it("logs notification_skipped audit event when sendEmail is false", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: undefined,
     });
 
@@ -307,7 +307,7 @@ describe("handleCreateRegistration (happy path)", () => {
     const captures: MockCreateRegCaptures = {};
     const mockDb = makeMockTrxDb(
       {
-        boxResult: { id: 1, state: "available" },
+        tableResult: { id: 1, state: "available" },
         existingReg: undefined,
       },
       captures,
@@ -343,7 +343,7 @@ describe("handleCreateRegistration (happy path)", () => {
     const captures: MockCreateRegCaptures = {};
     const mockDb = makeMockTrxDb(
       {
-        boxResult: { id: 1, state: "available" },
+        tableResult: { id: 1, state: "available" },
         existingReg: undefined,
       },
       captures,
@@ -439,7 +439,7 @@ describe("handleAssignWaitlist", () => {
     }
   });
 
-  it("assigns waitlist entry to box and returns 201", async () => {
+  it("assigns waitlist entry to table and returns 201", async () => {
     const mockDb = makeMockAssignWaitlistDb({
       entry: {
         id: "wl-1",
@@ -453,7 +453,7 @@ describe("handleAssignWaitlist", () => {
         language: "da",
         status: "waiting",
       },
-      box: { id: 5, state: "available" },
+      table: { id: 5, state: "available" },
       existingReg: undefined,
       newRegId: "reg-from-wl",
     });
@@ -471,7 +471,7 @@ describe("handleAssignWaitlist", () => {
     expect(body.tableId).toBe(5);
   });
 
-  it("throws 409 when box is occupied", async () => {
+  it("throws 409 when table is occupied", async () => {
     const mockDb = makeMockAssignWaitlistDb({
       entry: {
         id: "wl-1",
@@ -485,7 +485,7 @@ describe("handleAssignWaitlist", () => {
         language: "da",
         status: "waiting",
       },
-      box: { id: 5, state: "occupied" },
+      table: { id: 5, state: "occupied" },
       existingReg: undefined,
     });
 
@@ -507,7 +507,7 @@ describe("handleAssignWaitlist", () => {
   it("throws 404 when waitlist entry not found", async () => {
     const mockDb = makeMockAssignWaitlistDb({
       entry: undefined,
-      box: { id: 5, state: "available" },
+      table: { id: 5, state: "available" },
       existingReg: undefined,
     });
 
@@ -670,7 +670,7 @@ describe("handleNotificationPreview", () => {
 });
 
 describe("handleMoveRegistration (happy path)", () => {
-  it("moves registration to a new box", async () => {
+  it("moves registration to a new table", async () => {
     const mockDb = makeMockMoveDb({
       reg: { id: "reg-1", table_id: 1, name: "Alice", email: "a@b.com", language: "da", status: "active" },
       oldBox: { id: 1, state: "occupied" },
@@ -720,7 +720,7 @@ describe("handleMoveRegistration (happy path)", () => {
     }
   });
 
-  it("throws 400 when new box is same as current", async () => {
+  it("throws 400 when new table is same as current", async () => {
     const mockDb = makeMockMoveDb({
       reg: { id: "reg-1", table_id: 5, name: "A", email: "a@b.com", language: "da", status: "active" },
     });
@@ -737,7 +737,7 @@ describe("handleMoveRegistration (happy path)", () => {
     }
   });
 
-  it("throws 409 when target box is occupied", async () => {
+  it("throws 409 when target table is occupied", async () => {
     const mockDb = makeMockMoveDb({
       reg: { id: "reg-1", table_id: 1, name: "A", email: "a@b.com", language: "da", status: "active" },
       oldBox: { id: 1, state: "occupied" },
@@ -758,7 +758,7 @@ describe("handleMoveRegistration (happy path)", () => {
 });
 
 describe("handleRemoveRegistration (happy path)", () => {
-  it("removes registration and releases box as public (default)", async () => {
+  it("removes registration and releases table as public (default)", async () => {
     const mockDb = makeMockRemoveDb({
       reg: {
         id: "reg-1", table_id: 3, status: "active",
@@ -775,7 +775,7 @@ describe("handleRemoveRegistration (happy path)", () => {
     expect(body.tableReleased).toBe(true);
   });
 
-  it("removes registration and holds box as reserved when makeTablePublic is false", async () => {
+  it("removes registration and holds table as reserved when makeTablePublic is false", async () => {
     const mockDb = makeMockRemoveDb({
       reg: {
         id: "reg-1", table_id: 3, status: "active",
@@ -827,7 +827,7 @@ describe("handleRemoveRegistration (happy path)", () => {
 });
 
 describe("handleAssignWaitlist (happy path)", () => {
-  it("assigns waitlist entry to a box and creates registration", async () => {
+  it("assigns waitlist entry to a table and creates registration", async () => {
     const mockDb = makeMockAssignDb({
       entry: {
         id: "wl-1", name: "Bob", email: "bob@b.com",
@@ -835,7 +835,7 @@ describe("handleAssignWaitlist (happy path)", () => {
         floor: null, door: null, apartment_key: "else alfelts vej 140",
         language: "en", status: "waiting",
       },
-      box: { id: 10, state: "available" },
+      table: { id: 10, state: "available" },
       existingReg: undefined,
     });
 
@@ -885,7 +885,7 @@ describe("handleAssignWaitlist (happy path)", () => {
     }
   });
 
-  it("throws 409 when target box is occupied", async () => {
+  it("throws 409 when target table is occupied", async () => {
     const mockDb = makeMockAssignDb({
       entry: {
         id: "wl-1", name: "Bob", email: "bob@b.com",
@@ -893,7 +893,7 @@ describe("handleAssignWaitlist (happy path)", () => {
         floor: null, door: null, apartment_key: "else alfelts vej 140",
         language: "en", status: "waiting",
       },
-      box: { id: 10, state: "occupied" },
+      table: { id: 10, state: "occupied" },
     });
 
     try {
@@ -916,7 +916,7 @@ describe("handleAssignWaitlist (happy path)", () => {
         floor: null, door: null, apartment_key: "else alfelts vej 140",
         language: "en", status: "waiting",
       },
-      box: { id: 10, state: "available" },
+      table: { id: 10, state: "available" },
       existingReg: { id: "existing-reg" },
     });
 
@@ -945,7 +945,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
         language: "en", status: "waiting",
         created_at: new Date("2026-02-01T10:00:00Z"),
       },
-      box: { id: 10, state: "available" },
+      table: { id: 10, state: "available" },
     });
 
     await handleAssignWaitlist(
@@ -966,7 +966,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
         language: "en", status: "waiting",
         created_at: createdAt,
       },
-      box: { id: 10, state: "available" },
+      table: { id: 10, state: "available" },
     });
 
     await handleAssignWaitlist(
@@ -996,7 +996,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
         language: "en", status: "waiting",
         created_at: new Date("2026-02-01T10:00:00Z"),
       },
-      box: { id: 10, state: "available" },
+      table: { id: 10, state: "available" },
       existingReg: { id: "existing-reg" },
     });
 
@@ -1015,7 +1015,7 @@ describe("handleAssignWaitlist — notifyDownstream", () => {
 describe("duplicate-address warning in admin create", () => {
   it("returns 409 duplicate warning when apartment already has active registration", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: { id: "existing-reg" },
     });
 
@@ -1039,7 +1039,7 @@ describe("duplicate-address warning in admin create", () => {
 
   it("creates registration when confirmDuplicate is true", async () => {
     const mockDb = makeMockTrxDb({
-      boxResult: { id: 1, state: "available" },
+      tableResult: { id: 1, state: "available" },
       existingReg: { id: "existing-reg" },
     });
 
@@ -1068,7 +1068,7 @@ function makeMockMoveDb(opts: {
   oldBox?: { id: number; state: string };
   newBox?: { id: number; state: string };
 }): Kysely<Database> {
-  // The production code queries old box first (line 297), then new box (line 308).
+  // The production code queries old table first (line 297), then new table (line 308).
   // This counter relies on that ordering.
   let boxCallCount = 0;
   const mockTrx = {
@@ -1204,7 +1204,7 @@ function makeMockAssignDb(opts: {
     apartment_key: string; language: string; status: string;
     created_at?: Date;
   };
-  box?: { id: number; state: string };
+  table?: { id: number; state: string };
   existingReg?: { id: string };
 }): Kysely<Database> {
   const existingRegs = opts.existingReg ? [opts.existingReg] : [];
@@ -1226,7 +1226,7 @@ function makeMockAssignDb(opts: {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(opts.box),
+                executeTakeFirst: vi.fn().mockResolvedValue(opts.table),
               }),
             }),
           }),
@@ -1294,7 +1294,7 @@ interface MockCreateRegCaptures {
 
 function makeMockTrxDb(
   opts: {
-    boxResult?: { id: number; state: string };
+    tableResult?: { id: number; state: string };
     existingReg?: { id: string };
   },
   captures?: MockCreateRegCaptures,
@@ -1307,7 +1307,7 @@ function makeMockTrxDb(
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(opts.boxResult),
+                executeTakeFirst: vi.fn().mockResolvedValue(opts.tableResult),
               }),
             }),
           }),
@@ -1391,7 +1391,7 @@ interface MockAssignWaitlistOpts {
     language: string;
     status: string;
   };
-  box?: { id: number; state: string };
+  table?: { id: number; state: string };
   existingReg?: { id: string };
   newRegId?: string;
 }
@@ -1416,7 +1416,7 @@ function makeMockAssignWaitlistDb(opts: MockAssignWaitlistOpts): Kysely<Database
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(opts.box),
+                executeTakeFirst: vi.fn().mockResolvedValue(opts.table),
               }),
             }),
           }),

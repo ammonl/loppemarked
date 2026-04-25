@@ -28,7 +28,7 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("Anna Jensen");
   });
 
-  it("renders the booked table number instead of a planter box", () => {
+  it("renders the booked table number with no greenhouse-era terminology", () => {
     const result = buildConfirmationEmail(baseData);
     expect(result.bodyHtml).toContain("#3");
     expect(result.bodyHtml.toLowerCase()).not.toContain("planter box");

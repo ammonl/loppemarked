@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { BoxState } from "@loppemarked/shared";
+import type { TableState } from "@loppemarked/shared";
 import { TABLE_CATALOG, formatAddress, formatTableLabel } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { formatDateTime } from "@/utils/formatDate";
@@ -43,14 +43,14 @@ export function AdminWaitlist() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [assigningEntry, setAssigningEntry] = useState<WaitlistEntry | null>(null);
-  const [assignBoxId, setAssignBoxId] = useState("");
+  const [assignTableId, setAssignTableId] = useState("");
   const [assignNotification, setAssignNotification] = useState<NotificationValue>({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
   const [assignDuplicateWarning, setAssignDuplicateWarning] = useState<DuplicateExisting[] | null>(null);
   const [assignNotifyDownstream, setAssignNotifyDownstream] = useState(false);
   const [removingEntry, setRemovingEntry] = useState<WaitlistEntry | null>(null);
   const [removeNotifyDownstream, setRemoveNotifyDownstream] = useState(false);
 
-  const [boxStates, setBoxStates] = useState<Map<number, BoxState>>(new Map());
+  const [tableStates, setTableStates] = useState<Map<number, TableState>>(new Map());
 
   const statusOptions = useMemo(() => {
     const statuses = [...new Set(entries.map((e) => e.status))];
@@ -96,36 +96,36 @@ export function AdminWaitlist() {
     fetchWaitlist();
   }, [fetchWaitlist]);
 
-  const fetchBoxStates = useCallback(async () => {
+  const fetchTableStates = useCallback(async () => {
     try {
       const res = await fetch("/admin/tables", { credentials: "include" });
       if (res.ok) {
-        const boxes: { id: number; state: BoxState }[] = await res.json();
-        setBoxStates(new Map(boxes.map((b) => [b.id, b.state])));
+        const rows: { id: number; state: TableState }[] = await res.json();
+        setTableStates(new Map(rows.map((r) => [r.id, r.state])));
       }
     } catch {
-      // Box states are a UI enhancement; failures are non-critical
+      // Table states are a UI enhancement; failures are non-critical.
     }
   }, []);
 
   useEffect(() => {
-    fetchBoxStates();
-  }, [fetchBoxStates]);
+    fetchTableStates();
+  }, [fetchTableStates]);
 
   const sortedTableOptions = useMemo(() => {
     return [...TABLE_CATALOG]
       .map((table) => ({
         ...table,
-        occupied: boxStates.get(table.id) === "occupied",
+        occupied: tableStates.get(table.id) === "occupied",
       }))
       .sort((a, b) => {
         if (a.occupied !== b.occupied) return a.occupied ? 1 : -1;
         return a.number - b.number;
       });
-  }, [boxStates]);
+  }, [tableStates]);
 
   function openAssignDialog(entry: WaitlistEntry) {
-    setAssignBoxId("");
+    setAssignTableId("");
     setAssignNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setAssignDuplicateWarning(null);
     setAssignNotifyDownstream(false);
@@ -187,7 +187,7 @@ export function AdminWaitlist() {
   async function handleAssign(confirmDuplicate = false) {
     if (!assigningEntry) return;
 
-    const tableId = Number(assignBoxId);
+    const tableId = Number(assignTableId);
     if (isNaN(tableId) || tableId < 1) {
       setMessage({ type: "error", text: t("common.error") });
       return;
@@ -218,7 +218,7 @@ export function AdminWaitlist() {
         setAssignDuplicateWarning(null);
         setMessage({ type: "success", text: t("admin.waitlist.assigned") });
         setAssigningEntry(null);
-        await Promise.all([fetchWaitlist(), fetchBoxStates()]);
+        await Promise.all([fetchWaitlist(), fetchTableStates()]);
       } else {
         const body = await res.json();
         if (body.code === "DUPLICATE_ADDRESS_WARNING" || body.code === "APARTMENT_HAS_REGISTRATION") {
@@ -278,15 +278,15 @@ export function AdminWaitlist() {
 
           <div style={{ marginBottom: "0.75rem" }}>
             <label
-              htmlFor="assign-box-id"
+              htmlFor="assign-table-id"
               style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.25rem", color: colors.warmBrown, fontFamily: fonts.body }}
             >
               {t("admin.waitlist.assignTableId")}
             </label>
             <select
-              id="assign-box-id"
-              value={assignBoxId}
-              onChange={(e) => setAssignBoxId(e.target.value)}
+              id="assign-table-id"
+              value={assignTableId}
+              onChange={(e) => setAssignTableId(e.target.value)}
               style={{
                 width: "100%",
                 maxWidth: 300,
@@ -308,13 +308,13 @@ export function AdminWaitlist() {
             </select>
           </div>
 
-          {assignBoxId && Number(assignBoxId) > 0 && (
+          {assignTableId && Number(assignTableId) > 0 && (
             <NotificationComposer
               action="waitlist_assign"
               recipientName={assigningEntry.name}
               recipientEmail={assigningEntry.email}
               recipientLanguage={assigningEntry.language}
-              tableId={Number(assignBoxId)}
+              tableId={Number(assignTableId)}
               value={assignNotification}
               onChange={setAssignNotification}
             />

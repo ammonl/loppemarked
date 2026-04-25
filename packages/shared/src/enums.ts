@@ -1,10 +1,10 @@
-/** Box availability states */
-export const BOX_STATES = ["available", "occupied", "reserved"] as const;
-export type BoxState = (typeof BOX_STATES)[number];
+/** Table availability states */
+export const TABLE_STATES = ["available", "occupied", "reserved"] as const;
+export type TableState = (typeof TABLE_STATES)[number];
 
-/** Box states visible to public users (reserved is mapped to occupied) */
-export const PUBLIC_BOX_STATES = ["available", "occupied"] as const;
-export type PublicBoxState = (typeof PUBLIC_BOX_STATES)[number];
+/** Table states visible to public users (reserved is mapped to occupied) */
+export const PUBLIC_TABLE_STATES = ["available", "occupied"] as const;
+export type PublicTableState = (typeof PUBLIC_TABLE_STATES)[number];
 
 /** Registration lifecycle states */
 export const REGISTRATION_STATUSES = ["active", "switched", "removed"] as const;

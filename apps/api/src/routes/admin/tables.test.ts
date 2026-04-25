@@ -27,17 +27,17 @@ function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
 }
 
 describe("handleAdminTables", () => {
-  function mockListDb(boxRows: unknown[], regRows: unknown[]) {
-    const boxExecuteFn = vi.fn().mockResolvedValue(boxRows);
-    const boxOrderByFn = vi.fn().mockReturnValue({ execute: boxExecuteFn });
-    const boxSelectFn = vi.fn().mockReturnValue({ orderBy: boxOrderByFn });
+  function mockListDb(tableRows: unknown[], regRows: unknown[]) {
+    const tableExecuteFn = vi.fn().mockResolvedValue(tableRows);
+    const tableOrderByFn = vi.fn().mockReturnValue({ execute: tableExecuteFn });
+    const tableSelectFn = vi.fn().mockReturnValue({ orderBy: tableOrderByFn });
 
     const regExecuteFn = vi.fn().mockResolvedValue(regRows);
     const regWhereFn = vi.fn().mockReturnValue({ execute: regExecuteFn });
     const regSelectFn = vi.fn().mockReturnValue({ where: regWhereFn });
 
     const selectFromFn = vi.fn()
-      .mockReturnValueOnce({ select: boxSelectFn })
+      .mockReturnValueOnce({ select: tableSelectFn })
       .mockReturnValueOnce({ select: regSelectFn });
 
     return { selectFrom: selectFromFn } as unknown as Kysely<Database>;
@@ -69,7 +69,7 @@ describe("handleAdminTables", () => {
     });
   });
 
-  it("returns empty array when no boxes exist", async () => {
+  it("returns empty array when no tables exist", async () => {
     const res = await handleAdminTables(makeCtx({ db: mockListDb([], []) }));
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual([]);
@@ -97,7 +97,7 @@ describe("handleReserveTable", () => {
     }
   });
 
-  it("throws 400 when box is not available", async () => {
+  it("throws 400 when table is not available", async () => {
     const executeTakeFirstFn = vi.fn().mockResolvedValue({ id: 1, state: "occupied" });
     const forUpdateFn = vi.fn().mockReturnValue({ executeTakeFirst: executeTakeFirstFn });
     const whereFn = vi.fn().mockReturnValue({ forUpdate: forUpdateFn });
@@ -140,7 +140,7 @@ describe("handleReleaseTable", () => {
     }
   });
 
-  it("throws 400 when box is not reserved", async () => {
+  it("throws 400 when table is not reserved", async () => {
     const executeTakeFirstFn = vi.fn().mockResolvedValue({ id: 1, state: "available" });
     const forUpdateFn = vi.fn().mockReturnValue({ executeTakeFirst: executeTakeFirstFn });
     const whereFn = vi.fn().mockReturnValue({ forUpdate: forUpdateFn });

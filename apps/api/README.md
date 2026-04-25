@@ -52,7 +52,7 @@ src/
 │   │   ├── settings.ts      System settings (opening time)
 │   │   └── waitlist.ts      Waitlist assignment
 │   ├── health.ts            Health check endpoint
-│   └── public.ts            Public status, boxes, register, and waitlist
+│   └── public.ts            Public status, tables, register, and waitlist
 ├── router.ts                Route registration
 ├── dev-server.ts            Local development HTTP server
 ├── lambda.ts                AWS Lambda handler entry point

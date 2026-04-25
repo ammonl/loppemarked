@@ -9,11 +9,11 @@ import {
 describe("resolveTableLabel", () => {
   const labels = { "5": "Table #5", "10": "Table #10" };
 
-  it("resolves a numeric box ID", () => {
+  it("resolves a numeric table ID", () => {
     expect(resolveTableLabel(5, labels)).toBe("Table #5");
   });
 
-  it("resolves a string box ID", () => {
+  it("resolves a string table ID", () => {
     expect(resolveTableLabel("10", labels)).toBe("Table #10");
   });
 
@@ -154,7 +154,7 @@ describe("formatEventDetails", () => {
     expect(lines[0]).toEqual({ label: "audit.detail.recipient", value: "bob@example.com" });
   });
 
-  it("formats table_state_change with box label and state transition", () => {
+  it("formats table_state_change with table label and state transition", () => {
     const evt = makeEvent({
       action: "table_state_change",
       entityType: "table",
@@ -168,7 +168,7 @@ describe("formatEventDetails", () => {
     expect(lines[1]).toEqual({ label: "audit.detail.stateChange", value: "available \u2192 occupied" });
   });
 
-  it("formats registration_create with box, name, and address", () => {
+  it("formats registration_create with table, name, and address", () => {
     const evt = makeEvent({
       action: "registration_create",
       after: { table_id: 5, name: "Alice", apartment_key: "elm street 42" },
@@ -192,7 +192,7 @@ describe("formatEventDetails", () => {
     expect(lines[1]).toEqual({ label: "audit.detail.name", value: "Bob" });
   });
 
-  it("formats registration_move with box transition", () => {
+  it("formats registration_move with table transition", () => {
     const evt = makeEvent({
       action: "registration_move",
       before: { table_id: 5 },

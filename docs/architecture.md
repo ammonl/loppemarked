@@ -52,7 +52,7 @@ graph TB
 
     subgraph "Shared Components"
         TM[TableMap]
-        BSL[BoxStateLegend]
+        TSL[TableStateLegend]
         LS[LanguageSelector]
     end
 
@@ -66,7 +66,7 @@ graph TB
     PAGE -->|open, no selection| LAND
     PAGE -->|enter map| MAP
     MAP --> TM
-    MAP --> BSL
+    MAP --> TSL
     LP --> TR
 ```
 
