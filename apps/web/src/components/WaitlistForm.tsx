@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
@@ -38,6 +38,15 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
 
   const parsedHouseNumber = parseInt(houseNumber, 10);
   const needsFloorDoor = !isNaN(parsedHouseNumber) && isFloorDoorRequired(parsedHouseNumber);
+
+  // Clear floor/door whenever the house number no longer requires them so
+  // stale values don't leak into the submitted payload (and the apartment key).
+  useEffect(() => {
+    if (!needsFloorDoor) {
+      setFloor("");
+      setDoor("");
+    }
+  }, [needsFloorDoor]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

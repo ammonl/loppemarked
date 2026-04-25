@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ELIGIBLE_STREET,
   HOUSE_NUMBER_MIN,
@@ -47,6 +47,15 @@ export function RegistrationForm({ boxId, onCancel, onBoxUnavailable, onSuccess,
 
   const parsedHouseNumber = parseInt(houseNumber, 10);
   const needsUnitFields = !isNaN(parsedHouseNumber) && isFloorDoorRequired(parsedHouseNumber);
+
+  // Clear floor/door whenever the house number no longer requires them so
+  // stale values don't leak into the submitted payload (and the apartment key).
+  useEffect(() => {
+    if (!needsUnitFields) {
+      setFloor("");
+      setDoor("");
+    }
+  }, [needsUnitFields]);
 
   function buildPayload(opts?: { confirmSwitch?: boolean }) {
     return {
