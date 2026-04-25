@@ -25,10 +25,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     db,
   );
 
-  const idList = VISIBLE_TABLE_IDS.join(", ");
-  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_id_in_catalog CHECK (id IN (${sql.raw(idList)}))`.execute(
-    db,
-  );
+  await sql`ALTER TABLE tables ADD CONSTRAINT chk_table_id_in_catalog CHECK (id IN (${sql.join(
+    VISIBLE_TABLE_IDS.map((id) => sql`${id}`),
+  )}))`.execute(db);
 
   // Admins
   await db.schema

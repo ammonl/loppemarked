@@ -13,9 +13,9 @@ vi.mock("./NotificationComposer", () => ({
 }));
 
 const mockBoxes = [
-  { id: 1, name: "Linaria", greenhouse: "Kronen", state: "available", registration: null },
-  { id: 2, name: "Harebell", greenhouse: "Kronen", state: "occupied", registration: { id: "r1", name: "Alice", email: "alice@test.com", language: "en" } },
-  { id: 3, name: "Larkspur", greenhouse: "Kronen", state: "reserved", registration: null },
+  { id: 1, state: "available", registration: null },
+  { id: 2, state: "occupied", registration: { id: "r1", name: "Alice", email: "alice@test.com", language: "en" } },
+  { id: 3, state: "reserved", registration: null },
 ];
 
 describe("AdminBoxes", () => {

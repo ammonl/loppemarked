@@ -7,14 +7,14 @@ import {
 } from "./AuditTimeline";
 
 describe("resolveTableLabel", () => {
-  const labels = { "5": "Kronen - Blue Tit", "10": "Søen - Robin" };
+  const labels = { "5": "Table #5", "10": "Table #10" };
 
   it("resolves a numeric box ID", () => {
-    expect(resolveTableLabel(5, labels)).toBe("Kronen - Blue Tit");
+    expect(resolveTableLabel(5, labels)).toBe("Table #5");
   });
 
   it("resolves a string box ID", () => {
-    expect(resolveTableLabel("10", labels)).toBe("Søen - Robin");
+    expect(resolveTableLabel("10", labels)).toBe("Table #10");
   });
 
   it("returns null for missing ID", () => {
@@ -93,7 +93,7 @@ describe("formatApartmentKeyAsAddress", () => {
 
 describe("formatEventDetails", () => {
   const t = (key: string) => key;
-  const tableLabels = { "5": "Kronen - Blue Tit", "10": "Søen - Robin" };
+  const tableLabels = { "5": "Table #5", "10": "Table #10" };
 
   function makeEvent(overrides: Record<string, unknown>) {
     return {
@@ -157,14 +157,14 @@ describe("formatEventDetails", () => {
   it("formats table_state_change with box label and state transition", () => {
     const evt = makeEvent({
       action: "table_state_change",
-      entityType: "planter_box",
+      entityType: "table",
       entityId: "5",
       before: { state: "available" },
       after: { state: "occupied" },
     });
     const lines = formatEventDetails(evt, tableLabels, t as never);
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Kronen - Blue Tit" });
+    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Table #5" });
     expect(lines[1]).toEqual({ label: "audit.detail.stateChange", value: "available \u2192 occupied" });
   });
 
@@ -175,7 +175,7 @@ describe("formatEventDetails", () => {
     });
     const lines = formatEventDetails(evt, tableLabels, t as never);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Kronen - Blue Tit" });
+    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Table #5" });
     expect(lines[1]).toEqual({ label: "audit.detail.name", value: "Alice" });
     expect(lines[2]).toEqual({ label: "audit.detail.address", value: "Elm Street 42" });
   });
@@ -188,7 +188,7 @@ describe("formatEventDetails", () => {
     });
     const lines = formatEventDetails(evt, tableLabels, t as never);
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Søen - Robin" });
+    expect(lines[0]).toEqual({ label: "audit.detail.table", value: "Table #10" });
     expect(lines[1]).toEqual({ label: "audit.detail.name", value: "Bob" });
   });
 
@@ -202,7 +202,7 @@ describe("formatEventDetails", () => {
     expect(lines).toHaveLength(1);
     expect(lines[0]).toEqual({
       label: "audit.detail.table",
-      value: "Kronen - Blue Tit \u2192 Søen - Robin",
+      value: "Table #5 \u2192 Table #10",
     });
   });
 

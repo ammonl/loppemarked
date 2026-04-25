@@ -143,8 +143,8 @@ describe("AdminWaitlist", () => {
 
     it("disables occupied boxes and appends (occupied) suffix in assign dialog", async () => {
       const boxesData = [
-        { id: 1, name: "Linaria", greenhouse: "Kronen", state: "occupied" },
-        { id: 5, name: "Elm", greenhouse: "Kronen", state: "available" },
+        { id: 1, state: "occupied" },
+        { id: 5, state: "available" },
       ];
       const fetchMock = mockFetch([
         { ok: true, body: waitlistEntries },

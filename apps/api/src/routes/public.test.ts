@@ -502,7 +502,6 @@ describe("handleJoinWaitlist", () => {
     floor: null,
     door: null,
     language: "da",
-    greenhousePreference: "any",
   };
 
   it("throws badRequest when body is missing", async () => {
@@ -590,7 +589,6 @@ describe("handleJoinWaitlist (happy path)", () => {
     floor: null,
     door: null,
     language: "da",
-    greenhousePreference: "any",
   };
 
   beforeEach(() => {
@@ -896,7 +894,6 @@ describe("server-side floor/door normalization (issue #97)", () => {
             floor: "2",
             door: "th",
             language: "da",
-            greenhousePreference: "any",
           },
         }),
       );
@@ -933,7 +930,6 @@ describe("server-side floor/door normalization (issue #97)", () => {
             floor: "2",
             door: "th",
             language: "da",
-            greenhousePreference: "any",
           },
         }),
       );
@@ -1268,7 +1264,6 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
           street: "Else Alfelts Vej",
           houseNumber: 130,
           language: "da",
-          greenhousePreference: "any",
         },
       }),
     );
@@ -1392,7 +1387,6 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
           street: "Else Alfelts Vej",
           houseNumber: 130,
           language: "en",
-          greenhousePreference: "any",
         },
       }),
     );
