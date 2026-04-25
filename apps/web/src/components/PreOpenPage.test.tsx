@@ -14,14 +14,21 @@ vi.mock("@/i18n/LanguageProvider", () => ({
 const OPENING = "2026-04-01T10:00:00.000Z";
 
 describe("PreOpenPage", () => {
+  let originalLocation: Location;
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-30T09:59:50.000Z"));
+    originalLocation = window.location;
   });
 
   afterEach(() => {
     vi.useRealTimers();
     cleanup();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
   it("renders the share-your-treasures phrase, pre-open title, and eligibility copy", () => {
@@ -74,5 +81,47 @@ describe("PreOpenPage", () => {
 
     const after = board.textContent ?? "";
     expect(after).not.toBe(initial);
+  });
+
+  it("refreshes the page when the countdown completes", () => {
+    vi.setSystemTime(new Date("2026-04-01T09:59:58.000Z"));
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, reload },
+    });
+
+    render(<PreOpenPage openingDatetime={OPENING} />);
+
+    expect(reload).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refresh if the page mounts after the countdown already finished", () => {
+    vi.setSystemTime(new Date("2026-04-01T10:00:05.000Z"));
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, reload },
+    });
+
+    render(<PreOpenPage openingDatetime={OPENING} />);
+
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+
+    expect(reload).not.toHaveBeenCalled();
   });
 });

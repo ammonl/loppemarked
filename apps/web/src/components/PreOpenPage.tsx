@@ -47,7 +47,24 @@ export function PreOpenPage({ openingDatetime }: PreOpenPageProps) {
   const [parts, setParts] = useState<CountdownParts>(() => diffParts(targetMs, targetMs));
 
   useEffect(() => {
-    const tick = () => setParts(diffParts(targetMs, Date.now()));
+    // Only refresh once, and only if we actually observed a positive
+    // remaining time during this mount; this prevents a reload loop when the
+    // server clock has not yet caught up to the client.
+    let wasRunning = false;
+    let refreshed = false;
+    const tick = () => {
+      const now = Date.now();
+      const remaining = targetMs - now;
+      setParts(diffParts(targetMs, now));
+      if (remaining > 0) {
+        wasRunning = true;
+        return;
+      }
+      if (wasRunning && !refreshed && typeof window !== "undefined") {
+        refreshed = true;
+        window.location.reload();
+      }
+    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
