@@ -6,7 +6,7 @@ import { colors, fonts } from "@/styles/theme";
 
 interface NotificationPrefsData {
   notifyUserRegistration: boolean;
-  notifyAdminBoxAction: boolean;
+  notifyAdminTableAction: boolean;
   updatedAt: string | null;
 }
 
@@ -34,7 +34,7 @@ export function AdminNotificationPreferences() {
     fetchPrefs();
   }, [fetchPrefs]);
 
-  async function handleToggle(field: "notifyUserRegistration" | "notifyAdminBoxAction") {
+  async function handleToggle(field: "notifyUserRegistration" | "notifyAdminTableAction") {
     if (!data) return;
     setMessage(null);
     setSaving(true);
@@ -107,13 +107,13 @@ export function AdminNotificationPreferences() {
         >
           <input
             type="checkbox"
-            checked={data.notifyAdminBoxAction}
-            onChange={() => handleToggle("notifyAdminBoxAction")}
+            checked={data.notifyAdminTableAction}
+            onChange={() => handleToggle("notifyAdminTableAction")}
             disabled={saving}
             style={{ width: 18, height: 18, accentColor: colors.sage }}
           />
           <span style={{ fontSize: "0.95rem", color: colors.warmBrown, fontFamily: fonts.body }}>
-            {t("admin.notifications.adminBoxAction")}
+            {t("admin.notifications.adminTableAction")}
           </span>
         </label>
       </div>

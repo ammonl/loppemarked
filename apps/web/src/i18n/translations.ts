@@ -240,7 +240,7 @@ const da = {
   "admin.notifications.title": "E-mailnotifikationer",
   "admin.notifications.description": "Vælg hvilke begivenheder du vil modtage e-mailnotifikationer om.",
   "admin.notifications.userRegistration": "Bruger booker eller skifter loppebord",
-  "admin.notifications.adminBoxAction": "Anden administrator udfører bordhandlinger",
+  "admin.notifications.adminTableAction": "Anden administrator udfører bordhandlinger",
 
   "admin.tab.registrations": "Bookinger",
   "admin.tab.waitlist": "Venteliste",
@@ -677,7 +677,7 @@ const en: Record<TranslationKey, string> = {
   "admin.notifications.title": "Email notifications",
   "admin.notifications.description": "Choose which events you want to receive email notifications about.",
   "admin.notifications.userRegistration": "User books or switches table",
-  "admin.notifications.adminBoxAction": "Another admin takes table actions",
+  "admin.notifications.adminTableAction": "Another admin takes table actions",
 
   "admin.tab.registrations": "Bookings",
   "admin.tab.waitlist": "Waitlist",
