@@ -42,23 +42,56 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("<svg");
     expect(result.bodyHtml).toContain('viewBox="0 0 120 80"');
     // The booking-details location row no longer renders the bare text
-    // "Fælledhuset" — it shows an SVG plus a localized caption referencing the
-    // booked table number.
-    expect(result.bodyHtml).toContain("Bord #3 markeret med rødt");
-    expect(result.bodyHtml).toContain("plantegningen over Fælledhuset");
+    // `Fælledhuset` as a standalone value — it shows a summary line plus an
+    // SVG and caption referencing the booked table number.
+    expect(result.bodyHtml).toContain("Fælledhuset · Bord #3");
+    expect(result.bodyHtml).toContain("Bord #3 er markeret med rødt");
   });
 
-  it("highlights the booked table tile in the SVG", () => {
+  it("highlights the booked table tile in the SVG with the brand salmon fill", () => {
     const result = buildConfirmationEmail(baseData);
-    // The booked table is filled with brand salmon; other tiles use brand
-    // greenSoft. Verify the salmon fill appears at least once for the tile.
     expect(result.bodyHtml).toMatch(/fill="#C6705D"/);
   });
 
-  it("renders an English caption when language is en", () => {
+  it("uses an SVG <title> for accessibility instead of aria-label", () => {
+    const result = buildConfirmationEmail(baseData);
+    expect(result.bodyHtml).toContain("<title>Plantegning over Fælledhuset");
+    expect(result.bodyHtml).toContain("bord #3 fremhævet");
+    expect(result.bodyHtml).not.toMatch(/aria-label="Plantegning/);
+  });
+
+  it("renders one tile per catalog entry", () => {
+    const result = buildConfirmationEmail(baseData);
+    const tileMatches = result.bodyHtml.match(/<rect x="\d+(?:\.\d+)?" y="\d+(?:\.\d+)?" width="\d+(?:\.\d+)?" height="\d+(?:\.\d+)?" rx="0\.9"/g);
+    expect(tileMatches).not.toBeNull();
+    expect(tileMatches).toHaveLength(29);
+  });
+
+  it("wraps the SVG in an Outlook-skipping conditional comment", () => {
+    const result = buildConfirmationEmail(baseData);
+    expect(result.bodyHtml).toContain("<!--[if !mso]><!-->");
+    expect(result.bodyHtml).toContain("<!--<![endif]-->");
+  });
+
+  it("renders an English summary and caption when language is en", () => {
     const result = buildConfirmationEmail({ ...baseData, language: "en" });
-    expect(result.bodyHtml).toContain("Table #3 highlighted in red");
-    expect(result.bodyHtml).toContain("Fælledhuset floor plan");
+    expect(result.bodyHtml).toContain("Fælledhuset · Table #3");
+    expect(result.bodyHtml).toContain("Table #3 is highlighted in red on the Fælledhuset floor plan");
+  });
+
+  it("falls back to text-only location info when the table id is unknown", () => {
+    const result = buildConfirmationEmail({ ...baseData, boxId: 999 });
+    // No SVG is rendered for an unknown table — the recipient still sees the
+    // venue name and a textual fallback.
+    expect(result.bodyHtml).not.toContain("<svg");
+    expect(result.bodyHtml).toContain("Fælledhuset");
+    expect(result.bodyHtml).toContain("Dit bord #999 står i Fælledhuset");
+  });
+
+  it("falls back to English text-only location info when the table id is unknown", () => {
+    const result = buildConfirmationEmail({ ...baseData, language: "en", boxId: 999 });
+    expect(result.bodyHtml).not.toContain("<svg");
+    expect(result.bodyHtml).toContain("Your table #999 is in Fælledhuset");
   });
 
   it("still references Fælledhuset in the email footer and intro", () => {
@@ -97,7 +130,7 @@ describe("buildConfirmationEmail", () => {
     expect(enResult.bodyHtml).not.toContain("Practical information");
 
     const daResult = buildConfirmationEmail(baseData);
-    expect(daResult.bodyHtml).toContain("Sælgerinformation");
+    expect(daResult.bodyHtml).toContain("Retningslinjer for sælgere");
     expect(daResult.bodyHtml).not.toContain("Praktisk information");
   });
 
@@ -122,15 +155,15 @@ describe("buildConfirmationEmail", () => {
   it("includes the clothing-rack guideline", () => {
     const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
     expect(enResult.bodyHtml).toContain(
-      "only bring a clothing rack if one is included in your booking",
+      "Clothing racks are only allowed if rack space is included in your booking",
     );
-    expect(enResult.bodyHtml).toContain("Sellers must bring their own clothing racks.");
+    expect(enResult.bodyHtml).toContain("you must bring your own clothing rack");
 
     const daResult = buildConfirmationEmail(baseData);
     expect(daResult.bodyHtml).toContain(
-      "kun medbringe et tøjstativ, hvis det indgår i din booking",
+      "Tøjstativer er kun tilladt, hvis stativplads indgår i din booking",
     );
-    expect(daResult.bodyHtml).toContain("Sælgere skal selv medbringe deres tøjstativ.");
+    expect(daResult.bodyHtml).toContain("du skal selv medbringe dit tøjstativ");
   });
 
   it("does not include a community or WhatsApp section", () => {
