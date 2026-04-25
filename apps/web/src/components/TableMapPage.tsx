@@ -87,6 +87,10 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
         <p className="flea-map__intro">{t("table.pageIntro")}</p>
       </header>
 
+      <SellerNotes />
+
+      <hr className="flea-map__divider" aria-hidden="true" />
+
       <div className="flea-map__counts">
         <span>
           {t("table.totalLabel")}: <strong>{total}</strong>
@@ -98,8 +102,6 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
           {t("table.reservedLabel")}: <strong className="is-reserved">{reserved}</strong>
         </span>
       </div>
-
-      <SellerNotes />
 
       <div className="flea-map__legend">
         <TableStateLegend />
