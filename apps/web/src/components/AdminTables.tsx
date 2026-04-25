@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TableState } from "@loppemarked/shared";
 import {
   ELIGIBLE_STREET,
-  HOUSE_NUMBER_MIN,
-  HOUSE_NUMBER_MAX,
   formatTableLabel,
   getTableById,
   isFloorDoorRequired,
@@ -606,11 +604,12 @@ export function AdminTables() {
               <label htmlFor="table-add-house-number" style={labelStyle}>{t("admin.registrations.addHouseNumber")} *</label>
               <input
                 id="table-add-house-number"
-                type="number"
-                min={HOUSE_NUMBER_MIN}
-                max={HOUSE_NUMBER_MAX}
+                type="text"
+                inputMode="numeric"
+                pattern="\d{3}"
+                maxLength={3}
                 value={addHouseNumber}
-                onChange={(e) => { setAddHouseNumber(e.target.value); setAddFloor(""); setAddDoor(""); }}
+                onChange={(e) => { setAddHouseNumber(e.target.value.replace(/\D/g, "")); setAddFloor(""); setAddDoor(""); }}
                 style={inputStyle}
               />
             </div>
