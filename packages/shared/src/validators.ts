@@ -107,6 +107,22 @@ export function validateAddress(
 }
 
 /**
+ * Drop floor/door for house numbers that don't require them. Used by both
+ * the public-facing forms (#95) and the API endpoints (#97) so the
+ * apartment dedupe key is identical regardless of any stray client input.
+ */
+export function effectiveFloorDoor(
+  houseNumber: number,
+  floor: string | null | undefined,
+  door: string | null | undefined,
+): { floor: string | null; door: string | null } {
+  if (!isFloorDoorRequired(houseNumber)) {
+    return { floor: null, door: null };
+  }
+  return { floor: floor ?? null, door: door ?? null };
+}
+
+/**
  * Generate a normalized apartment key from address components.
  * Used as the uniqueness constraint for one-box-per-apartment rule.
  *

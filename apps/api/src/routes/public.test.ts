@@ -829,6 +829,43 @@ describe("server-side floor/door normalization (issue #97)", () => {
         apartment_key: "else alfelts vej 122",
       });
     });
+
+    it("preserves floor/door for floor-required house numbers", async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      const captures: MockRegisterCaptures = {};
+      const mockDb = makeMockDbForRegister(
+        {
+          openingDatetime: pastDate,
+          box: { id: 1, state: "available" },
+          existingReg: undefined,
+          newRegId: "reg-keep",
+        },
+        captures,
+      );
+
+      const res = await handlePublicRegister(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 138,
+            floor: "2",
+            door: "th",
+            boxId: 1,
+            language: "da",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(200);
+      expect(captures.registrationInsertValues).toMatchObject({
+        floor: "2",
+        door: "th",
+        apartment_key: "else alfelts vej 138/2-th",
+      });
+    });
   });
 
   describe("handleJoinWaitlist", () => {
@@ -871,6 +908,43 @@ describe("server-side floor/door normalization (issue #97)", () => {
         floor: null,
         door: null,
         apartment_key: "else alfelts vej 122",
+      });
+    });
+
+    it("preserves floor/door for floor-required house numbers", async () => {
+      const captures: MockWaitlistCaptures = {};
+      const mockDb = makeMockDbForWaitlist(
+        {
+          availableCount: 0,
+          existingEntry: undefined,
+          newEntryId: "wl-keep",
+          positionEntryCreatedAt: "2026-03-01T10:00:00Z",
+          positionCount: 1,
+        },
+        captures,
+      );
+
+      const res = await handleJoinWaitlist(
+        makeCtx({
+          db: mockDb,
+          body: {
+            name: "Alice",
+            email: "alice@example.com",
+            street: "Else Alfelts Vej",
+            houseNumber: 138,
+            floor: "2",
+            door: "th",
+            language: "da",
+            greenhousePreference: "any",
+          },
+        }),
+      );
+
+      expect(res.statusCode).toBe(201);
+      expect(captures.waitlistInsertValues).toMatchObject({
+        floor: "2",
+        door: "th",
+        apartment_key: "else alfelts vej 138/2-th",
       });
     });
   });

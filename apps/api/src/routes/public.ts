@@ -2,6 +2,7 @@ import {
   BOX_CATALOG,
   GREENHOUSES,
   RESERVED_LABEL_AWAITING_REVIEW,
+  effectiveFloorDoor,
   formatTableLabel,
   isFloorDoorRequired,
   normalizeApartmentKey,
@@ -140,23 +141,6 @@ export async function handleValidateAddress(ctx: RequestContext): Promise<RouteR
       apartmentKey: normalizeApartmentKey(street, houseNumber, floor, door),
     },
   };
-}
-
-/**
- * Drop client-supplied floor/door for house numbers that don't require them.
- * Mirrors the client-side normalization in #95 so a malicious or future buggy
- * client cannot bypass the one-box-per-apartment dedupe by submitting stray
- * floor/door values for a row-house address (see #97).
- */
-function effectiveFloorDoor(
-  houseNumber: number,
-  floor: string | null | undefined,
-  door: string | null | undefined,
-): { floor: string | null; door: string | null } {
-  if (!isFloorDoorRequired(houseNumber)) {
-    return { floor: null, door: null };
-  }
-  return { floor: floor ?? null, door: door ?? null };
 }
 
 export async function handleValidateRegistration(ctx: RequestContext): Promise<RouteResponse> {

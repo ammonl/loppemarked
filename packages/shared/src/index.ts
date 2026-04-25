@@ -80,6 +80,7 @@ export {
   isFloorDoorRequired,
   validateFloorDoor,
   validateAddress,
+  effectiveFloorDoor,
   normalizeApartmentKey,
   formatAddress,
   validateName,
