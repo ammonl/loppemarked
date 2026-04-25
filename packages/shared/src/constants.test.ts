@@ -106,14 +106,18 @@ describe("EVENT_CONTACT", () => {
 });
 
 describe("TABLE_CATALOG", () => {
-  it("has one entry per planter box", () => {
-    expect(TABLE_CATALOG).toHaveLength(TOTAL_BOX_COUNT);
+  it("matches the published Fælledhuset map (23 visible tables)", () => {
+    expect(TABLE_CATALOG).toHaveLength(23);
   });
 
-  it("numbers tables 1-29 matching id", () => {
-    TABLE_CATALOG.forEach((t, i) => {
-      expect(t.id).toBe(i + 1);
-      expect(t.number).toBe(i + 1);
+  it("uses ids matching the reference numbering, with a deliberate gap at 22", () => {
+    const ids = TABLE_CATALOG.map((t) => t.id);
+    const expected = [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24,
+    ];
+    expect(ids).toEqual(expected);
+    TABLE_CATALOG.forEach((t) => {
+      expect(t.number).toBe(t.id);
     });
   });
 
@@ -137,20 +141,31 @@ describe("TABLE_CATALOG", () => {
 
   it("resolves by id via getTableById", () => {
     expect(getTableById(1)?.number).toBe(1);
-    expect(getTableById(29)?.number).toBe(29);
+    expect(getTableById(24)?.number).toBe(24);
+    expect(getTableById(22)).toBeUndefined();
     expect(getTableById(999)).toBeUndefined();
+    // BOX_CATALOG still seeds id 29 against legacy planter rows; the
+    // shrunken map should not surface it as a bookable table.
+    expect(getTableById(29)).toBeUndefined();
+  });
+
+  it("references TOTAL_BOX_COUNT only for legacy planter seed parity", () => {
+    // The map shrunk from 29 to 23 visible tables; this assertion
+    // keeps the relationship explicit so a future BOX_CATALOG resync
+    // does not silently desync from the map.
+    expect(TABLE_CATALOG.length).toBeLessThan(TOTAL_BOX_COUNT);
   });
 });
 
 describe("formatTableLabel", () => {
   it("renders a short label by default", () => {
     expect(formatTableLabel(1)).toBe("Table #1");
-    expect(formatTableLabel(29)).toBe("Table #29");
+    expect(formatTableLabel(24)).toBe("Table #24");
   });
 
   it("renders size when details requested", () => {
     expect(formatTableLabel(1, { includeDetails: true })).toBe("Table #1 · 2 m");
-    expect(formatTableLabel(23, { includeDetails: true })).toBe("Table #23 · 3 m");
+    expect(formatTableLabel(23, { includeDetails: true })).toBe("Table #23 · 2 m");
   });
 
   it("falls back to the raw id for unknown tables", () => {

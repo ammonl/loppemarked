@@ -30,8 +30,11 @@ export {
   TABLE_MAP_VIEWBOX,
   STANDARD_TABLE_SIZE_LABEL,
   CLOTHING_RACK_TABLE_IDS,
+  CLOTHING_RACKS,
+  VISIBLE_TABLE_IDS,
   getTableById,
   tableHasClothingRack,
+  getClothingRackSide,
   formatTableLabel,
   DEFAULT_OPENING_DATETIME,
   OPENING_TIMEZONE,
@@ -54,7 +57,13 @@ export {
   SEED_ADMIN_EMAILS,
 } from "./constants.js";
 
-export type { Greenhouse, BoxCatalogEntry, GreenhousePreference, TableCatalogEntry } from "./constants.js";
+export type {
+  Greenhouse,
+  BoxCatalogEntry,
+  GreenhousePreference,
+  TableCatalogEntry,
+  ClothingRackSide,
+} from "./constants.js";
 
 export type {
   SystemSettings,

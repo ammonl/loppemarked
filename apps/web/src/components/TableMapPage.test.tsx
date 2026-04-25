@@ -84,7 +84,9 @@ describe("TableMapPage", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/public/boxes");
     expect(screen.getByTestId("table-tile-1")).toBeDefined();
-    expect(screen.getByTestId("table-tile-29")).toBeDefined();
+    expect(screen.getByTestId("table-tile-24")).toBeDefined();
+    // id 22 is intentionally absent from the published map.
+    expect(screen.queryByTestId("table-tile-22")).toBeNull();
     expect(screen.getByText("table.pageTitle")).toBeDefined();
   });
 

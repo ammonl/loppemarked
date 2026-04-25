@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
-import { getTableById, STANDARD_TABLE_SIZE_LABEL, tableHasClothingRack } from "@loppemarked/shared";
+import {
+  VISIBLE_TABLE_IDS,
+  getTableById,
+  STANDARD_TABLE_SIZE_LABEL,
+  tableHasClothingRack,
+} from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LoadingSplash } from "./LoadingSplash";
@@ -49,8 +54,12 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
     return map;
   }, [boxes]);
 
-  const total = boxes.length;
-  const available = boxes.filter((b) => b.state === "available").length;
+  const visibleBoxes = useMemo(
+    () => boxes.filter((b) => VISIBLE_TABLE_IDS.includes(b.id)),
+    [boxes],
+  );
+  const total = visibleBoxes.length;
+  const available = visibleBoxes.filter((b) => b.state === "available").length;
   const reserved = total - available;
   const hasAvailable = available > 0;
 

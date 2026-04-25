@@ -68,10 +68,9 @@ export interface TableCatalogEntry {
 }
 
 /** SVG viewBox for the Fælledhuset hall map (width × height units). */
-export const TABLE_MAP_VIEWBOX = { width: 120, height: 80 } as const;
+export const TABLE_MAP_VIEWBOX = { width: 120, height: 95 } as const;
 
 const STANDARD_TABLE_SIZE_METERS = 2;
-const PREMIUM_TABLE_SIZE_METERS = 3;
 
 /**
  * Public-facing size label shown on the table-map detail panel. Until the
@@ -80,52 +79,75 @@ const PREMIUM_TABLE_SIZE_METERS = 3;
  */
 export const STANDARD_TABLE_SIZE_LABEL = "100x200cm" as const;
 
+/** Side of a table the adjacent clothing rack sits on, in map coordinates. */
+export type ClothingRackSide = "above" | "below" | "left" | "right";
+
 /**
- * Tables flagged for an adjacent clothing rack. Sellers without a flagged
- * table are not permitted to bring a rack of their own.
+ * Tables flagged for an adjacent clothing rack along with the rack's side
+ * relative to the table. Sellers without a flagged table are not permitted
+ * to bring a rack of their own. Layout matches the published Fælledhuset
+ * map reference.
  */
-export const CLOTHING_RACK_TABLE_IDS: readonly number[] = [8, 14, 18, 22];
+export const CLOTHING_RACKS: readonly { tableId: number; side: ClothingRackSide }[] = [
+  { tableId: 1, side: "above" },
+  { tableId: 3, side: "below" },
+  { tableId: 4, side: "above" },
+  { tableId: 11, side: "left" },
+  { tableId: 12, side: "right" },
+  { tableId: 13, side: "left" },
+  { tableId: 15, side: "above" },
+  { tableId: 18, side: "above" },
+  { tableId: 21, side: "above" },
+] as const;
+
+/** Convenience id-only list, kept for code that just needs membership. */
+export const CLOTHING_RACK_TABLE_IDS: readonly number[] = CLOTHING_RACKS.map(
+  (r) => r.tableId,
+);
 
 export function tableHasClothingRack(id: number): boolean {
   return CLOTHING_RACK_TABLE_IDS.includes(id);
 }
 
+export function getClothingRackSide(id: number): ClothingRackSide | undefined {
+  return CLOTHING_RACKS.find((r) => r.tableId === id)?.side;
+}
+
 /**
- * Fælledhuset hall table layout. Tables 1–22 line the perimeter
- * walls; tables 23–26 form the long center island (premium 3-meter
- * tables); tables 27–29 form a smaller second center aisle.
+ * Fælledhuset hall table layout, sourced from the published reference map.
+ * Tables 1–10 form the three left/center vertical aisles, 13–14 are a
+ * horizontal pair near the courtyard wall, 15–20 fill two right-of-center
+ * aisles, and 21/23/24 line the right wall (id 22 is intentionally
+ * skipped). 11 and 12 are the horizontal pair along the promenade wall.
  */
 export const TABLE_CATALOG: readonly TableCatalogEntry[] = [
-  { id: 1, number: 1, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 20, y: 12, width: 10, height: 5 },
-  { id: 2, number: 2, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 32, y: 12, width: 10, height: 5 },
-  { id: 3, number: 3, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 44, y: 12, width: 10, height: 5 },
-  { id: 4, number: 4, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 56, y: 12, width: 10, height: 5 },
-  { id: 5, number: 5, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 68, y: 12, width: 10, height: 5 },
-  { id: 6, number: 6, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 80, y: 12, width: 10, height: 5 },
-  { id: 7, number: 7, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 92, y: 12, width: 10, height: 5 },
-  { id: 8, number: 8, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 103, y: 22, width: 5, height: 10 },
-  { id: 9, number: 9, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 103, y: 34, width: 5, height: 10 },
-  { id: 10, number: 10, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 103, y: 46, width: 5, height: 10 },
-  { id: 11, number: 11, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 103, y: 58, width: 5, height: 10 },
-  { id: 12, number: 12, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 92, y: 63, width: 10, height: 5 },
-  { id: 13, number: 13, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 80, y: 63, width: 10, height: 5 },
-  { id: 14, number: 14, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 68, y: 63, width: 10, height: 5 },
-  { id: 15, number: 15, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 56, y: 63, width: 10, height: 5 },
-  { id: 16, number: 16, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 44, y: 63, width: 10, height: 5 },
-  { id: 17, number: 17, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 32, y: 63, width: 10, height: 5 },
-  { id: 18, number: 18, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 20, y: 63, width: 10, height: 5 },
-  { id: 19, number: 19, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 58, width: 5, height: 10 },
-  { id: 20, number: 20, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 46, width: 5, height: 10 },
-  { id: 21, number: 21, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 34, width: 5, height: 10 },
-  { id: 22, number: 22, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 22, width: 5, height: 10 },
-  { id: 23, number: 23, sizeMeters: PREMIUM_TABLE_SIZE_METERS, x: 22, y: 28, width: 15, height: 6 },
-  { id: 24, number: 24, sizeMeters: PREMIUM_TABLE_SIZE_METERS, x: 39, y: 28, width: 15, height: 6 },
-  { id: 25, number: 25, sizeMeters: PREMIUM_TABLE_SIZE_METERS, x: 66, y: 28, width: 15, height: 6 },
-  { id: 26, number: 26, sizeMeters: PREMIUM_TABLE_SIZE_METERS, x: 83, y: 28, width: 15, height: 6 },
-  { id: 27, number: 27, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 30, y: 46, width: 10, height: 5 },
-  { id: 28, number: 28, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 55, y: 46, width: 10, height: 5 },
-  { id: 29, number: 29, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 80, y: 46, width: 10, height: 5 },
+  { id: 1, number: 1, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 31, width: 6, height: 13 },
+  { id: 2, number: 2, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 44, width: 6, height: 13 },
+  { id: 3, number: 3, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 57, width: 6, height: 13 },
+  { id: 4, number: 4, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 25, width: 6, height: 13 },
+  { id: 5, number: 5, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 39, width: 6, height: 13 },
+  { id: 6, number: 6, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 52, width: 6, height: 13 },
+  { id: 7, number: 7, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 12, width: 6, height: 13 },
+  { id: 8, number: 8, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 25, width: 6, height: 13 },
+  { id: 9, number: 9, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 39, width: 6, height: 13 },
+  { id: 10, number: 10, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 52, width: 6, height: 13 },
+  { id: 11, number: 11, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 24, y: 76, width: 13, height: 6 },
+  { id: 12, number: 12, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 44, y: 76, width: 13, height: 6 },
+  { id: 13, number: 13, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 63, y: 13, width: 13, height: 6 },
+  { id: 14, number: 14, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 77, y: 13, width: 13, height: 6 },
+  { id: 15, number: 15, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 31, width: 6, height: 13 },
+  { id: 16, number: 16, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 47, width: 6, height: 13 },
+  { id: 17, number: 17, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 61, width: 6, height: 13 },
+  { id: 18, number: 18, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 31, width: 6, height: 13 },
+  { id: 19, number: 19, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 45, width: 6, height: 13 },
+  { id: 20, number: 20, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 58, width: 6, height: 13 },
+  { id: 21, number: 21, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 22, width: 6, height: 13 },
+  { id: 23, number: 23, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 36, width: 6, height: 13 },
+  { id: 24, number: 24, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 49, width: 6, height: 13 },
 ] as const;
+
+/** IDs of tables present on the published Fælledhuset map. */
+export const VISIBLE_TABLE_IDS: readonly number[] = TABLE_CATALOG.map((t) => t.id);
 
 /** Lookup helper for a table by its id (= box id). */
 export function getTableById(id: number): TableCatalogEntry | undefined {

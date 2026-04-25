@@ -1,7 +1,12 @@
 "use client";
 
-import type { PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
-import { TABLE_CATALOG, TABLE_MAP_VIEWBOX, tableHasClothingRack } from "@loppemarked/shared";
+import type { ClothingRackSide, PlanterBoxPublic, TableCatalogEntry } from "@loppemarked/shared";
+import {
+  TABLE_CATALOG,
+  TABLE_MAP_VIEWBOX,
+  getClothingRackSide,
+  tableHasClothingRack,
+} from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { colors } from "@/styles/theme";
 
@@ -15,30 +20,51 @@ const STATE_COLORS: Record<TableMapState, { fill: string; stroke: string; text: 
   valgt: { fill: colors.fleaBrass, stroke: colors.fleaBrassDark, text: colors.fleaCream },
 };
 
+const FLOOR_PLAN_INSET_X = 4;
+const FLOOR_PLAN_INSET_TOP = 8;
+const FLOOR_PLAN_INSET_BOTTOM = 8;
+
 /**
- * Returns the rectangle for a clothing rack drawn adjacent to a perimeter
- * tile, on its interior side so the rack always sits inside the floor plan.
+ * Returns the rectangle for a clothing rack drawn on the side of the table
+ * indicated by the published map reference.
  */
-function clothingRackRect(table: TableCatalogEntry) {
+function clothingRackRect(table: TableCatalogEntry, side: ClothingRackSide) {
   const RACK_DEPTH = 2;
   const RACK_GAP = 0.4;
-  const isVertical = table.height > table.width;
-  if (isVertical) {
-    const onRightWall = table.x > TABLE_MAP_VIEWBOX.width / 2;
-    const x = onRightWall
-      ? table.x - RACK_DEPTH - RACK_GAP
-      : table.x + table.width + RACK_GAP;
-    return { x, y: table.y, width: RACK_DEPTH, height: table.height };
+  switch (side) {
+    case "above":
+      return {
+        x: table.x,
+        y: table.y - RACK_DEPTH - RACK_GAP,
+        width: table.width,
+        height: RACK_DEPTH,
+      };
+    case "below":
+      return {
+        x: table.x,
+        y: table.y + table.height + RACK_GAP,
+        width: table.width,
+        height: RACK_DEPTH,
+      };
+    case "left":
+      return {
+        x: table.x - RACK_DEPTH - RACK_GAP,
+        y: table.y,
+        width: RACK_DEPTH,
+        height: table.height,
+      };
+    case "right":
+      return {
+        x: table.x + table.width + RACK_GAP,
+        y: table.y,
+        width: RACK_DEPTH,
+        height: table.height,
+      };
   }
-  const onBottomWall = table.y > TABLE_MAP_VIEWBOX.height / 2;
-  const y = onBottomWall
-    ? table.y - RACK_DEPTH - RACK_GAP
-    : table.y + table.height + RACK_GAP;
-  return { x: table.x, y, width: table.width, height: RACK_DEPTH };
 }
 
-function ClothingRackGlyph({ table }: { table: TableCatalogEntry }) {
-  const rect = clothingRackRect(table);
+function ClothingRackGlyph({ table, side }: { table: TableCatalogEntry; side: ClothingRackSide }) {
+  const rect = clothingRackRect(table, side);
   const isHorizontal = rect.width > rect.height;
   // Rod runs along the long axis of the rack.
   const rodInset = 0.3;
@@ -101,59 +127,65 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
           </radialGradient>
         </defs>
 
-        <rect x={4} y={4} width={width - 8} height={height - 8} rx={3} fill="url(#fleaFloor)" />
-        <rect x={4} y={4} width={width - 8} height={height - 8} rx={3} fill="url(#fleaFloorVignette)" />
-        <rect
-          x={4}
-          y={4}
-          width={width - 8}
-          height={height - 8}
-          rx={3}
-          fill="none"
-          stroke={colors.fleaCorkFrame}
-          strokeWidth={0.9}
-          strokeDasharray="0.8 1.2"
-          opacity={0.7}
-        />
+        {(() => {
+          const planX = FLOOR_PLAN_INSET_X;
+          const planY = FLOOR_PLAN_INSET_TOP;
+          const planW = width - FLOOR_PLAN_INSET_X * 2;
+          const planH = height - FLOOR_PLAN_INSET_TOP - FLOOR_PLAN_INSET_BOTTOM;
+          return (
+            <>
+              <rect x={planX} y={planY} width={planW} height={planH} rx={3} fill="url(#fleaFloor)" />
+              <rect x={planX} y={planY} width={planW} height={planH} rx={3} fill="url(#fleaFloorVignette)" />
+              <rect
+                x={planX}
+                y={planY}
+                width={planW}
+                height={planH}
+                rx={3}
+                fill="none"
+                stroke={colors.fleaCorkFrame}
+                strokeWidth={0.9}
+                strokeDasharray="0.8 1.2"
+                opacity={0.7}
+              />
+            </>
+          );
+        })()}
 
-        <rect
-          x={width / 2 - 7}
-          y={height - 5}
-          width={14}
-          height={3}
-          fill={colors.fleaCream}
-          stroke={colors.fleaCorkFrame}
-          strokeWidth={0.6}
-        />
         <text
           x={width / 2}
-          y={height - 2.4}
-          fontSize={2.4}
+          y={5}
+          fontSize={4}
+          fontWeight={700}
           textAnchor="middle"
+          fill={colors.fleaAccentInk}
+          fontFamily="'Caveat', cursive"
+        >
+          {t("table.floorPlanCourtyard")}
+        </text>
+
+        <text
+          x={width / 2}
+          y={height - 2}
+          fontSize={4}
+          fontWeight={700}
+          textAnchor="middle"
+          fill={colors.fleaAccentInk}
+          fontFamily="'Caveat', cursive"
+        >
+          {t("table.floorPlanPromenade")}
+        </text>
+
+        <text
+          x={width - 7}
+          y={height - 11}
+          fontSize={3.2}
+          fontWeight={700}
+          textAnchor="end"
           fill={colors.fleaAccentInk}
           fontFamily="'Caveat', cursive"
         >
           {t("table.floorPlanEntrance")}
-        </text>
-
-        <rect
-          x={width / 2 - 10}
-          y={5.5}
-          width={20}
-          height={3}
-          fill={colors.fleaCorkFrame}
-          opacity={0.4}
-          rx={0.6}
-        />
-        <text
-          x={width / 2}
-          y={7.8}
-          fontSize={2.4}
-          textAnchor="middle"
-          fill={colors.fleaAccentInk}
-          fontFamily="'Caveat', cursive"
-        >
-          {t("table.floorPlanStage")}
         </text>
 
         {TABLE_CATALOG.map((table) => {
@@ -169,6 +201,7 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
           const cx = table.x + table.width / 2;
           const cy = table.y + table.height / 2;
           const hasRack = tableHasClothingRack(table.id);
+          const rackSide = getClothingRackSide(table.id);
 
           return (
             <g
@@ -199,7 +232,7 @@ export function TableMap({ boxesById, selectedId, onSelect }: TableMapProps) {
                   opacity={0.35}
                 />
               )}
-              {hasRack && <ClothingRackGlyph table={table} />}
+              {hasRack && rackSide && <ClothingRackGlyph table={table} side={rackSide} />}
               <rect
                 x={table.x}
                 y={table.y}

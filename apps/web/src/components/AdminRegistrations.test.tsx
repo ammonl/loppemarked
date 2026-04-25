@@ -410,9 +410,12 @@ describe("AdminRegistrations", () => {
       expect(options[0].value).toBe("");
       expect(options[1].textContent).toBe("Table #1 · 2 m");
       expect(options[1].value).toBe("1");
-      expect(options[23].textContent).toBe("Table #23 · 3 m");
-      expect(options[23].value).toBe("23");
-      expect(options).toHaveLength(30);
+      // id 22 is intentionally absent from the published map; option index
+      // 22 corresponds to table 23 and the row count is 1 placeholder + 23
+      // visible tables.
+      expect(options[22].textContent).toBe("Table #23 · 2 m");
+      expect(options[22].value).toBe("23");
+      expect(options).toHaveLength(24);
     });
 
     it("disables occupied tables and appends (occupied) suffix in add dialog", async () => {
@@ -584,7 +587,7 @@ describe("AdminRegistrations", () => {
 
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
-      expect(options[23].textContent).toBe("Table #23 · 3 m");
+      expect(options[22].textContent).toBe("Table #23 · 2 m");
     });
 
     it("does not disable the current table in move dialog", async () => {

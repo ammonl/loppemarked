@@ -76,7 +76,8 @@ const da = {
   "table.joinWaitlistCta": "Tilmeld Venteliste",
   "table.mapAriaLabel": "Interaktivt kort over Fælledhusets loppemarked",
   "table.floorPlanEntrance": "Indgang",
-  "table.floorPlanStage": "Scene",
+  "table.floorPlanCourtyard": "Gårdhave",
+  "table.floorPlanPromenade": "Promenade",
   "table.legendClothingRack": "Tøjstativ",
   "table.supportContact": "Spørgsmål? Skriv til {contact}",
 
@@ -534,7 +535,8 @@ const en: Record<TranslationKey, string> = {
   "table.joinWaitlistCta": "Join Waitlist",
   "table.mapAriaLabel": "Interactive map of the Fælledhuset flea market hall",
   "table.floorPlanEntrance": "Entrance",
-  "table.floorPlanStage": "Stage",
+  "table.floorPlanCourtyard": "Courtyard",
+  "table.floorPlanPromenade": "Promenade",
   "table.legendClothingRack": "Clothing rack",
   "table.supportContact": "Questions? Email {contact}",
 
