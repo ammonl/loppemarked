@@ -444,6 +444,23 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
     body.door ?? null,
   );
 
+  // One-table-per-apartment rule: if this apartment already holds an active
+  // booking, block the waitlist signup. Checked before BOXES_AVAILABLE so the
+  // user gets the specific reason even when free boxes also exist.
+  const existingRegistration = await ctx.db
+    .selectFrom("registrations")
+    .select("id")
+    .where("apartment_key", "=", apartmentKey)
+    .where("status", "=", "active")
+    .executeTakeFirst();
+
+  if (existingRegistration) {
+    throw conflict(
+      "This apartment already has a table. Only one table per apartment is allowed.",
+      "APARTMENT_HAS_REGISTRATION",
+    );
+  }
+
   const availableCount = await ctx.db
     .selectFrom("planter_boxes")
     .select(ctx.db.fn.countAll<number>().as("count"))

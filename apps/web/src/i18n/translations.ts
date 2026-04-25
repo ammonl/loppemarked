@@ -100,6 +100,10 @@ const da = {
   "waitlist.emailFollowUp":
     "Hvis et bord bliver ledigt, kontakter arrangørerne dig pr. e-mail.",
   "waitlist.success": "Du er nu på ventelisten!",
+  "waitlist.alreadyHasTableTitle":
+    "Din lejlighed har allerede et bord",
+  "waitlist.alreadyHasTableBody":
+    "Du er ikke skrevet op på ventelisten, fordi din lejlighed allerede har booket et bord. Hver lejlighed kan kun have ét bord.",
 
   "audit.title": "Hændelseslog",
   "audit.timestamp": "Tidsstempel",
@@ -554,6 +558,10 @@ const en: Record<TranslationKey, string> = {
   "waitlist.emailFollowUp":
     "If a table becomes available, the organizers will reach out to you by email.",
   "waitlist.success": "You are now on the waitlist!",
+  "waitlist.alreadyHasTableTitle":
+    "Your apartment already has a table",
+  "waitlist.alreadyHasTableBody":
+    "You were not added to the waitlist because your apartment already has a booked table. Only one table per apartment is allowed.",
 
   "audit.title": "Audit Log",
   "audit.timestamp": "Timestamp",

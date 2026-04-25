@@ -771,6 +771,7 @@ function makeMockDbForRegister(opts: MockRegisterOpts): Kysely<Database> {
 interface MockWaitlistOpts {
   availableCount: number;
   existingEntry?: { id: string; created_at: string };
+  existingRegistrationId?: string;
   newEntryId?: string;
   positionEntryCreatedAt?: string;
   positionCount?: number;
@@ -854,6 +855,21 @@ function makeMockDbForWaitlist(opts: MockWaitlistOpts): Kysely<Database> {
 
   return {
     selectFrom: vi.fn().mockImplementation((table: string) => {
+      if (table === "registrations") {
+        return {
+          select: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                executeTakeFirst: vi.fn().mockResolvedValue(
+                  opts.existingRegistrationId
+                    ? { id: opts.existingRegistrationId }
+                    : undefined,
+                ),
+              }),
+            }),
+          }),
+        };
+      }
       if (table === "planter_boxes") {
         return {
           select: vi.fn().mockReturnValue({
