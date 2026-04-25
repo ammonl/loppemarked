@@ -30,11 +30,11 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
   const [consentChecked, setConsentChecked] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{
-    alreadyOnWaitlist: boolean;
-    position: number;
-    joinedAt?: string;
-  } | null>(null);
+  const [result, setResult] = useState<
+    | { kind: "joined"; alreadyOnWaitlist: boolean; position: number; joinedAt?: string }
+    | { kind: "alreadyHasTable" }
+    | null
+  >(null);
 
   const parsedHouseNumber = parseInt(houseNumber, 10);
   const needsFloorDoor = !isNaN(parsedHouseNumber) && isFloorDoorRequired(parsedHouseNumber);
@@ -48,13 +48,16 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
       return;
     }
 
+    // Drop floor/door from the payload when the house number doesn't require
+    // them. Otherwise stale values (typed for a previous house number) would
+    // leak through and corrupt the apartment dedupe key.
     const input = {
       name: name.trim(),
       email: email.trim(),
       street: ELIGIBLE_STREET,
       houseNumber: parsedHouseNumber,
-      floor: floor.trim() || null,
-      door: door.trim() || null,
+      floor: needsFloorDoor ? floor.trim() || null : null,
+      door: needsFloorDoor ? door.trim() || null : null,
       language: language as Language,
       // Flea market has a single hall — send the any-preference default
       // to the existing API contract without exposing a pointless selector.
@@ -86,11 +89,16 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
+        if (res.status === 409 && body?.code === "APARTMENT_HAS_REGISTRATION") {
+          setResult({ kind: "alreadyHasTable" });
+          return;
+        }
         setErrors([body?.error ?? t("common.error")]);
         return;
       }
 
       setResult({
+        kind: "joined",
         alreadyOnWaitlist: body.alreadyOnWaitlist ?? false,
         position: body.position ?? 0,
         joinedAt: body.joinedAt,
@@ -102,7 +110,27 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
     }
   }
 
-  if (result) {
+  if (result?.kind === "alreadyHasTable") {
+    return (
+      <section className="flea-scene-form">
+        <h2 className="flea-scene-form__success-title">
+          {t("waitlist.alreadyHasTableTitle")}
+        </h2>
+        <p className="flea-scene-form__subtitle">
+          {t("waitlist.alreadyHasTableBody")}
+        </p>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flea-scene-cta flea-scene-cta--mt-lg"
+        >
+          {t("common.close")}
+        </button>
+      </section>
+    );
+  }
+
+  if (result?.kind === "joined") {
     return (
       <section className="flea-scene-form">
         <h2 className="flea-scene-form__success-title">{t("waitlist.success")}</h2>

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../../db/types.js";
 import type { RequestContext } from "../../router.js";
@@ -18,6 +18,10 @@ vi.mock("../../lib/email-service.js", () => ({
 
 vi.mock("../../lib/admin-ops-notifications.js", () => ({
   notifyAdmins: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../../lib/waitlist-emails.js", () => ({
+  notifyDownstreamWaitlist: vi.fn().mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0 }),
 }));
 
 function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
@@ -852,6 +856,89 @@ describe("handleAssignWaitlist (happy path)", () => {
   });
 });
 
+describe("handleAssignWaitlist — notifyDownstream", () => {
+  beforeEach(async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    vi.mocked(notifyDownstreamWaitlist).mockClear();
+  });
+
+  it("does not call notifyDownstreamWaitlist when flag is omitted", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const mockDb = makeMockAssignDb({
+      entry: {
+        id: "wl-1", name: "Bob", email: "bob@b.com",
+        street: "Else Alfelts Vej", house_number: 140,
+        floor: null, door: null, apartment_key: "else alfelts vej 140",
+        language: "en", status: "waiting",
+        created_at: new Date("2026-02-01T10:00:00Z"),
+      },
+      box: { id: 10, state: "available" },
+    });
+
+    await handleAssignWaitlist(
+      makeCtx({ db: mockDb, body: { waitlistEntryId: "wl-1", boxId: 10 } }),
+    );
+
+    expect(notifyDownstreamWaitlist).not.toHaveBeenCalled();
+  });
+
+  it("calls notifyDownstreamWaitlist with entry created_at when flag is true", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const createdAt = new Date("2026-02-01T10:00:00Z");
+    const mockDb = makeMockAssignDb({
+      entry: {
+        id: "wl-1", name: "Bob", email: "bob@b.com",
+        street: "Else Alfelts Vej", house_number: 140,
+        floor: null, door: null, apartment_key: "else alfelts vej 140",
+        language: "en", status: "waiting",
+        created_at: createdAt,
+      },
+      box: { id: 10, state: "available" },
+    });
+
+    await handleAssignWaitlist(
+      makeCtx({
+        db: mockDb,
+        body: { waitlistEntryId: "wl-1", boxId: 10, notifyDownstream: true },
+      }),
+    );
+
+    expect(notifyDownstreamWaitlist).toHaveBeenCalledTimes(1);
+    const call = vi.mocked(notifyDownstreamWaitlist).mock.calls[0];
+    expect(call[1]).toBe("admin-1");
+    expect(call[2]).toBe(createdAt);
+    expect(call[3]).toEqual({
+      triggerAction: "waitlist_assign",
+      entityId: "wl-1",
+    });
+  });
+
+  it("does not notify when assignment short-circuits with duplicate warning", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const mockDb = makeMockAssignDb({
+      entry: {
+        id: "wl-1", name: "Bob", email: "bob@b.com",
+        street: "Else Alfelts Vej", house_number: 140,
+        floor: null, door: null, apartment_key: "else alfelts vej 140",
+        language: "en", status: "waiting",
+        created_at: new Date("2026-02-01T10:00:00Z"),
+      },
+      box: { id: 10, state: "available" },
+      existingReg: { id: "existing-reg" },
+    });
+
+    const result = await handleAssignWaitlist(
+      makeCtx({
+        db: mockDb,
+        body: { waitlistEntryId: "wl-1", boxId: 10, notifyDownstream: true },
+      }),
+    );
+
+    expect(result.statusCode).toBe(409);
+    expect(notifyDownstreamWaitlist).not.toHaveBeenCalled();
+  });
+});
+
 describe("duplicate-address warning in admin create", () => {
   it("returns 409 duplicate warning when apartment already has active registration", async () => {
     const mockDb = makeMockTrxDb({
@@ -1042,6 +1129,7 @@ function makeMockAssignDb(opts: {
     street: string; house_number: number;
     floor: string | null; door: string | null;
     apartment_key: string; language: string; status: string;
+    created_at?: Date;
   };
   box?: { id: number; state: string };
   existingReg?: { id: string };

@@ -101,6 +101,10 @@ const da = {
   "waitlist.emailFollowUp":
     "Hvis et bord bliver ledigt, kontakter arrangørerne dig pr. e-mail.",
   "waitlist.success": "Du er nu på ventelisten!",
+  "waitlist.alreadyHasTableTitle":
+    "Din lejlighed har allerede et bord",
+  "waitlist.alreadyHasTableBody":
+    "Du er ikke skrevet op på ventelisten, fordi din lejlighed allerede har booket et bord. Hver lejlighed kan kun have ét bord.",
 
   "audit.title": "Hændelseslog",
   "audit.timestamp": "Tidsstempel",
@@ -352,6 +356,10 @@ const da = {
   "admin.waitlist.removeConfirmHint":
     "Fjern denne ventelisteindgang permanent. Der oprettes ingen booking, og den valgte person får ingen besked.",
   "admin.waitlist.removed": "Ventelisteindgang fjernet",
+  "admin.waitlist.notifyDownstream":
+    "Underret efterfølgende på ventelisten om deres nye position",
+  "admin.waitlist.notifyDownstreamHint":
+    "Send en e-mail til alle, der står efter denne person på ventelisten, med deres opdaterede position.",
 
   "admin.tables.title": "Loppebordsoversigt",
   "admin.tables.number": "Bord",
@@ -552,6 +560,10 @@ const en: Record<TranslationKey, string> = {
   "waitlist.emailFollowUp":
     "If a table becomes available, the organizers will reach out to you by email.",
   "waitlist.success": "You are now on the waitlist!",
+  "waitlist.alreadyHasTableTitle":
+    "Your apartment already has a table",
+  "waitlist.alreadyHasTableBody":
+    "You were not added to the waitlist because your apartment already has a booked table. Only one table per apartment is allowed.",
 
   "audit.title": "Audit Log",
   "audit.timestamp": "Timestamp",
@@ -803,6 +815,10 @@ const en: Record<TranslationKey, string> = {
   "admin.waitlist.removeConfirmHint":
     "Permanently remove this waitlist entry. No booking is created and no notification is sent to the person.",
   "admin.waitlist.removed": "Waitlist entry removed",
+  "admin.waitlist.notifyDownstream":
+    "Notify downstream waitlist members of their new position",
+  "admin.waitlist.notifyDownstreamHint":
+    "Send an email to everyone behind this person on the waitlist with their updated position.",
 
   "admin.tables.title": "Table Overview",
   "admin.tables.number": "Table",

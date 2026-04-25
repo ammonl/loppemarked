@@ -11,6 +11,7 @@ import { notifyAdmins } from "../../lib/admin-ops-notifications.js";
 import { queueAndSendEmail } from "../../lib/email-service.js";
 import { badRequest, conflict, notFound, unauthorized } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
+import { notifyDownstreamWaitlist } from "../../lib/waitlist-emails.js";
 import type { Database } from "../../db/types.js";
 import type { RequestContext, RouteResponse } from "../../router.js";
 
@@ -594,6 +595,7 @@ interface AssignWaitlistBody {
   boxId?: number;
   notification?: NotificationInput;
   confirmDuplicate?: boolean;
+  notifyDownstream?: boolean;
 }
 
 export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteResponse> {
@@ -604,6 +606,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
 
   const body = (ctx.body ?? {}) as AssignWaitlistBody;
   const { waitlistEntryId, boxId } = body;
+  const notifyDownstream = body.notifyDownstream ?? false;
 
   if (!waitlistEntryId || !boxId) {
     throw badRequest("waitlistEntryId and boxId are required");
@@ -611,7 +614,14 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
 
   type AssignResult =
     | { type: "duplicate_warning"; existingRegistrations: { id: string; boxId: number; name: string; email: string }[] }
-    | { type: "created"; registrationId: string; recipientName: string; recipientEmail: string; language: Language };
+    | {
+        type: "created";
+        registrationId: string;
+        recipientName: string;
+        recipientEmail: string;
+        language: Language;
+        waitlistCreatedAt: Date;
+      };
 
   let result: AssignResult;
 
@@ -621,7 +631,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         .selectFrom("waitlist_entries")
         .select([
           "id", "name", "email", "street", "house_number",
-          "floor", "door", "apartment_key", "language", "status",
+          "floor", "door", "apartment_key", "language", "status", "created_at",
         ])
         .where("id", "=", waitlistEntryId)
         .forUpdate()
@@ -770,6 +780,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
         recipientName: entry.name,
         recipientEmail: entry.email,
         language: entry.language as Language,
+        waitlistCreatedAt: entry.created_at,
       };
     });
   } catch (err) {
@@ -807,6 +818,13 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
     "registration",
     result.registrationId,
   );
+
+  if (notifyDownstream) {
+    await notifyDownstreamWaitlist(ctx.db, adminId, result.waitlistCreatedAt, {
+      triggerAction: "waitlist_assign",
+      entityId: waitlistEntryId,
+    });
+  }
 
   await notifyAdmins(ctx.db, {
     type: "admin_waitlist_assign",

@@ -1,9 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../../db/types.js";
 import type { RequestContext } from "../../router.js";
 import { AppError } from "../../lib/errors.js";
 import { handleListWaitlist, handleRemoveWaitlist } from "./waitlist.js";
+
+vi.mock("../../lib/waitlist-emails.js", () => ({
+  notifyDownstreamWaitlist: vi.fn().mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0 }),
+}));
 
 function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   return {
@@ -65,6 +69,7 @@ interface RemoveMockOpts {
     email: string;
     apartment_key: string;
     status: string;
+    created_at?: Date;
   };
   deleteSpy?: ReturnType<typeof vi.fn>;
   auditSpy?: ReturnType<typeof vi.fn>;
@@ -162,6 +167,7 @@ describe("handleRemoveWaitlist", () => {
         email: "alice@example.com",
         apartment_key: "else alfelts vej 130",
         status: "waiting",
+        created_at: new Date("2026-01-01T00:00:00Z"),
       },
       deleteSpy,
       auditSpy,
@@ -200,5 +206,149 @@ describe("handleRemoveWaitlist", () => {
       expect((err as AppError).statusCode).toBe(400);
     }
     expect(deleteSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleRemoveWaitlist — notifyDownstream", () => {
+  beforeEach(async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    vi.mocked(notifyDownstreamWaitlist).mockClear();
+  });
+
+  it("does not call notifyDownstreamWaitlist when flag is omitted", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const mockDb = makeRemoveMockDb({
+      entry: {
+        id: "w1",
+        name: "Alice",
+        email: "alice@example.com",
+        apartment_key: "else alfelts vej 130",
+        status: "waiting",
+        created_at: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+
+    await handleRemoveWaitlist(makeCtx({ db: mockDb, params: { id: "w1" } }));
+
+    expect(notifyDownstreamWaitlist).not.toHaveBeenCalled();
+  });
+
+  it("does not call notifyDownstreamWaitlist when flag is false", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const mockDb = makeRemoveMockDb({
+      entry: {
+        id: "w1",
+        name: "Alice",
+        email: "alice@example.com",
+        apartment_key: "else alfelts vej 130",
+        status: "waiting",
+        created_at: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+
+    await handleRemoveWaitlist(
+      makeCtx({
+        db: mockDb,
+        params: { id: "w1" },
+        body: { notifyDownstream: false },
+      }),
+    );
+
+    expect(notifyDownstreamWaitlist).not.toHaveBeenCalled();
+  });
+
+  it("calls notifyDownstreamWaitlist with the removed entry's created_at when flag is true", async () => {
+    const { notifyDownstreamWaitlist } = await import("../../lib/waitlist-emails.js");
+    const removedAt = new Date("2026-02-15T10:00:00Z");
+    const mockDb = makeRemoveMockDb({
+      entry: {
+        id: "w1",
+        name: "Alice",
+        email: "alice@example.com",
+        apartment_key: "else alfelts vej 130",
+        status: "waiting",
+        created_at: removedAt,
+      },
+    });
+
+    await handleRemoveWaitlist(
+      makeCtx({
+        db: mockDb,
+        params: { id: "w1" },
+        body: { notifyDownstream: true },
+      }),
+    );
+
+    expect(notifyDownstreamWaitlist).toHaveBeenCalledTimes(1);
+    const call = vi.mocked(notifyDownstreamWaitlist).mock.calls[0];
+    expect(call[1]).toBe("admin-1");
+    expect(call[2]).toBe(removedAt);
+    expect(call[3]).toEqual({
+      triggerAction: "waitlist_remove",
+      entityId: "w1",
+    });
+  });
+
+  it("records the admin's notify_downstream choice in the waitlist_remove audit event", async () => {
+    const auditValuesSpy = vi.fn().mockReturnValue({
+      execute: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const mockTrx = {
+      selectFrom: vi.fn().mockImplementation((table: string) => {
+        if (table === "waitlist_entries") {
+          return {
+            select: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                forUpdate: vi.fn().mockReturnValue({
+                  executeTakeFirst: vi.fn().mockResolvedValue({
+                    id: "w1",
+                    name: "Alice",
+                    email: "alice@example.com",
+                    apartment_key: "else alfelts vej 130",
+                    status: "waiting",
+                    created_at: new Date("2026-02-15T10:00:00Z"),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      }),
+      deleteFrom: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
+      insertInto: vi.fn().mockImplementation((table: string) => {
+        if (table === "audit_events") {
+          return { values: auditValuesSpy };
+        }
+        return {};
+      }),
+    };
+
+    const mockDb = {
+      transaction: vi.fn().mockReturnValue({
+        execute: vi.fn().mockImplementation(
+          async (fn: (trx: unknown) => Promise<unknown>) => fn(mockTrx),
+        ),
+      }),
+    } as unknown as Kysely<Database>;
+
+    await handleRemoveWaitlist(
+      makeCtx({
+        db: mockDb,
+        params: { id: "w1" },
+        body: { notifyDownstream: true },
+      }),
+    );
+
+    const auditPayload = auditValuesSpy.mock.calls[0][0] as Record<string, unknown>;
+    expect(auditPayload.action).toBe("waitlist_remove");
+    expect(JSON.parse(String(auditPayload.after))).toMatchObject({
+      notify_downstream: true,
+    });
   });
 });

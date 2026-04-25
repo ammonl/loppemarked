@@ -1,6 +1,11 @@
 import { logAuditEvent } from "../../lib/audit.js";
 import { badRequest, notFound, unauthorized } from "../../lib/errors.js";
+import { notifyDownstreamWaitlist } from "../../lib/waitlist-emails.js";
 import type { RequestContext, RouteResponse } from "../../router.js";
+
+interface RemoveWaitlistBody {
+  notifyDownstream?: boolean;
+}
 
 export async function handleListWaitlist(ctx: RequestContext): Promise<RouteResponse> {
   if (!ctx.adminId) {
@@ -44,7 +49,10 @@ export async function handleRemoveWaitlist(ctx: RequestContext): Promise<RouteRe
     throw badRequest("Waitlist entry ID is required");
   }
 
-  await ctx.db.transaction().execute(async (trx) => {
+  const body = (ctx.body ?? {}) as RemoveWaitlistBody;
+  const notifyDownstream = body.notifyDownstream ?? false;
+
+  const removed = await ctx.db.transaction().execute(async (trx) => {
     const entry = await trx
       .selectFrom("waitlist_entries")
       .select([
@@ -53,6 +61,7 @@ export async function handleRemoveWaitlist(ctx: RequestContext): Promise<RouteRe
         "email",
         "apartment_key",
         "status",
+        "created_at",
       ])
       .where("id", "=", entryId)
       .forUpdate()
@@ -79,8 +88,20 @@ export async function handleRemoveWaitlist(ctx: RequestContext): Promise<RouteRe
         apartment_key: entry.apartment_key,
         status: entry.status,
       },
+      after: {
+        notify_downstream: notifyDownstream,
+      },
     });
+
+    return { id: entry.id, createdAt: entry.created_at };
   });
+
+  if (notifyDownstream) {
+    await notifyDownstreamWaitlist(ctx.db, adminId, removed.createdAt, {
+      triggerAction: "waitlist_remove",
+      entityId: removed.id,
+    });
+  }
 
   return {
     statusCode: 204,

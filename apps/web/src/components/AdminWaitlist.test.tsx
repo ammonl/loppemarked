@@ -203,7 +203,42 @@ describe("AdminWaitlist", () => {
       expect(assignBody.waitlistEntryId).toBe("w1");
       expect(assignBody.boxId).toBe(5);
       expect(assignBody.notification).toBeDefined();
+      expect(assignBody.notifyDownstream).toBe(false);
       expect(screen.getByText("admin.waitlist.assigned")).toBeDefined();
+    });
+
+    it("submits assignment with notifyDownstream=true when checkbox is checked", async () => {
+      const fetchMock = mockFetch([
+        { ok: true, body: waitlistEntries },
+        { ok: true, body: [] },
+        { ok: true, status: 201, body: { registrationId: "r5", waitlistEntryId: "w1", boxId: 5 } },
+        { ok: true, body: waitlistEntries },
+        { ok: true, body: [] },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.assign"));
+      });
+
+      fireEvent.change(screen.getByLabelText("admin.waitlist.assignTableId"), { target: { value: "5" } });
+
+      const notifyCheckbox = screen.getByLabelText(/admin.waitlist.notifyDownstream/) as HTMLInputElement;
+      expect(notifyCheckbox.checked).toBe(false);
+      fireEvent.click(notifyCheckbox);
+      expect(notifyCheckbox.checked).toBe(true);
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("common.confirm"));
+      });
+
+      const assignCall = fetchMock.mock.calls[2];
+      const assignBody = JSON.parse(assignCall[1].body);
+      expect(assignBody.notifyDownstream).toBe(true);
     });
 
     it("shows error on assign failure", async () => {
@@ -345,7 +380,45 @@ describe("AdminWaitlist", () => {
       const deleteCall = fetchMock.mock.calls.find((call) => call[1]?.method === "DELETE");
       expect(deleteCall).toBeDefined();
       expect(deleteCall?.[0]).toBe("/admin/waitlist/w1");
+      const deleteBody = JSON.parse(deleteCall?.[1]?.body as string);
+      expect(deleteBody.notifyDownstream).toBe(false);
       expect(screen.getByText("admin.waitlist.removed")).toBeDefined();
+    });
+
+    it("sends notifyDownstream=true in DELETE body when checkbox is checked", async () => {
+      const fetchMock = mockFetch([
+        { ok: true, body: waitlistEntries },
+        { ok: true, body: [] },
+        { ok: true, status: 204, body: null },
+        { ok: true, body: [] },
+      ]);
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("admin.waitlist.remove"));
+      });
+
+      const notifyCheckbox = screen.getByLabelText(/admin.waitlist.notifyDownstream/) as HTMLInputElement;
+      expect(notifyCheckbox.checked).toBe(false);
+      fireEvent.click(notifyCheckbox);
+      expect(notifyCheckbox.checked).toBe(true);
+
+      const confirmButton = screen.getAllByText("admin.waitlist.remove").find(
+        (el) => el.tagName === "BUTTON" && (el as HTMLButtonElement).type === "button" && el.closest("[role='dialog']") !== null,
+      );
+
+      await act(async () => {
+        fireEvent.click(confirmButton as HTMLElement);
+      });
+
+      const deleteCall = fetchMock.mock.calls.find((call) => call[1]?.method === "DELETE");
+      expect(deleteCall).toBeDefined();
+      const deleteBody = JSON.parse(deleteCall?.[1]?.body as string);
+      expect(deleteBody.notifyDownstream).toBe(true);
     });
 
     it("shows error message and keeps dialog open on remove failure", async () => {

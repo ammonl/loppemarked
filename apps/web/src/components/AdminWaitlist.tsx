@@ -46,7 +46,9 @@ export function AdminWaitlist() {
   const [assignBoxId, setAssignBoxId] = useState("");
   const [assignNotification, setAssignNotification] = useState<NotificationValue>({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
   const [assignDuplicateWarning, setAssignDuplicateWarning] = useState<DuplicateExisting[] | null>(null);
+  const [assignNotifyDownstream, setAssignNotifyDownstream] = useState(false);
   const [removingEntry, setRemovingEntry] = useState<WaitlistEntry | null>(null);
+  const [removeNotifyDownstream, setRemoveNotifyDownstream] = useState(false);
 
   const [boxStates, setBoxStates] = useState<Map<number, BoxState>>(new Map());
 
@@ -126,6 +128,7 @@ export function AdminWaitlist() {
     setAssignBoxId("");
     setAssignNotification({ sendEmail: true, subject: "", bodyHtml: "", valid: true });
     setAssignDuplicateWarning(null);
+    setAssignNotifyDownstream(false);
     setMessage(null);
     setAssigningEntry(entry);
   }
@@ -135,6 +138,7 @@ export function AdminWaitlist() {
   }
 
   function openRemoveDialog(entry: WaitlistEntry) {
+    setRemoveNotifyDownstream(false);
     setMessage(null);
     setRemovingEntry(entry);
   }
@@ -152,7 +156,9 @@ export function AdminWaitlist() {
     try {
       const res = await fetch(`/admin/waitlist/${encodeURIComponent(removingEntry.id)}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ notifyDownstream: removeNotifyDownstream }),
       });
 
       if (res.ok) {
@@ -204,6 +210,7 @@ export function AdminWaitlist() {
             subject: assignNotification.subject || undefined,
             bodyHtml: assignNotification.bodyHtml || undefined,
           },
+          notifyDownstream: assignNotifyDownstream,
         }),
       });
 
@@ -312,6 +319,34 @@ export function AdminWaitlist() {
               onChange={setAssignNotification}
             />
           )}
+
+          <label
+            htmlFor="assign-notify-downstream"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.5rem",
+              marginTop: "0.75rem",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              color: colors.warmBrown,
+              fontFamily: fonts.body,
+            }}
+          >
+            <input
+              id="assign-notify-downstream"
+              type="checkbox"
+              checked={assignNotifyDownstream}
+              onChange={(e) => setAssignNotifyDownstream(e.target.checked)}
+              style={{ marginTop: "0.2rem" }}
+            />
+            <span>
+              <strong>{t("admin.waitlist.notifyDownstream")}</strong>
+              <span style={{ display: "block", fontSize: "0.8rem", color: colors.inkBrown, marginTop: "0.15rem" }}>
+                {t("admin.waitlist.notifyDownstreamHint")}
+              </span>
+            </span>
+          </label>
 
           {assignDuplicateWarning !== null && (
             <div
@@ -422,6 +457,33 @@ export function AdminWaitlist() {
           <p style={{ fontSize: "0.85rem", color: colors.warmBrown, margin: "0 0 1rem 0" }}>
             {t("admin.waitlist.removeConfirmHint")}
           </p>
+          <label
+            htmlFor="remove-notify-downstream"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.5rem",
+              marginBottom: "1rem",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              color: colors.warmBrown,
+              fontFamily: fonts.body,
+            }}
+          >
+            <input
+              id="remove-notify-downstream"
+              type="checkbox"
+              checked={removeNotifyDownstream}
+              onChange={(e) => setRemoveNotifyDownstream(e.target.checked)}
+              style={{ marginTop: "0.2rem" }}
+            />
+            <span>
+              <strong>{t("admin.waitlist.notifyDownstream")}</strong>
+              <span style={{ display: "block", fontSize: "0.8rem", color: colors.inkBrown, marginTop: "0.15rem" }}>
+                {t("admin.waitlist.notifyDownstreamHint")}
+              </span>
+            </span>
+          </label>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button
               type="button"
