@@ -982,6 +982,11 @@ describe("role visibility — public endpoints do not expose reserved status or 
 });
 
 describe("handleJoinWaitlist — FIFO ordering", () => {
+  beforeEach(() => {
+    const mockSes = { send: vi.fn().mockResolvedValue({}) };
+    setSesClient(mockSes as never);
+  });
+
   it("returns existing waitlist position when apartment already on waitlist (preserves original timestamp)", async () => {
     const existingEntry = {
       id: "wl-1",
@@ -1154,6 +1159,29 @@ describe("handleJoinWaitlist — FIFO ordering", () => {
             })),
           };
           return fn(trx);
+        }),
+      }),
+      insertInto: vi.fn().mockImplementation((table: string) => {
+        if (table === "emails") {
+          return {
+            values: vi.fn().mockReturnValue({
+              returning: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue([{ id: "email-fifo" }]),
+              }),
+            }),
+          };
+        }
+        return {
+          values: vi.fn().mockReturnValue({
+            execute: vi.fn().mockResolvedValue(undefined),
+          }),
+        };
+      }),
+      updateTable: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            execute: vi.fn().mockResolvedValue(undefined),
+          }),
         }),
       }),
     } as unknown as Kysely<Database>;
