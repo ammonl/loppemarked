@@ -108,6 +108,202 @@ describe("AdminWaitlist", () => {
       const assignButtons = screen.getAllByText("admin.waitlist.assign");
       expect(assignButtons).toHaveLength(1);
     });
+
+    it("shows queue position for waiting entries based on FIFO order", async () => {
+      const fifoEntries = [
+        {
+          id: "wA",
+          name: "Alice",
+          email: "alice@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 1,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 1",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-10T08:00:00Z",
+        },
+        {
+          id: "wB",
+          name: "Bob",
+          email: "bob@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 2,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 2",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-15T08:00:00Z",
+        },
+        {
+          id: "wC",
+          name: "Cleo",
+          email: "cleo@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 3,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 3",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-20T08:00:00Z",
+        },
+      ];
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: fifoEntries }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      const aliceRow = screen.getByText("Alice").closest("tr");
+      const bobRow = screen.getByText("Bob").closest("tr");
+      const cleoRow = screen.getByText("Cleo").closest("tr");
+
+      expect(aliceRow?.querySelector("td")?.textContent).toBe("1");
+      expect(bobRow?.querySelector("td")?.textContent).toBe("2");
+      expect(cleoRow?.querySelector("td")?.textContent).toBe("3");
+    });
+
+    it("uses id as tiebreaker when created_at is identical", async () => {
+      const sameTime = "2026-01-10T08:00:00Z";
+      const tiedEntries = [
+        {
+          id: "wB",
+          name: "Bob",
+          email: "bob@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 2,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 2",
+          language: "da",
+          status: "waiting",
+          created_at: sameTime,
+        },
+        {
+          id: "wA",
+          name: "Alice",
+          email: "alice@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 1,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 1",
+          language: "da",
+          status: "waiting",
+          created_at: sameTime,
+        },
+      ];
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: tiedEntries }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      const aliceRow = screen.getByText("Alice").closest("tr");
+      const bobRow = screen.getByText("Bob").closest("tr");
+
+      expect(aliceRow?.querySelector("td")?.textContent).toBe("1");
+      expect(bobRow?.querySelector("td")?.textContent).toBe("2");
+    });
+
+    it("renders an em-dash for non-waiting entries", async () => {
+      const mixed = [
+        {
+          id: "wA",
+          name: "Alice",
+          email: "alice@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 1,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 1",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-10T08:00:00Z",
+        },
+        {
+          id: "wD",
+          name: "Dave",
+          email: "dave@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 4,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 4",
+          language: "da",
+          status: "assigned",
+          created_at: "2026-01-05T08:00:00Z",
+        },
+      ];
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: mixed }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      // Default filter shows only waiting; switch to all so Dave is visible.
+      const statusFilter = screen.getByLabelText("admin.waitlist.status") as HTMLSelectElement;
+      fireEvent.change(statusFilter, { target: { value: "__all__" } });
+
+      const aliceRow = screen.getByText("Alice").closest("tr");
+      const daveRow = screen.getByText("Dave").closest("tr");
+
+      expect(aliceRow?.querySelector("td")?.textContent).toBe("1");
+      expect(daveRow?.querySelector("td")?.textContent).toBe("—");
+    });
+
+    it("keeps queue position stable when the table is re-sorted", async () => {
+      const fifoEntries = [
+        {
+          id: "wA",
+          name: "Alice",
+          email: "alice@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 1,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 1",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-10T08:00:00Z",
+        },
+        {
+          id: "wB",
+          name: "Bob",
+          email: "bob@test.com",
+          street: "Else Alfelts Vej",
+          house_number: 2,
+          floor: null,
+          door: null,
+          apartment_key: "Else Alfelts Vej 2",
+          language: "da",
+          status: "waiting",
+          created_at: "2026-01-15T08:00:00Z",
+        },
+      ];
+      vi.stubGlobal("fetch", mockFetch([{ ok: true, body: fifoEntries }]));
+
+      await act(async () => {
+        render(<AdminWaitlist />);
+      });
+
+      // Click Name sort header twice to flip ordering
+      const nameHeader = screen.getByText("admin.waitlist.name");
+      await act(async () => {
+        fireEvent.click(nameHeader);
+      });
+      await act(async () => {
+        fireEvent.click(nameHeader);
+      });
+
+      const aliceRow = screen.getByText("Alice").closest("tr");
+      const bobRow = screen.getByText("Bob").closest("tr");
+      expect(aliceRow?.querySelector("td")?.textContent).toBe("1");
+      expect(bobRow?.querySelector("td")?.textContent).toBe("2");
+    });
   });
 
   describe("assign flow", () => {
