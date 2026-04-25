@@ -521,6 +521,9 @@
   padding-bottom: 12%;
   background:
     linear-gradient(180deg, #221408 0%, #150b04 100%);
+  /* Hold the resting digit hidden until the top-half entry flip lands, so the
+     final-position number doesn't show through while the entry is in progress. */
+  animation: flea-flipboard-reveal-bottom 480ms steps(1, end) both;
 }
 
 @keyframes flea-flipboard-flip-top {
@@ -531,6 +534,15 @@
   100% {
     transform: rotateX(-90deg);
     opacity: 0.2;
+  }
+}
+
+@keyframes flea-flipboard-reveal-bottom {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -582,7 +594,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flea-flipboard__card-half--top {
+  .flea-flipboard__card-half--top,
+  .flea-flipboard__card-half--bottom {
     animation: none;
   }
 }
