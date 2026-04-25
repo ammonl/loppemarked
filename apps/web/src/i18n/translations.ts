@@ -326,6 +326,9 @@ const da = {
   "admin.messaging.templateHint": "Sidehoved og sidefod tilføjes automatisk, når e-mailen sendes.",
 
   "admin.waitlist.title": "Venteliste",
+  "admin.waitlist.queuePosition": "#",
+  "admin.waitlist.queuePositionAria": "Køposition",
+  "admin.waitlist.notInQueue": "Ikke i køen",
   "admin.waitlist.name": "Navn",
   "admin.waitlist.email": "E-mail",
   "admin.waitlist.apartment": "Lejlighed",
@@ -763,6 +766,9 @@ const en: Record<TranslationKey, string> = {
   "admin.messaging.templateHint": "Header and footer are automatically added when the email is sent.",
 
   "admin.waitlist.title": "Waitlist",
+  "admin.waitlist.queuePosition": "#",
+  "admin.waitlist.queuePositionAria": "Queue position",
+  "admin.waitlist.notInQueue": "Not in queue",
   "admin.waitlist.name": "Name",
   "admin.waitlist.email": "Email",
   "admin.waitlist.apartment": "Apartment",
