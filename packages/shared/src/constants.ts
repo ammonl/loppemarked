@@ -49,7 +49,7 @@ export const BOX_CATALOG: readonly BoxCatalogEntry[] = [
 export const TOTAL_BOX_COUNT = 29;
 
 /**
- * Metadata for a numbered flea-market table.
+ * Metadata for a numbered table.
  *
  * The `id` matches the underlying `planter_boxes.id` (1-29) so the public
  * flea-market page can reuse the existing box/greenhouse API surface while
@@ -133,7 +133,7 @@ export function getTableById(id: number): TableCatalogEntry | undefined {
 }
 
 /**
- * Human-readable flea-market table label used in admin UI and
+ * Human-readable table label used in admin UI and
  * admin-facing email templates.
  *
  * Falls back gracefully when the id is outside the catalog

@@ -514,7 +514,7 @@ const en: Record<TranslationKey, string> = {
   "table.notes.shareTable":
     "If you don't need the whole table, consider sharing it with a neighbor.",
   "table.ariaTile": "Table {number} – {state}",
-  "table.allBookedTitle": "Oh no! Every flea-market table has already been booked by your neighbors!",
+  "table.allBookedTitle": "Oh no! Every table has already been booked by your neighbors!",
   "table.allBookedBody":
     "Join the waitlist and we'll let you know if a table opens up.",
   "table.joinWaitlistCta": "Join Waitlist",
@@ -536,7 +536,7 @@ const en: Record<TranslationKey, string> = {
 
   "waitlist.title": "Waitlist",
   "waitlist.description":
-    "All flea-market tables are currently booked. Join the waitlist and we'll contact you when a table opens up.",
+    "All tables are currently booked. Join the waitlist and we'll contact you when a table opens up.",
   "waitlist.joinButton": "Join the waitlist",
   "waitlist.positionLabel": "Your position on the waitlist",
   "waitlist.alreadyOnWaitlist":
@@ -582,14 +582,14 @@ const en: Record<TranslationKey, string> = {
   "audit.action.notification_sent": "Notification Sent",
   "audit.action.notification_skipped": "Notification Skipped",
 
-  "registration.formTitle": "Book your flea-market table",
+  "registration.formTitle": "Book your table",
   "registration.nameLabel": "Name",
   "registration.emailLabel": "Email",
   "registration.streetLabel": "Street",
   "registration.houseNumberLabel": "House number",
   "registration.floorLabel": "Floor",
   "registration.doorLabel": "Door",
-  "registration.boxLabel": "Flea-market table",
+  "registration.boxLabel": "Table",
   "registration.switchWarning":
     "Your apartment already has an active booking. If you continue, you will switch to the new table and your current table will be released.",
   "registration.switchConfirm": "Confirm switch",
@@ -611,7 +611,7 @@ const en: Record<TranslationKey, string> = {
   "cancel.reviewIntro":
     "You are about to cancel the following table booking. Please read through the details before confirming.",
   "cancel.bookingHolder": "Booked by",
-  "cancel.bookingTable": "Flea-market table",
+  "cancel.bookingTable": "Table",
   "cancel.bookingSize": "Size",
   "cancel.effectsTitle": "What happens when you cancel?",
   "cancel.effectEmail": "Your table booking is immediately deactivated.",
@@ -639,7 +639,7 @@ const en: Record<TranslationKey, string> = {
   "validation.streetInvalid": "Street must be Else Alfelts Vej",
   "validation.houseNumberInvalid": "House number must be between 122 and 202",
   "validation.floorDoorRequired": "Floor is required for this address",
-  "validation.boxIdInvalid": "Invalid flea-market table",
+  "validation.boxIdInvalid": "Invalid table",
 
   "consent.title": "Data protection and consent",
   "consent.dataCollected":
@@ -684,7 +684,7 @@ const en: Record<TranslationKey, string> = {
 
   "admin.notifications.title": "Email notifications",
   "admin.notifications.description": "Choose which events you want to receive email notifications about.",
-  "admin.notifications.userRegistration": "User books or switches flea-market table",
+  "admin.notifications.userRegistration": "User books or switches table",
   "admin.notifications.adminBoxAction": "Another admin takes table actions",
 
   "admin.tab.registrations": "Bookings",
@@ -714,16 +714,16 @@ const en: Record<TranslationKey, string> = {
   "admin.registrations.releaseType": "Release table",
   "admin.registrations.releasePublic": "Release to public",
   "admin.registrations.releaseReserved": "Keep as reserved",
-  "admin.registrations.newTableId": "New flea-market table",
+  "admin.registrations.newTableId": "New table",
   "admin.registrations.addName": "Name",
   "admin.registrations.addEmail": "Email",
   "admin.registrations.addStreet": "Street",
   "admin.registrations.addHouseNumber": "House number",
   "admin.registrations.addFloor": "Floor",
   "admin.registrations.addDoor": "Door",
-  "admin.registrations.addTableId": "Flea-market table",
+  "admin.registrations.addTableId": "Table",
   "admin.registrations.addLanguage": "Language",
-  "admin.registrations.selectTable": "Select flea-market table...",
+  "admin.registrations.selectTable": "Select table...",
   "admin.registrations.duplicateWarning":
     "This address already has active bookings. Creating a duplicate is admin-only behavior.",
   "admin.registrations.duplicateConfirmHint":
@@ -780,7 +780,7 @@ const en: Record<TranslationKey, string> = {
   "admin.waitlist.assign": "Assign table",
   "admin.waitlist.noEntries": "No waitlist entries found",
   "admin.waitlist.assigned": "Assigned",
-  "admin.waitlist.assignTableId": "Flea-market table",
+  "admin.waitlist.assignTableId": "Table",
   "admin.waitlist.confirmAssign": "Confirm assignment",
   "admin.waitlist.duplicateWarning":
     "This address already has active bookings. Assigning will create a duplicate, which is admin-only behavior.",
@@ -788,9 +788,9 @@ const en: Record<TranslationKey, string> = {
     "Click 'Confirm Duplicate' to proceed with the assignment.",
   "admin.waitlist.confirmDuplicate": "Confirm Duplicate",
   "admin.waitlist.table": "Table",
-  "admin.waitlist.selectTable": "Select flea-market table...",
+  "admin.waitlist.selectTable": "Select table...",
 
-  "admin.tables.title": "Flea-Market Table Overview",
+  "admin.tables.title": "Table Overview",
   "admin.tables.number": "Table",
   "admin.tables.size": "Size",
   "admin.tables.state": "State",
