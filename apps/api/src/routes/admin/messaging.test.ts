@@ -31,17 +31,30 @@ function makeCtx(overrides: Partial<RequestContext> = {}): RequestContext {
   };
 }
 
-function buildQueryMock(rows: unknown[]) {
+interface QueryMock {
+  db: Kysely<Database>;
+  orderByFn: ReturnType<typeof vi.fn>;
+}
+
+function buildQueryMockWithSpies(rows: unknown[]): QueryMock {
   const executeFn = vi.fn().mockResolvedValue(rows);
 
   const queryObj: Record<string, unknown> = {};
   queryObj.execute = executeFn;
   queryObj.where = vi.fn().mockReturnValue(queryObj);
   queryObj.select = vi.fn().mockReturnValue(queryObj);
-  queryObj.orderBy = vi.fn().mockReturnValue(queryObj);
+  const orderByFn = vi.fn().mockReturnValue(queryObj);
+  queryObj.orderBy = orderByFn;
 
   const selectFromFn = vi.fn().mockReturnValue(queryObj);
-  return { selectFrom: selectFromFn } as unknown as Kysely<Database>;
+  return {
+    db: { selectFrom: selectFromFn } as unknown as Kysely<Database>,
+    orderByFn,
+  };
+}
+
+function buildQueryMock(rows: unknown[]): Kysely<Database> {
+  return buildQueryMockWithSpies(rows).db;
 }
 
 describe("handleGetBulkEmailTemplate", () => {
@@ -250,6 +263,17 @@ describe("handleGetRecipients", () => {
       .map((r) => r.email)
       .sort();
     expect(danishEmails).toEqual(["da-1@test.com", "da-2@test.com"]);
+  });
+
+  it("requests a deterministic ordering with a stable id tie-breaker", async () => {
+    const { db, orderByFn } = buildQueryMockWithSpies([
+      { email: "a@test.com", name: "A", language: "en" },
+    ]);
+
+    await handleGetRecipients(makeCtx({ db, body: { audience: "all" } }));
+
+    expect(orderByFn).toHaveBeenNthCalledWith(1, "created_at", "desc");
+    expect(orderByFn).toHaveBeenNthCalledWith(2, "id", "desc");
   });
 
   it("dedups duplicate emails by keeping the most recent active row", async () => {
