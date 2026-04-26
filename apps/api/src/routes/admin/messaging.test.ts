@@ -38,7 +38,6 @@ function buildQueryMock(rows: unknown[]) {
   queryObj.execute = executeFn;
   queryObj.where = vi.fn().mockReturnValue(queryObj);
   queryObj.select = vi.fn().mockReturnValue(queryObj);
-  queryObj.innerJoin = vi.fn().mockReturnValue(queryObj);
 
   const selectFromFn = vi.fn().mockReturnValue(queryObj);
   return { selectFrom: selectFromFn } as unknown as Kysely<Database>;
@@ -194,6 +193,64 @@ describe("handleGetRecipients", () => {
       expect(err).toBeInstanceOf(AppError);
       expect((err as AppError).statusCode).toBe(400);
     }
+  });
+
+  // Regression: ticket #153. The previous implementation joined registrations
+  // to tables with INNER JOIN, which silently dropped active registrations.
+  // The recipient list must read from registrations directly so every active
+  // registration is included regardless of join state.
+  it("reads recipients from registrations without joining tables", async () => {
+    const executeFn = vi.fn().mockResolvedValue([
+      { email: "danish@test.com", name: "Dansk", language: "da" },
+      { email: "english@test.com", name: "English", language: "en" },
+    ]);
+
+    const queryObj: Record<string, unknown> = {};
+    queryObj.execute = executeFn;
+    queryObj.where = vi.fn().mockReturnValue(queryObj);
+    queryObj.select = vi.fn().mockReturnValue(queryObj);
+    const innerJoin = vi.fn().mockReturnValue(queryObj);
+    queryObj.innerJoin = innerJoin;
+
+    const selectFrom = vi.fn().mockReturnValue(queryObj);
+    const mockDb = { selectFrom } as unknown as Kysely<Database>;
+
+    const result = await handleGetRecipients(
+      makeCtx({ db: mockDb, body: { audience: "all" } }),
+    );
+
+    expect(selectFrom).toHaveBeenCalledWith("registrations");
+    expect(innerJoin).not.toHaveBeenCalled();
+
+    const body = result.body as {
+      count: number;
+      recipients: { email: string; language: string }[];
+    };
+    expect(body.count).toBe(2);
+    expect(body.recipients.map((r) => r.language).sort()).toEqual(["da", "en"]);
+  });
+
+  it("includes active Danish-language registrations alongside English", async () => {
+    const mockRows = [
+      { email: "self-da@test.com", name: "Self DA", language: "da" },
+      { email: "admin-da@test.com", name: "Admin DA", language: "da" },
+      { email: "english@test.com", name: "English", language: "en" },
+    ];
+    const mockDb = buildQueryMock(mockRows);
+
+    const result = await handleGetRecipients(
+      makeCtx({ db: mockDb, body: { audience: "all" } }),
+    );
+
+    const body = result.body as {
+      count: number;
+      recipients: { email: string; language: string }[];
+    };
+    const danish = body.recipients.filter((r) => r.language === "da");
+    const english = body.recipients.filter((r) => r.language === "en");
+    expect(body.count).toBe(3);
+    expect(danish).toHaveLength(2);
+    expect(english).toHaveLength(1);
   });
 });
 

@@ -15,17 +15,11 @@ interface Recipient {
 }
 
 async function queryRecipients(ctx: RequestContext): Promise<Recipient[]> {
-  const query = ctx.db
+  const rows = await ctx.db
     .selectFrom("registrations")
-    .innerJoin("tables", "tables.id", "registrations.table_id")
-    .select([
-      "registrations.email",
-      "registrations.name",
-      "registrations.language",
-    ])
-    .where("registrations.status", "=", "active");
-
-  const rows = await query.execute();
+    .select(["email", "name", "language"])
+    .where("status", "=", "active")
+    .execute();
 
   const seen = new Set<string>();
   const unique: Recipient[] = [];
