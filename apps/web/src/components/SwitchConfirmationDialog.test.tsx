@@ -17,7 +17,6 @@ vi.mock("@/i18n/LanguageProvider", () => ({
         "registration.switchKeep": "Keep current table",
         "registration.switchConfirm": "Confirm switch",
         "table.detailsTitle": "Table #{number}",
-        "table.meters": "meters",
         "common.loading": "Loading...",
       };
       return translations[key] ?? key;
@@ -132,8 +131,8 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText(/Table #5.*2 meters/)).toBeDefined();
-    expect(screen.getByText(/Table #20.*2 meters/)).toBeDefined();
+    expect(screen.getByText(/Table #5.*80x180 cm/)).toBeDefined();
+    expect(screen.getByText(/Table #20.*150x135 cm/)).toBeDefined();
   });
 
   it("does not show price/DKK in the display", () => {

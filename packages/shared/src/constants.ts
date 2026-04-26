@@ -7,11 +7,17 @@ import type { Language } from "./enums.js";
  * presents tables by number, location, and size.
  *
  * Coordinates are in the `TABLE_MAP_VIEWBOX` system (top-left origin).
+ * `widthCm` × `lengthCm` matches the inventory listing for that table
+ * (e.g. 80×180, 150×135) — `lengthCm` is the longer side for elongated
+ * tables but reflects the listed orientation for the near-square pieces.
+ * SVG `width`/`height` are derived from those cm values at a uniform
+ * 1 unit ≈ 15 cm scale.
  */
 export interface TableCatalogEntry {
   id: number;
   number: number;
-  sizeMeters: number;
+  widthCm: number;
+  lengthCm: number;
   x: number;
   y: number;
   width: number;
@@ -20,15 +26,6 @@ export interface TableCatalogEntry {
 
 /** SVG viewBox for the Fælledhuset hall map (width × height units). */
 export const TABLE_MAP_VIEWBOX = { width: 120, height: 95 } as const;
-
-const STANDARD_TABLE_SIZE_METERS = 2;
-
-/**
- * Public-facing size label shown on the table-map detail panel. Until the
- * catalog carries individual dimensions, every table is presented at the
- * standard 100×200 cm.
- */
-export const STANDARD_TABLE_SIZE_LABEL = "100x200cm" as const;
 
 /** Side of a table the adjacent clothing rack sits on, in map coordinates. */
 export type ClothingRackSide = "above" | "below" | "left" | "right";
@@ -65,36 +62,37 @@ export function getClothingRackSide(id: number): ClothingRackSide | undefined {
 }
 
 /**
- * Fælledhuset hall table layout, sourced from the published reference map.
- * Tables 1–10 form the three left/center vertical aisles, 13–14 are a
- * horizontal pair near the courtyard wall, 15–20 fill two right-of-center
- * aisles, and 21/23/24 line the right wall (id 22 is intentionally
- * skipped). 11 and 12 are the horizontal pair along the promenade wall.
+ * Fælledhuset hall table layout, sourced from the published reference map
+ * and the actual on-site table inventory. Tables 1–10 form the three
+ * left/center vertical aisles, 13–14 line the courtyard wall, 15–20 fill
+ * two right-of-center aisles, and 21–23 line the right wall. 11 and 12
+ * are the horizontal pair along the promenade wall. SVG width/height are
+ * derived from the cm dimensions at 1 unit ≈ 15 cm.
  */
 export const TABLE_CATALOG: readonly TableCatalogEntry[] = [
-  { id: 1, number: 1, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 31, width: 6, height: 13 },
-  { id: 2, number: 2, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 44, width: 6, height: 13 },
-  { id: 3, number: 3, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 12, y: 57, width: 6, height: 13 },
-  { id: 4, number: 4, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 25, width: 6, height: 13 },
-  { id: 5, number: 5, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 39, width: 6, height: 13 },
-  { id: 6, number: 6, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 29, y: 52, width: 6, height: 13 },
-  { id: 7, number: 7, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 12, width: 6, height: 13 },
-  { id: 8, number: 8, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 25, width: 6, height: 13 },
-  { id: 9, number: 9, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 39, width: 6, height: 13 },
-  { id: 10, number: 10, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 46, y: 52, width: 6, height: 13 },
-  { id: 11, number: 11, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 24, y: 76, width: 13, height: 6 },
-  { id: 12, number: 12, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 44, y: 76, width: 13, height: 6 },
-  { id: 13, number: 13, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 63, y: 13, width: 13, height: 6 },
-  { id: 14, number: 14, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 77, y: 13, width: 13, height: 6 },
-  { id: 15, number: 15, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 31, width: 6, height: 13 },
-  { id: 16, number: 16, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 47, width: 6, height: 13 },
-  { id: 17, number: 17, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 62, y: 61, width: 6, height: 13 },
-  { id: 18, number: 18, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 31, width: 6, height: 13 },
-  { id: 19, number: 19, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 45, width: 6, height: 13 },
-  { id: 20, number: 20, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 79, y: 58, width: 6, height: 13 },
-  { id: 21, number: 21, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 22, width: 6, height: 13 },
-  { id: 23, number: 23, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 36, width: 6, height: 13 },
-  { id: 24, number: 24, sizeMeters: STANDARD_TABLE_SIZE_METERS, x: 95, y: 49, width: 6, height: 13 },
+  { id: 1, number: 1, widthCm: 60, lengthCm: 140, x: 13, y: 32.9, width: 4, height: 9.3 },
+  { id: 2, number: 2, widthCm: 80, lengthCm: 180, x: 12.4, y: 44.5, width: 5.3, height: 12 },
+  { id: 3, number: 3, widthCm: 60, lengthCm: 140, x: 13, y: 58.9, width: 4, height: 9.3 },
+  { id: 4, number: 4, widthCm: 75, lengthCm: 150, x: 29.5, y: 26.5, width: 5, height: 10 },
+  { id: 5, number: 5, widthCm: 80, lengthCm: 180, x: 29.4, y: 39.5, width: 5.3, height: 12 },
+  { id: 6, number: 6, widthCm: 80, lengthCm: 180, x: 29.4, y: 52.5, width: 5.3, height: 12 },
+  { id: 7, number: 7, widthCm: 80, lengthCm: 180, x: 46.4, y: 12.5, width: 5.3, height: 12 },
+  { id: 8, number: 8, widthCm: 80, lengthCm: 180, x: 46.4, y: 25.5, width: 5.3, height: 12 },
+  { id: 9, number: 9, widthCm: 80, lengthCm: 180, x: 46.4, y: 39.5, width: 5.3, height: 12 },
+  { id: 10, number: 10, widthCm: 80, lengthCm: 180, x: 46.4, y: 52.5, width: 5.3, height: 12 },
+  { id: 11, number: 11, widthCm: 75, lengthCm: 180, x: 24.5, y: 76.5, width: 12, height: 5 },
+  { id: 12, number: 12, widthCm: 75, lengthCm: 150, x: 45.5, y: 76.5, width: 10, height: 5 },
+  { id: 13, number: 13, widthCm: 60, lengthCm: 120, x: 65.5, y: 14, width: 8, height: 4 },
+  { id: 14, number: 14, widthCm: 150, lengthCm: 135, x: 78.5, y: 11.5, width: 10, height: 9 },
+  { id: 15, number: 15, widthCm: 60, lengthCm: 110, x: 63, y: 33.9, width: 4, height: 7.3 },
+  { id: 16, number: 16, widthCm: 80, lengthCm: 180, x: 62.4, y: 47.5, width: 5.3, height: 12 },
+  { id: 17, number: 17, widthCm: 80, lengthCm: 180, x: 62.4, y: 61.5, width: 5.3, height: 12 },
+  { id: 18, number: 18, widthCm: 80, lengthCm: 80, x: 79.4, y: 34.9, width: 5.3, height: 5.3 },
+  { id: 19, number: 19, widthCm: 80, lengthCm: 180, x: 79.4, y: 45.5, width: 5.3, height: 12 },
+  { id: 20, number: 20, widthCm: 150, lengthCm: 135, x: 77.5, y: 59.5, width: 9, height: 10 },
+  { id: 21, number: 21, widthCm: 80, lengthCm: 180, x: 95.4, y: 22.5, width: 5.3, height: 12 },
+  { id: 22, number: 22, widthCm: 80, lengthCm: 180, x: 95.4, y: 36.5, width: 5.3, height: 12 },
+  { id: 23, number: 23, widthCm: 80, lengthCm: 180, x: 95.4, y: 49.5, width: 5.3, height: 12 },
 ] as const;
 
 /** IDs of tables present on the published Fælledhuset map. */
@@ -108,6 +106,11 @@ export function getTableById(id: number): TableCatalogEntry | undefined {
   return TABLE_CATALOG.find((t) => t.id === id);
 }
 
+/** "80x180 cm" style size label derived from a catalog entry. */
+export function formatTableSize(table: Pick<TableCatalogEntry, "widthCm" | "lengthCm">): string {
+  return `${table.widthCm}x${table.lengthCm} cm`;
+}
+
 /**
  * Human-readable table label used in admin UI and
  * admin-facing email templates.
@@ -119,7 +122,7 @@ export function formatTableLabel(id: number, opts: { includeDetails?: boolean } 
   const table = getTableById(id);
   if (!table) return `Table #${id}`;
   if (opts.includeDetails) {
-    return `Table #${table.number} · ${table.sizeMeters} m`;
+    return `Table #${table.number} · ${formatTableSize(table)}`;
   }
   return `Table #${table.number}`;
 }

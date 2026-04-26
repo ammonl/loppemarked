@@ -102,13 +102,14 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).toContain("Fælledhuset");
   });
 
-  it("renders the table size", () => {
+  it("renders the table size in cm", () => {
+    // Table 3 is one of the 60x140 cm clothing-rack tables.
     const daResult = buildConfirmationEmail(baseData);
-    expect(daResult.bodyHtml).toContain("2 meter");
+    expect(daResult.bodyHtml).toContain("60x140 cm");
 
-    // Every visible table on the simplified Fælledhuset map is 2 m.
+    // Table 23 is one of the standard 80x180 cm tables along the right wall.
     const enResult = buildConfirmationEmail({ ...baseData, tableId: 23, language: "en" });
-    expect(enResult.bodyHtml).toContain("2 meters");
+    expect(enResult.bodyHtml).toContain("80x180 cm");
     expect(enResult.bodyHtml).toContain("#23");
   });
 

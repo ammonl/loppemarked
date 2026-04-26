@@ -6,6 +6,7 @@ import {
   ELIGIBLE_STREET,
   TABLE_CATALOG,
   formatTableLabel,
+  formatTableSize,
   getTableById,
   isFloorDoorRequired,
   validateRegistrationInput,
@@ -64,7 +65,7 @@ const requiredLabelStyle: React.CSSProperties = {
   color: colors.warmBrown,
 };
 
-function formatTableOption(table: { id: number; number: number; sizeMeters: number }): string {
+function formatTableOption(table: { id: number }): string {
   return `${formatTableLabel(table.id, { includeDetails: true })}`;
 }
 
@@ -195,7 +196,8 @@ export function AdminRegistrations() {
         return {
           ...r,
           table_number: table?.number ?? r.table_id,
-          table_size: table?.sizeMeters ?? 0,
+          table_size_label: table ? formatTableSize(table) : "—",
+          table_size_area: table ? table.widthCm * table.lengthCm : 0,
         };
       }),
     [registrations],
@@ -742,7 +744,7 @@ export function AdminRegistrations() {
                 <SortableHeader label={t("admin.registrations.name")} sortKey="name" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.email")} sortKey="email" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.table")} sortKey="table_number" sort={sort} onToggle={toggleSort} />
-                <SortableHeader label={t("admin.registrations.tableSize")} sortKey="table_size" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label={t("admin.registrations.tableSize")} sortKey="table_size_area" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.apartment")} sortKey="apartment_key" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.status")} sortKey="status" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label={t("admin.registrations.date")} sortKey="created_at" sort={sort} onToggle={toggleSort} />
@@ -755,7 +757,7 @@ export function AdminRegistrations() {
                   <td style={{ padding: "0.5rem" }}>{reg.name}</td>
                   <td style={{ padding: "0.5rem" }}>{reg.email}</td>
                   <td style={{ padding: "0.5rem" }}>#{reg.table_number}</td>
-                  <td style={{ padding: "0.5rem" }}>{reg.table_size} m</td>
+                  <td style={{ padding: "0.5rem" }}>{reg.table_size_label}</td>
                   <td style={{ padding: "0.5rem", fontSize: "0.8rem" }}>{formatAddress(reg.street, reg.house_number, reg.floor, reg.door)}</td>
                   <td style={{ padding: "0.5rem" }}>
                     <span

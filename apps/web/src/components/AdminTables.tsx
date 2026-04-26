@@ -5,6 +5,7 @@ import type { TableState } from "@loppemarked/shared";
 import {
   ELIGIBLE_STREET,
   formatTableLabel,
+  formatTableSize,
   getTableById,
   isFloorDoorRequired,
   validateRegistrationInput,
@@ -43,7 +44,9 @@ interface AdminTable {
 
 interface AdminTableRow extends AdminTable {
   tableNumber: number;
-  sizeMeters: number;
+  sizeLabel: string;
+  /** Sortable size proxy: total area in cm² (lengthCm × widthCm). */
+  sizeArea: number;
   tableLabel: string;
   _searchText: string;
 }
@@ -77,16 +80,19 @@ const labelStyle: React.CSSProperties = {
 function enrichTable(t: AdminTable): AdminTableRow {
   const catalogEntry = getTableById(t.id);
   const tableNumber = catalogEntry?.number ?? t.id;
-  const sizeMeters = catalogEntry?.sizeMeters ?? 0;
+  const sizeLabel = catalogEntry ? formatTableSize(catalogEntry) : "—";
+  const sizeArea = catalogEntry ? catalogEntry.widthCm * catalogEntry.lengthCm : 0;
   const tableLabel = formatTableLabel(t.id);
   return {
     ...t,
     tableNumber,
-    sizeMeters,
+    sizeLabel,
+    sizeArea,
     tableLabel,
     _searchText: [
       tableLabel,
       String(tableNumber),
+      sizeLabel,
       t.registration?.name,
       t.registration?.email,
     ]
@@ -585,7 +591,7 @@ export function AdminTables() {
             {t("admin.tables.addRegistration")} – {activeDialog.table.tableLabel}
           </h3>
           <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", color: colors.warmBrown }}>
-            <strong>{t("admin.tables.size")}:</strong> {activeDialog.table.sizeMeters} {t("admin.tables.meters")}
+            <strong>{t("admin.tables.size")}:</strong> {activeDialog.table.sizeLabel}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div>
@@ -715,7 +721,7 @@ export function AdminTables() {
           <thead>
             <tr>
               <SortableHeader label={t("admin.tables.number")} sortKey="tableNumber" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
-              <SortableHeader label={t("admin.tables.size")} sortKey="sizeMeters" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
+              <SortableHeader label={t("admin.tables.size")} sortKey="sizeArea" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
               <SortableHeader label={t("admin.tables.state")} sortKey="state" sort={sort} onToggle={toggleSort} style={{ padding: "0.5rem 0.75rem" }} />
               <th style={tableHeaderStyle}>{t("admin.tables.actions")}</th>
             </tr>
@@ -734,7 +740,7 @@ export function AdminTables() {
                     )}
                   </td>
                   <td style={tableCellStyle}>
-                    {row.sizeMeters} {t("admin.tables.meters")}
+                    {row.sizeLabel}
                   </td>
                   <td style={tableCellStyle}>
                     <span
