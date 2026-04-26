@@ -538,7 +538,7 @@ describe("AdminRegistrations", () => {
       const fetchMock = mockFetch([
         { ok: true, body: registrations },
         { ok: true, body: [] },
-        { ok: true, body: { registrationId: "r1", newBoxId: 3 } },
+        { ok: true, body: { registrationId: "r1", newTableId: 3 } },
         { ok: true, body: registrations },
         { ok: true, body: [] },
       ]);
@@ -565,7 +565,8 @@ describe("AdminRegistrations", () => {
       expect(moveCall[0]).toBe("/admin/registrations/move");
       const moveBody = JSON.parse(moveCall[1].body);
       expect(moveBody.registrationId).toBe("r1");
-      expect(moveBody.newBoxId).toBe(3);
+      expect(moveBody.newTableId).toBe(3);
+      expect(moveBody).not.toHaveProperty("newBoxId");
       expect(screen.getByText("admin.registrations.moved")).toBeDefined();
     });
 
