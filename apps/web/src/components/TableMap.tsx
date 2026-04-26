@@ -177,11 +177,11 @@ export function TableMap({ tablesById, selectedId, onSelect }: TableMapProps) {
         </text>
 
         <text
-          x={width - 7}
+          x={90.05}
           y={height - 11}
           fontSize={3.2}
           fontWeight={700}
-          textAnchor="end"
+          textAnchor="middle"
           fill={colors.fleaAccentInk}
           fontFamily="'Caveat', cursive"
         >
