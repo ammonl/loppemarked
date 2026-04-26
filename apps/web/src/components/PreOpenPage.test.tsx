@@ -39,6 +39,18 @@ describe("PreOpenPage", () => {
     expect(screen.getByText("status.eligibility")).toBeDefined();
   });
 
+  it("renders the event date, time, and place so visitors can see when and where the loppemarked is", () => {
+    render(<PreOpenPage openingDatetime={OPENING} />);
+
+    const eventBlock = screen.getByTestId("flea-preopen-event");
+    expect(within(eventBlock).getByText("status.eventDateLabel")).toBeDefined();
+    expect(within(eventBlock).getByText("landing.eventDate")).toBeDefined();
+    expect(within(eventBlock).getByText("status.eventTimeLabel")).toBeDefined();
+    expect(within(eventBlock).getByText("landing.eventTime")).toBeDefined();
+    expect(within(eventBlock).getByText("status.eventPlaceLabel")).toBeDefined();
+    expect(within(eventBlock).getByText("landing.eventPlace")).toBeDefined();
+  });
+
   it("does not reference greenhouses or planter boxes", () => {
     render(<PreOpenPage openingDatetime={OPENING} />);
 
