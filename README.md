@@ -184,7 +184,12 @@ The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Conf
 
 ## Monitoring & Alerting
 
-CloudWatch alarms cover the major failure modes:
+Dashboards, alarms, and the alerting SNS topic are provisioned **only when
+the `enable_observability_alerts` module variable is `true`**. Production
+keeps the default (`true`); staging sets it to `false`, so the resources
+described below exist in production only.
+
+In production, CloudWatch alarms cover the major failure modes:
 
 | Alarm | Metric | Threshold |
 |-------|--------|-----------|
@@ -199,11 +204,6 @@ CloudWatch alarms cover the major failure modes:
 Alarm notifications are delivered via SNS email subscription (configured per environment via `alarm_email`).
 
 A CloudWatch dashboard aggregates Lambda, RDS, and SES metrics.
-
-Dashboards, alarms, and the alerting SNS topic are gated by the
-`enable_observability_alerts` module variable. Production keeps the default
-(`true`); staging sets it to `false` so no dashboard, alarms, or alerting
-SNS topic are provisioned for that environment.
 
 **Drift detection** runs daily via `.github/workflows/drift-detection.yml`. If Terraform detects infrastructure drift, a GitHub issue is created automatically.
 
