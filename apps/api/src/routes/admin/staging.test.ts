@@ -116,7 +116,7 @@ describe("handleFillTables", () => {
     expect(res.statusCode).toBe(200);
     const body = res.body as { filledCount: number; totalTables: number };
     expect(body.filledCount).toBe(2);
-    expect(body.totalTables).toBe(23);
+    expect(body.totalTables).toBe(24);
   });
 });
 

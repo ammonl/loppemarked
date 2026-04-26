@@ -80,10 +80,10 @@ describe("TableMapPage", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/public/tables");
     expect(screen.getByTestId("table-tile-1")).toBeDefined();
-    expect(screen.getByTestId("table-tile-22")).toBeDefined();
     expect(screen.getByTestId("table-tile-23")).toBeDefined();
-    // id 24 was renamed to 23 during the right-wall renumbering.
-    expect(screen.queryByTestId("table-tile-24")).toBeNull();
+    expect(screen.getByTestId("table-tile-24")).toBeDefined();
+    // id 25 is outside the catalog after extending to 24 tables.
+    expect(screen.queryByTestId("table-tile-25")).toBeNull();
     expect(screen.getByText("table.pageTitle")).toBeDefined();
   });
 

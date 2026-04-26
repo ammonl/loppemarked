@@ -25,14 +25,14 @@ const FLOOR_PLAN_INSET_X = 4;
 const FLOOR_PLAN_INSET_TOP = 8;
 const FLOOR_PLAN_INSET_BOTTOM = 8;
 
-// The entrance label sits horizontally between tables 19 and 23, the two
+// The entrance label sits horizontally between tables 20 and 24, the two
 // rightmost columns adjacent to the venue door. Derived from the catalog so
 // the label tracks any future moves of those tables.
 const ENTRANCE_LABEL_X = (() => {
-  const t19 = getTableById(19);
-  const t23 = getTableById(23);
-  if (!t19 || !t23) return 90.05;
-  return (t19.x + t19.width / 2 + (t23.x + t23.width / 2)) / 2;
+  const t20 = getTableById(20);
+  const t24 = getTableById(24);
+  if (!t20 || !t24) return 90.05;
+  return (t20.x + t20.width / 2 + (t24.x + t24.width / 2)) / 2;
 })();
 
 /**

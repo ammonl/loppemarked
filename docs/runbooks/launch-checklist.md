@@ -29,7 +29,7 @@ Complete all checks in the staging environment before proceeding to production.
 
 ### 1.2 Database & Data
 
-- [x] Flea-market tables seeded from the published Fælledhuset catalog (23 visible tables; ids 1–24 with 22 skipped)
+- [x] Flea-market tables seeded from the published Fælledhuset catalog (24 visible tables; contiguous ids 1–24)
 - [x] All tables in `available` state (no stale registrations from testing)
 - [x] System settings row exists with correct opening datetime
 - [x] Opening datetime matches planned launch: `2026-04-01T10:00:00 Europe/Copenhagen`

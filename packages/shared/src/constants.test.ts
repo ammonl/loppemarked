@@ -59,15 +59,15 @@ describe("EVENT_CONTACT", () => {
 });
 
 describe("TABLE_CATALOG", () => {
-  it("matches the published Fælledhuset map (23 visible tables)", () => {
-    expect(TABLE_CATALOG).toHaveLength(23);
-    expect(TOTAL_TABLE_COUNT).toBe(23);
+  it("matches the published Fælledhuset map (24 visible tables)", () => {
+    expect(TABLE_CATALOG).toHaveLength(24);
+    expect(TOTAL_TABLE_COUNT).toBe(24);
   });
 
-  it("uses contiguous ids 1..23 after the right-wall renumbering", () => {
+  it("uses contiguous ids 1..24 after extending the catalog", () => {
     const ids = TABLE_CATALOG.map((t) => t.id);
     const expected = [
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
     ];
     expect(ids).toEqual(expected);
     expect(VISIBLE_TABLE_IDS).toEqual(expected);
@@ -82,7 +82,7 @@ describe("TABLE_CATALOG", () => {
       const key = `${table.widthCm}x${table.lengthCm}`;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    expect(counts.get("80x180")).toBe(13);
+    expect(counts.get("80x180")).toBe(14);
     expect(counts.get("60x140")).toBe(2);
     expect(counts.get("75x150")).toBe(2);
     expect(counts.get("150x135")).toBe(2);
@@ -113,9 +113,9 @@ describe("TABLE_CATALOG", () => {
 
   it("resolves by id via getTableById", () => {
     expect(getTableById(1)?.number).toBe(1);
-    expect(getTableById(22)?.number).toBe(22);
     expect(getTableById(23)?.number).toBe(23);
-    expect(getTableById(24)).toBeUndefined();
+    expect(getTableById(24)?.number).toBe(24);
+    expect(getTableById(25)).toBeUndefined();
     expect(getTableById(999)).toBeUndefined();
   });
 });
@@ -130,13 +130,15 @@ describe("formatTableSize", () => {
 describe("formatTableLabel", () => {
   it("renders a short label by default", () => {
     expect(formatTableLabel(1)).toBe("Table #1");
-    expect(formatTableLabel(23)).toBe("Table #23");
+    expect(formatTableLabel(24)).toBe("Table #24");
   });
 
   it("renders size when details requested", () => {
-    expect(formatTableLabel(1, { includeDetails: true })).toBe("Table #1 · 60x140 cm");
-    expect(formatTableLabel(2, { includeDetails: true })).toBe("Table #2 · 80x180 cm");
-    expect(formatTableLabel(23, { includeDetails: true })).toBe("Table #23 · 80x180 cm");
+    expect(formatTableLabel(1, { includeDetails: true })).toBe("Table #1 · 150x135 cm");
+    expect(formatTableLabel(2, { includeDetails: true })).toBe("Table #2 · 60x140 cm");
+    expect(formatTableLabel(3, { includeDetails: true })).toBe("Table #3 · 60x110 cm");
+    expect(formatTableLabel(16, { includeDetails: true })).toBe("Table #16 · 80x180 cm");
+    expect(formatTableLabel(24, { includeDetails: true })).toBe("Table #24 · 80x180 cm");
   });
 
   it("falls back to the raw id for unknown tables", () => {

@@ -37,15 +37,15 @@ export type ClothingRackSide = "above" | "below" | "left" | "right";
  * map reference.
  */
 export const CLOTHING_RACKS: readonly { tableId: number; side: ClothingRackSide }[] = [
-  { tableId: 1, side: "above" },
-  { tableId: 3, side: "below" },
-  { tableId: 4, side: "above" },
-  { tableId: 11, side: "left" },
-  { tableId: 12, side: "right" },
-  { tableId: 13, side: "left" },
-  { tableId: 15, side: "above" },
-  { tableId: 18, side: "above" },
-  { tableId: 21, side: "above" },
+  { tableId: 2, side: "above" },
+  { tableId: 4, side: "below" },
+  { tableId: 5, side: "above" },
+  { tableId: 12, side: "left" },
+  { tableId: 13, side: "right" },
+  { tableId: 14, side: "left" },
+  { tableId: 16, side: "above" },
+  { tableId: 19, side: "above" },
+  { tableId: 22, side: "above" },
 ] as const;
 
 /** Convenience id-only list, kept for code that just needs membership. */
@@ -63,36 +63,39 @@ export function getClothingRackSide(id: number): ClothingRackSide | undefined {
 
 /**
  * Fælledhuset hall table layout, sourced from the published reference map
- * and the actual on-site table inventory. Tables 1–10 form the three
- * left/center vertical aisles, 13–14 line the courtyard wall, 15–20 fill
- * two right-of-center aisles, and 21–23 line the right wall. 11 and 12
- * are the horizontal pair along the promenade wall. SVG width/height are
- * derived from the cm dimensions at 1 unit ≈ 15 cm.
+ * and the actual on-site table inventory. Table 1 is the 150x135 piece
+ * placed above the leftmost column, 2–4 form that column, 5–11 fill the
+ * three left/center vertical aisles, 12 and 13 are the horizontal pair
+ * along the promenade wall, 14–15 line the courtyard wall, 16–18 fill
+ * the right-of-center aisle, 19–21 fill the next aisle out (with the
+ * 80x80 piece at 19), and 22–24 line the right wall. SVG width/height
+ * are derived from the cm dimensions at 1 unit ≈ 15 cm.
  */
 export const TABLE_CATALOG: readonly TableCatalogEntry[] = [
-  { id: 1, number: 1, widthCm: 60, lengthCm: 140, x: 13, y: 32.9, width: 4, height: 9.3 },
-  { id: 2, number: 2, widthCm: 80, lengthCm: 180, x: 12.4, y: 44.5, width: 5.3, height: 12 },
-  { id: 3, number: 3, widthCm: 60, lengthCm: 140, x: 13, y: 58.9, width: 4, height: 9.3 },
-  { id: 4, number: 4, widthCm: 75, lengthCm: 150, x: 29.5, y: 26.5, width: 5, height: 10 },
-  { id: 5, number: 5, widthCm: 80, lengthCm: 180, x: 29.4, y: 39.5, width: 5.3, height: 12 },
-  { id: 6, number: 6, widthCm: 80, lengthCm: 180, x: 29.4, y: 52.5, width: 5.3, height: 12 },
-  { id: 7, number: 7, widthCm: 80, lengthCm: 180, x: 46.4, y: 12.5, width: 5.3, height: 12 },
-  { id: 8, number: 8, widthCm: 80, lengthCm: 180, x: 46.4, y: 25.5, width: 5.3, height: 12 },
-  { id: 9, number: 9, widthCm: 80, lengthCm: 180, x: 46.4, y: 39.5, width: 5.3, height: 12 },
-  { id: 10, number: 10, widthCm: 80, lengthCm: 180, x: 46.4, y: 52.5, width: 5.3, height: 12 },
-  { id: 11, number: 11, widthCm: 75, lengthCm: 180, x: 24.5, y: 76.5, width: 12, height: 5 },
-  { id: 12, number: 12, widthCm: 75, lengthCm: 150, x: 45.5, y: 76.5, width: 10, height: 5 },
-  { id: 13, number: 13, widthCm: 60, lengthCm: 120, x: 65.5, y: 14, width: 8, height: 4 },
-  { id: 14, number: 14, widthCm: 150, lengthCm: 135, x: 78.5, y: 11.5, width: 10, height: 9 },
-  { id: 15, number: 15, widthCm: 60, lengthCm: 110, x: 63, y: 33.9, width: 4, height: 7.3 },
-  { id: 16, number: 16, widthCm: 80, lengthCm: 180, x: 62.4, y: 47.5, width: 5.3, height: 12 },
-  { id: 17, number: 17, widthCm: 80, lengthCm: 180, x: 62.4, y: 61.5, width: 5.3, height: 12 },
-  { id: 18, number: 18, widthCm: 80, lengthCm: 80, x: 79.4, y: 34.9, width: 5.3, height: 5.3 },
-  { id: 19, number: 19, widthCm: 80, lengthCm: 180, x: 79.4, y: 45.5, width: 5.3, height: 12 },
-  { id: 20, number: 20, widthCm: 150, lengthCm: 135, x: 77.5, y: 59.5, width: 9, height: 10 },
-  { id: 21, number: 21, widthCm: 80, lengthCm: 180, x: 95.4, y: 22.5, width: 5.3, height: 12 },
-  { id: 22, number: 22, widthCm: 80, lengthCm: 180, x: 95.4, y: 36.5, width: 5.3, height: 12 },
-  { id: 23, number: 23, widthCm: 80, lengthCm: 180, x: 95.4, y: 49.5, width: 5.3, height: 12 },
+  { id: 1, number: 1, widthCm: 150, lengthCm: 135, x: 10.5, y: 14, width: 10, height: 9 },
+  { id: 2, number: 2, widthCm: 60, lengthCm: 140, x: 13, y: 32.9, width: 4, height: 9.3 },
+  { id: 3, number: 3, widthCm: 60, lengthCm: 110, x: 13, y: 44.5, width: 4, height: 7.3 },
+  { id: 4, number: 4, widthCm: 60, lengthCm: 140, x: 13, y: 58.9, width: 4, height: 9.3 },
+  { id: 5, number: 5, widthCm: 75, lengthCm: 150, x: 29.5, y: 26.5, width: 5, height: 10 },
+  { id: 6, number: 6, widthCm: 80, lengthCm: 180, x: 29.4, y: 39.5, width: 5.3, height: 12 },
+  { id: 7, number: 7, widthCm: 80, lengthCm: 180, x: 29.4, y: 52.5, width: 5.3, height: 12 },
+  { id: 8, number: 8, widthCm: 80, lengthCm: 180, x: 46.4, y: 12.5, width: 5.3, height: 12 },
+  { id: 9, number: 9, widthCm: 80, lengthCm: 180, x: 46.4, y: 25.5, width: 5.3, height: 12 },
+  { id: 10, number: 10, widthCm: 80, lengthCm: 180, x: 46.4, y: 39.5, width: 5.3, height: 12 },
+  { id: 11, number: 11, widthCm: 80, lengthCm: 180, x: 46.4, y: 52.5, width: 5.3, height: 12 },
+  { id: 12, number: 12, widthCm: 75, lengthCm: 180, x: 24.5, y: 76.5, width: 12, height: 5 },
+  { id: 13, number: 13, widthCm: 75, lengthCm: 150, x: 45.5, y: 76.5, width: 10, height: 5 },
+  { id: 14, number: 14, widthCm: 60, lengthCm: 120, x: 65.5, y: 14, width: 8, height: 4 },
+  { id: 15, number: 15, widthCm: 150, lengthCm: 135, x: 78.5, y: 11.5, width: 10, height: 9 },
+  { id: 16, number: 16, widthCm: 80, lengthCm: 180, x: 62.4, y: 33.9, width: 5.3, height: 12 },
+  { id: 17, number: 17, widthCm: 80, lengthCm: 180, x: 62.4, y: 47.5, width: 5.3, height: 12 },
+  { id: 18, number: 18, widthCm: 80, lengthCm: 180, x: 62.4, y: 61.5, width: 5.3, height: 12 },
+  { id: 19, number: 19, widthCm: 80, lengthCm: 80, x: 79.4, y: 34.9, width: 5.3, height: 5.3 },
+  { id: 20, number: 20, widthCm: 80, lengthCm: 180, x: 79.4, y: 45.5, width: 5.3, height: 12 },
+  { id: 21, number: 21, widthCm: 80, lengthCm: 180, x: 79.4, y: 59.5, width: 5.3, height: 12 },
+  { id: 22, number: 22, widthCm: 80, lengthCm: 180, x: 95.4, y: 22.5, width: 5.3, height: 12 },
+  { id: 23, number: 23, widthCm: 80, lengthCm: 180, x: 95.4, y: 36.5, width: 5.3, height: 12 },
+  { id: 24, number: 24, widthCm: 80, lengthCm: 180, x: 95.4, y: 49.5, width: 5.3, height: 12 },
 ] as const;
 
 /** IDs of tables present on the published Fælledhuset map. */

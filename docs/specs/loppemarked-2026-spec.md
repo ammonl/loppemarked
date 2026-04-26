@@ -48,9 +48,9 @@
 ## 3. Table Catalog
 
 The visible Fælledhuset catalog is defined in
-`packages/shared/src/constants.ts` (`TABLE_CATALOG`). Table IDs are 1–24 with
-22 skipped (23 visible tables). Each entry has a position and a size in
-meters; some tables have an adjacent clothing-rack slot.
+`packages/shared/src/constants.ts` (`TABLE_CATALOG`). Table IDs are contiguous
+1–24 (24 visible tables). Each entry has a position and a size in meters;
+some tables have an adjacent clothing-rack slot.
 
 ## 4. Public Experience
 

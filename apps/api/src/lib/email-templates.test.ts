@@ -67,7 +67,7 @@ describe("buildConfirmationEmail", () => {
     const result = buildConfirmationEmail(baseData);
     const tileMatches = result.bodyHtml.match(/<rect x="\d+(?:\.\d+)?" y="\d+(?:\.\d+)?" width="\d+(?:\.\d+)?" height="\d+(?:\.\d+)?" rx="0\.9"/g);
     expect(tileMatches).not.toBeNull();
-    expect(tileMatches).toHaveLength(23);
+    expect(tileMatches).toHaveLength(24);
   });
 
   it("wraps the SVG in an Outlook-skipping conditional comment", () => {

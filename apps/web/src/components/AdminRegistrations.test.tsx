@@ -125,8 +125,8 @@ describe("AdminRegistrations", () => {
 
       expect(screen.getByText("admin.registrations.tableSize")).toBeDefined();
       expect(screen.queryByText("admin.registrations.tablePrice")).toBeNull();
-      // Alice books table 1, which is one of the 60x140 cm clothing-rack tables.
-      expect(screen.getByText("60x140 cm")).toBeDefined();
+      // Alice books table 1, which is the 150x135 cm piece above the leftmost column.
+      expect(screen.getByText("150x135 cm")).toBeDefined();
       expect(screen.queryByText(/DKK/)).toBeNull();
     });
 
@@ -409,13 +409,13 @@ describe("AdminRegistrations", () => {
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
       expect(options[0].value).toBe("");
-      expect(options[1].textContent).toBe("Table #1 · 60x140 cm");
+      expect(options[1].textContent).toBe("Table #1 · 150x135 cm");
       expect(options[1].value).toBe("1");
-      // The catalog now runs contiguously through id 23, so option 23
-      // is Table #23 (formerly #24 before the right-wall renumbering).
-      expect(options[23].textContent).toBe("Table #23 · 80x180 cm");
-      expect(options[23].value).toBe("23");
-      expect(options).toHaveLength(24);
+      // The catalog now runs contiguously through id 24 after extending
+      // the layout, so option 24 is Table #24.
+      expect(options[24].textContent).toBe("Table #24 · 80x180 cm");
+      expect(options[24].value).toBe("24");
+      expect(options).toHaveLength(25);
     });
 
     it("disables occupied tables and appends (occupied) suffix in add dialog", async () => {
