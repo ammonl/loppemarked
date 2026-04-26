@@ -82,12 +82,12 @@ describe("handleFillTables", () => {
   });
 
   it("fills available tables with fake registrations", async () => {
-    const mockBoxes = [
+    const mockTables = [
       { id: 1, state: "available" },
       { id: 2, state: "reserved" },
     ];
 
-    const executeFn = vi.fn().mockResolvedValue(mockBoxes);
+    const executeFn = vi.fn().mockResolvedValue(mockTables);
     const orderByFn = vi.fn().mockReturnValue({ execute: executeFn });
     const whereFn = vi.fn().mockReturnValue({ orderBy: orderByFn });
     const selectFn = vi.fn().mockReturnValue({ where: whereFn });
