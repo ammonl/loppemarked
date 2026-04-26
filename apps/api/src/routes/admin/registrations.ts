@@ -104,9 +104,16 @@ async function sendNotificationIfRequested(
         cancellationUrl,
       });
       bodyHtml = liveTemplate.bodyHtml;
+    } else if (supportsCancellation) {
+      // Unedited body but no token (token mint failed): regenerate the
+      // default with no cancel section at all, so the recipient never sees
+      // the preview-only placeholder note. Mirrors the self-registration
+      // fallback where the section is simply absent.
+      const fallbackTemplate = buildAdminNotification(previewInput);
+      bodyHtml = fallbackTemplate.bodyHtml;
     } else {
-      // Unedited body but no token (admin disabled cancel? token mint failed?
-      // or action does not support cancellation): fall back to the default.
+      // Action doesn't support a cancel section (move/remove): use the
+      // default template as-is.
       bodyHtml = previewTemplate.bodyHtml;
     }
 

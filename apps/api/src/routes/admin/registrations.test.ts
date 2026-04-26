@@ -321,6 +321,53 @@ describe("handleCreateRegistration (happy path)", () => {
     });
   });
 
+  it("drops the cancel section entirely when token minting fails", async () => {
+    const { queueAndSendEmail } = await import("../../lib/email-service.js");
+    const mockSendEmail = vi.mocked(queueAndSendEmail);
+    mockSendEmail.mockClear();
+    mockSendEmail.mockResolvedValue("email-no-token");
+
+    const { db, auditInserts } = makeMockTrxDbWithCaptures({
+      tableResult: { id: 3, state: "available" },
+      existingReg: undefined,
+      newRegId: "reg-no-token",
+      failTokenInsert: true,
+    });
+
+    await handleCreateRegistration(
+      makeCtx({
+        db,
+        body: {
+          tableId: 3,
+          name: "Alice",
+          email: "alice@example.com",
+          street: "Else Alfelts Vej",
+          houseNumber: 130,
+          language: "en",
+          notification: { sendEmail: true },
+        },
+      }),
+    );
+
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    const sent = mockSendEmail.mock.calls[0][1] as { bodyHtml: string };
+    // No live link, and crucially the preview-only placeholder note must not
+    // leak to the recipient (would be confusing — the link will never appear).
+    expect(sent.bodyHtml).not.toMatch(/\/cancel\?token=/);
+    expect(sent.bodyHtml).not.toContain("Cancel my booking");
+    expect(sent.bodyHtml).not.toContain(
+      "A personal cancellation link for the recipient will be inserted",
+    );
+
+    expect(auditInserts.some((e) => e.action === "cancellation_token_minted")).toBe(false);
+    const sentAudit = auditInserts.find((e) => e.action === "notification_sent");
+    expect(sentAudit).toBeDefined();
+    expect(JSON.parse(sentAudit!.after as string)).toMatchObject({
+      cancellation_link_included: false,
+      edited_before_send: false,
+    });
+  });
+
   it("does not inject a live cancel link when admin edits the email body", async () => {
     const { queueAndSendEmail } = await import("../../lib/email-service.js");
     const mockSendEmail = vi.mocked(queueAndSendEmail);
@@ -1427,6 +1474,7 @@ function makeMockTrxDbWithCaptures(opts: {
   tableResult?: { id: number; state: string };
   existingReg?: { id: string };
   newRegId: string;
+  failTokenInsert?: boolean;
 }): {
   db: Kysely<Database>;
   tokenInserts: Array<Record<string, unknown>>;
@@ -1439,6 +1487,14 @@ function makeMockTrxDbWithCaptures(opts: {
   const captureInsert = vi.fn().mockImplementation((tableName: string) => ({
     values: vi.fn().mockImplementation((vals: Record<string, unknown>) => {
       if (tableName === "registration_cancellation_tokens") {
+        if (opts.failTokenInsert) {
+          return {
+            returning: vi.fn().mockReturnValue({
+              execute: vi.fn().mockRejectedValue(new Error("token insert failed")),
+            }),
+            execute: vi.fn().mockRejectedValue(new Error("token insert failed")),
+          };
+        }
         tokenInserts.push(vals);
       }
       if (tableName === "audit_events") {
