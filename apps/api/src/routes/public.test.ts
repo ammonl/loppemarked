@@ -714,6 +714,65 @@ describe("handleJoinWaitlist (happy path)", () => {
     );
     expect(auditCalls.length).toBeGreaterThan(0);
   });
+
+  // Regression for the race where the existence check at the top of the
+  // already-on-waitlist branch finds the entry, but an admin
+  // remove/assign lands before getWaitlistPosition's lookup. The handler
+  // must not return position: 0 alongside the now-stale joinedAt.
+  it("returns alreadyOnWaitlist false when existing entry vanishes before position lookup", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingEntry: { id: "wl-existing", created_at: "2026-03-01T08:00:00Z" },
+      // Position lookup returns no entry, simulating an admin
+      // remove/assign between the existence check and the position read.
+      positionEntryCreatedAt: undefined,
+    });
+
+    const res = await handleJoinWaitlist(
+      makeCtx({ db: mockDb, body: validWaitlistBody }),
+    );
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyOnWaitlist).toBe(false);
+    expect(body.position).toBeNull();
+    expect(body).not.toHaveProperty("joinedAt");
+  });
+
+  // Regression for the race where the insert transaction commits but an
+  // admin removes/assigns the just-inserted entry before
+  // getWaitlistPosition runs. The handler must not return position: 0
+  // and must not queue a confirmation email built around that sentinel.
+  it("returns position null and skips confirmation email when new entry is processed before position lookup", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingEntry: undefined,
+      newEntryId: "wl-raced",
+      // Position lookup after the insert finds nothing — admin already
+      // moved the entry out of `waiting`.
+      positionEntryCreatedAt: undefined,
+    });
+
+    const res = await handleJoinWaitlist(
+      makeCtx({ db: mockDb, body: validWaitlistBody }),
+    );
+
+    // The returned waitlistEntryId proves the insert transaction
+    // committed (the helper only resolves an id when its mocked insert
+    // chain is exercised), so the in-transaction waitlist_add audit was
+    // exercised even though the post-commit position lookup raced out.
+    expect(res.statusCode).toBe(201);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyOnWaitlist).toBe(false);
+    expect(body.waitlistEntryId).toBe("wl-raced");
+    expect(body.position).toBeNull();
+
+    const insertCalls = (mockDb.insertInto as ReturnType<typeof vi.fn>).mock.calls;
+    const emailCalls = insertCalls.filter(
+      (call: string[]) => call[0] === "emails",
+    );
+    expect(emailCalls.length).toBe(0);
+  });
 });
 
 // Regression tests: a malicious or buggy client can submit a

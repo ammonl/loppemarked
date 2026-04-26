@@ -29,7 +29,7 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<
-    | { kind: "joined"; alreadyOnWaitlist: boolean; position: number; joinedAt?: string }
+    | { kind: "joined"; alreadyOnWaitlist: boolean; position: number | null; joinedAt?: string }
     | { kind: "alreadyHasTable" }
     | null
   >(null);
@@ -95,7 +95,7 @@ export function WaitlistForm({ onCancel }: WaitlistFormProps) {
       setResult({
         kind: "joined",
         alreadyOnWaitlist: body.alreadyOnWaitlist ?? false,
-        position: body.position ?? 0,
+        position: body.position ?? null,
         joinedAt: body.joinedAt,
       });
     } catch {
