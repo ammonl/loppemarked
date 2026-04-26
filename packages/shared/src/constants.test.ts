@@ -82,7 +82,8 @@ describe("TABLE_CATALOG", () => {
       const key = `${table.widthCm}x${table.lengthCm}`;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    expect(counts.get("80x180")).toBe(14);
+    expect(counts.get("80x180")).toBe(12);
+    expect(counts.get("76x210")).toBe(2);
     expect(counts.get("60x140")).toBe(2);
     expect(counts.get("75x150")).toBe(2);
     expect(counts.get("150x135")).toBe(2);

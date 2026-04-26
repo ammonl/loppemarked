@@ -132,7 +132,7 @@ describe("SwitchConfirmationDialog", () => {
     );
 
     expect(screen.getByText(/Table #5.*75x150 cm/)).toBeDefined();
-    expect(screen.getByText(/Table #20.*80x180 cm/)).toBeDefined();
+    expect(screen.getByText(/Table #20.*76x210 cm/)).toBeDefined();
   });
 
   it("does not show price/DKK in the display", () => {

@@ -234,8 +234,8 @@ describe("buildAdminNotification — move", () => {
   it("includes new table details table with number and size", () => {
     const result = buildAdminNotification(moveInput);
     expect(result.bodyHtml).toContain("#20");
-    // Table 20 is one of the standard 80x180 cm tables in the right-of-center aisle.
-    expect(result.bodyHtml).toContain("80x180 cm");
+    // Table 20 is one of the 76x210 cm pieces in the right-of-center aisle.
+    expect(result.bodyHtml).toContain("76x210 cm");
   });
 
   it("renders the table size in the same canonical format as the confirmation email", () => {
