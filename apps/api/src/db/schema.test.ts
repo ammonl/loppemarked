@@ -1,19 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { up, down } from "./migrations/001_initial_schema.js";
+import * as initial from "./migrations/001_initial_schema.js";
+import * as renumber from "./migrations/002_renumber_tables.js";
 
 describe("initial schema migration", () => {
   it("exports up function", () => {
-    expect(typeof up).toBe("function");
+    expect(typeof initial.up).toBe("function");
   });
 
   it("exports down function", () => {
-    expect(typeof down).toBe("function");
+    expect(typeof initial.down).toBe("function");
+  });
+});
+
+describe("renumber tables migration", () => {
+  it("exports up function", () => {
+    expect(typeof renumber.up).toBe("function");
+  });
+
+  it("exports down function", () => {
+    expect(typeof renumber.down).toBe("function");
   });
 });
 
 describe("migration structure", () => {
   it("up and down are async functions", () => {
-    expect(up.constructor.name).toBe("AsyncFunction");
-    expect(down.constructor.name).toBe("AsyncFunction");
+    expect(initial.up.constructor.name).toBe("AsyncFunction");
+    expect(initial.down.constructor.name).toBe("AsyncFunction");
+    expect(renumber.up.constructor.name).toBe("AsyncFunction");
+    expect(renumber.down.constructor.name).toBe("AsyncFunction");
   });
 });

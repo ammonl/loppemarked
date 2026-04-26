@@ -7,9 +7,11 @@ import type { Language } from "./enums.js";
  * presents tables by number, location, and size.
  *
  * Coordinates are in the `TABLE_MAP_VIEWBOX` system (top-left origin).
- * `widthCm` and `lengthCm` capture the actual table dimensions (with
- * `lengthCm` the longer side); the SVG `width`/`height` are derived for
- * layout at a uniform 1 unit ≈ 15 cm scale.
+ * `widthCm` × `lengthCm` matches the inventory listing for that table
+ * (e.g. 80×180, 150×135) — `lengthCm` is the longer side for elongated
+ * tables but reflects the listed orientation for the near-square pieces.
+ * SVG `width`/`height` are derived from those cm values at a uniform
+ * 1 unit ≈ 15 cm scale.
  */
 export interface TableCatalogEntry {
   id: number;

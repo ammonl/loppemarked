@@ -17,7 +17,6 @@ vi.mock("@/i18n/LanguageProvider", () => ({
         "registration.switchKeep": "Keep current table",
         "registration.switchConfirm": "Confirm switch",
         "table.detailsTitle": "Table #{number}",
-        "table.meters": "meters",
         "common.loading": "Loading...",
       };
       return translations[key] ?? key;
