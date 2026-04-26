@@ -136,7 +136,7 @@ export function AdminSettings() {
             color: colors.white,
             border: "none",
             borderRadius: 4,
-            cursor: saving ? "not-allowed" : "pointer",
+            cursor: saving ? "progress" : "pointer",
             fontSize: "1rem",
             fontFamily: fonts.body,
             alignSelf: "flex-start",

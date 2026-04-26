@@ -640,7 +640,7 @@ export function AdminMessaging() {
           fontSize: "0.9rem",
           fontWeight: 600,
           fontFamily: fonts.body,
-          cursor: sending ? "not-allowed" : "pointer",
+          cursor: sending ? "progress" : "pointer",
         }}
       >
         {sending ? t("admin.messaging.sending") : t("admin.messaging.send")}

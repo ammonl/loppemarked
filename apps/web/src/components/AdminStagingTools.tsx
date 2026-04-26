@@ -143,7 +143,7 @@ export function AdminStagingTools() {
               color: colors.white,
               border: "none",
               borderRadius: 4,
-              cursor: filling || clearing ? "not-allowed" : "pointer",
+              cursor: filling || clearing ? "progress" : "pointer",
               fontSize: "0.9rem",
               fontFamily: fonts.body,
             }}
@@ -175,7 +175,7 @@ export function AdminStagingTools() {
               color: colors.white,
               border: "none",
               borderRadius: 4,
-              cursor: filling || clearing ? "not-allowed" : "pointer",
+              cursor: filling || clearing ? "progress" : "pointer",
               fontSize: "0.9rem",
               fontFamily: fonts.body,
             }}

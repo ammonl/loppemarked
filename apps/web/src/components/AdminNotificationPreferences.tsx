@@ -82,7 +82,7 @@ export function AdminNotificationPreferences() {
             display: "flex",
             alignItems: "center",
             gap: "0.75rem",
-            cursor: saving ? "not-allowed" : "pointer",
+            cursor: saving ? "progress" : "pointer",
           }}
         >
           <input
@@ -102,7 +102,7 @@ export function AdminNotificationPreferences() {
             display: "flex",
             alignItems: "center",
             gap: "0.75rem",
-            cursor: saving ? "not-allowed" : "pointer",
+            cursor: saving ? "progress" : "pointer",
           }}
         >
           <input

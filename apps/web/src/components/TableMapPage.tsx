@@ -290,7 +290,9 @@ function SellerNotes() {
         {t("table.notes.title")}
       </h3>
       <ul className="flea-map__notes-list">
-        <li>{t("table.notes.clothingRackOnlyDesignated")}</li>
+        <li className="flea-map__notes-list-item--emphasis">
+          <strong>{t("table.notes.clothingRackOnlyDesignated")}</strong>
+        </li>
         <li>{t("table.notes.bringYourOwnRack")}</li>
         <li>{t("table.notes.shareTable")}</li>
       </ul>

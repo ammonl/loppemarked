@@ -122,7 +122,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             color: colors.fleaCream,
             border: "none",
             borderRadius: 6,
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor: loading ? "progress" : "pointer",
             fontSize: "0.85rem",
             fontFamily: fonts.sans,
             fontWeight: 600,

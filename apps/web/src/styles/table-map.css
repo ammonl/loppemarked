@@ -317,6 +317,31 @@
   margin-top: 0.3rem;
 }
 
+/* Emphasizes a key rule in the seller notes. Uses the page's terracotta
+   accent ink with a soft highlighter sweep behind the text so it reads as
+   a marker stroke on paper rather than a boxed callout. */
+.flea-map__notes-list-item--emphasis {
+  color: var(--scene-accent-ink);
+}
+
+.flea-map__notes-list-item--emphasis::marker {
+  color: var(--scene-accent);
+}
+
+.flea-map__notes-list-item--emphasis strong {
+  font-weight: 600;
+  background: linear-gradient(
+    transparent 55%,
+    rgba(168, 85, 68, 0.22) 55%,
+    rgba(168, 85, 68, 0.22) 92%,
+    transparent 92%
+  );
+  padding: 0 0.15rem;
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 .flea-map__full-notice {
   text-align: center;
   margin-bottom: 1.25rem;
