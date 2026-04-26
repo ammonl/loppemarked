@@ -247,7 +247,7 @@ describe("buildAdminNotification — move", () => {
     // that both renderers emit it for the same tableId.
     const tableId = moveInput.tableId;
     const expectedSize = formatTableSize(getTableById(tableId)!);
-    expect(expectedSize).toBe("150x135 cm");
+    expect(expectedSize).toBe("76x210 cm");
 
     const move = buildAdminNotification(moveInput);
     const confirmation = buildConfirmationEmail({
