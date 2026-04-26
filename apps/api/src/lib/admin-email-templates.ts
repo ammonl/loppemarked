@@ -27,6 +27,17 @@ export interface NotificationPreviewInput {
   language: Language;
   tableId: number;
   oldTableId?: number;
+  /**
+   * Real cancellation URL to embed when the email is actually sent. Only
+   * meaningful for `add` and `waitlist_assign`; ignored for other actions.
+   */
+  cancellationUrl?: string;
+  /**
+   * Render the cancel section as a placeholder (no clickable link). Used by
+   * the admin preview API before a registration row exists. Only meaningful
+   * for `add` and `waitlist_assign`.
+   */
+  cancellationLinkPlaceholder?: boolean;
 }
 
 export interface NotificationPreview {
@@ -158,9 +169,9 @@ function buildAddNotification(data: NotificationPreviewInput): NotificationPrevi
   // Admin-created bookings and waitlist assignments share the structure and
   // content of the self-registration confirmation email — only the intro
   // wording differs to reflect that the booking was created by an admin or
-  // assigned from the waitlist. The cancellation-link section stays exclusive
-  // to the self flow because it requires a per-registration token that the
-  // admin preview pipeline does not mint.
+  // assigned from the waitlist. The cancel section is rendered when either
+  // a real cancellationUrl is supplied (send-time) or the placeholder flag
+  // is set (preview-time).
   // We intentionally drop EmailContent.from / replyTo: queueAndSendEmail
   // resolves both from env defaults, mirroring how public.ts consumes
   // buildConfirmationEmail.
@@ -171,6 +182,8 @@ function buildAddNotification(data: NotificationPreviewInput): NotificationPrevi
     language: data.language,
     tableId: data.tableId,
     flow,
+    cancellationUrl: data.cancellationUrl,
+    cancellationLinkPlaceholder: data.cancellationLinkPlaceholder,
   });
 
   return {

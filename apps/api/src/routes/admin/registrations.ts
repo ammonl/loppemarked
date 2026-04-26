@@ -13,6 +13,11 @@ import {
   type NotificationPreviewInput,
 } from "../../lib/admin-email-templates.js";
 import { notifyAdmins } from "../../lib/admin-ops-notifications.js";
+import {
+  buildCancellationUrl,
+  createCancellationToken,
+  getPublicWebBaseUrl,
+} from "../../lib/cancellation-tokens.js";
 import { queueAndSendEmail } from "../../lib/email-service.js";
 import { badRequest, conflict, notFound, unauthorized } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
@@ -29,6 +34,13 @@ interface NotificationInput {
 /**
  * Send a notification email if requested by the admin.
  * Errors are caught and logged — they never fail the caller.
+ *
+ * `cancellationUrl` is the live cancel link minted after the registration
+ * was created. When the admin did not edit the body, we regenerate the
+ * default template with the live URL so the recipient gets a working cancel
+ * link. When the admin did edit, we send their body as-is — the preview
+ * already showed them that the cancel section's live link is only inserted
+ * into the unedited default body.
  */
 async function sendNotificationIfRequested(
   db: Kysely<Database> | Transaction<Database>,
@@ -37,6 +49,7 @@ async function sendNotificationIfRequested(
   previewInput: NotificationPreviewInput,
   entityType: string,
   entityId: string,
+  cancellationUrl?: string,
 ): Promise<void> {
   if (!notification) {
     return;
@@ -60,12 +73,49 @@ async function sendNotificationIfRequested(
       return;
     }
 
-    const defaultTemplate = buildAdminNotification(previewInput);
-    const subject = notification.subject ?? defaultTemplate.subject;
-    const bodyHtml = notification.bodyHtml ?? defaultTemplate.bodyHtml;
-    const edited =
-      (notification.subject != null && notification.subject !== defaultTemplate.subject) ||
-      (notification.bodyHtml != null && notification.bodyHtml !== defaultTemplate.bodyHtml);
+    const supportsCancellation =
+      previewInput.action === "add" || previewInput.action === "waitlist_assign";
+
+    // The "default" template the admin saw in the composer is rendered with
+    // the placeholder cancel section, not a live link. Comparing against the
+    // placeholder template lets us tell whether the admin edited the body.
+    const previewTemplate = buildAdminNotification({
+      ...previewInput,
+      cancellationLinkPlaceholder: supportsCancellation,
+    });
+
+    const subjectEdited =
+      notification.subject != null && notification.subject !== previewTemplate.subject;
+    const bodyEdited =
+      notification.bodyHtml != null && notification.bodyHtml !== previewTemplate.bodyHtml;
+    const edited = subjectEdited || bodyEdited;
+
+    const subject = notification.subject ?? previewTemplate.subject;
+
+    let bodyHtml: string;
+    if (bodyEdited) {
+      // Honor the admin's edits exactly — no live cancel link injected.
+      bodyHtml = notification.bodyHtml as string;
+    } else if (supportsCancellation && cancellationUrl) {
+      // Unedited body and we have a real token: regenerate the default with
+      // the live link so the recipient can self-cancel.
+      const liveTemplate = buildAdminNotification({
+        ...previewInput,
+        cancellationUrl,
+      });
+      bodyHtml = liveTemplate.bodyHtml;
+    } else if (supportsCancellation) {
+      // Unedited body but no token (token mint failed): regenerate the
+      // default with no cancel section at all, so the recipient never sees
+      // the preview-only placeholder note. Mirrors the self-registration
+      // fallback where the section is simply absent.
+      const fallbackTemplate = buildAdminNotification(previewInput);
+      bodyHtml = fallbackTemplate.bodyHtml;
+    } else {
+      // Action doesn't support a cancel section (move/remove): use the
+      // default template as-is.
+      bodyHtml = previewTemplate.bodyHtml;
+    }
 
     const emailId = await queueAndSendEmail(db, {
       recipientEmail: previewInput.recipientEmail,
@@ -94,10 +144,41 @@ async function sendNotificationIfRequested(
         email_id: emailId,
         edited_before_send: edited,
         subject,
+        cancellation_link_included: Boolean(
+          supportsCancellation && cancellationUrl && !bodyEdited,
+        ),
       },
     });
   } catch (err) {
     logger.error("Failed to process notification", err);
+  }
+}
+
+/**
+ * Mint a per-registration cancellation token and return the resolved URL.
+ * Failures degrade gracefully: the email still goes out without a cancel
+ * link, mirroring the self-registration fallback in `public.ts`.
+ */
+async function mintCancellationUrl(
+  db: Kysely<Database> | Transaction<Database>,
+  adminId: string,
+  registrationId: string,
+): Promise<string | undefined> {
+  try {
+    const { token } = await createCancellationToken(db, { registrationId });
+    const url = buildCancellationUrl(getPublicWebBaseUrl(), token);
+    await logAuditEvent(db, {
+      actor_type: "admin",
+      actor_id: adminId,
+      action: "cancellation_token_minted",
+      entity_type: "registration",
+      entity_id: registrationId,
+      after: { source: "admin" },
+    });
+    return url;
+  } catch (err) {
+    logger.error("Failed to mint cancellation token for admin booking", err);
+    return undefined;
   }
 }
 
@@ -304,6 +385,8 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
     };
   }
 
+  const cancellationUrl = await mintCancellationUrl(ctx.db, adminId, result.id);
+
   await sendNotificationIfRequested(
     ctx.db,
     adminId,
@@ -317,6 +400,7 @@ export async function handleCreateRegistration(ctx: RequestContext): Promise<Rou
     },
     "registration",
     result.id,
+    cancellationUrl,
   );
 
   await notifyAdmins(ctx.db, {
@@ -806,6 +890,12 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
     };
   }
 
+  const cancellationUrl = await mintCancellationUrl(
+    ctx.db,
+    adminId,
+    result.registrationId,
+  );
+
   await sendNotificationIfRequested(
     ctx.db,
     adminId,
@@ -819,6 +909,7 @@ export async function handleAssignWaitlist(ctx: RequestContext): Promise<RouteRe
     },
     "registration",
     result.registrationId,
+    cancellationUrl,
   );
 
   if (notifyDownstream) {
@@ -880,13 +971,20 @@ export async function handleNotificationPreview(ctx: RequestContext): Promise<Ro
     throw badRequest("oldTableId is required for move action");
   }
 
+  const adminAction = action as AdminNotificationAction;
+  const supportsCancellation = adminAction === "add" || adminAction === "waitlist_assign";
+
   const preview = buildAdminNotification({
-    action: action as AdminNotificationAction,
+    action: adminAction,
     recipientName,
     recipientEmail,
     language: language as Language,
     tableId,
     oldTableId: body.oldTableId,
+    // The registration row does not exist yet at preview time, so we render
+    // the cancel section as a placeholder. The real link is minted and
+    // injected at send-time when the admin has not edited the body.
+    cancellationLinkPlaceholder: supportsCancellation,
   });
 
   return {

@@ -62,12 +62,36 @@ describe("buildAdminNotification — add", () => {
     expect(enResult.bodyHtml).toContain("pricing");
   });
 
-  it("does not include a cancellation link", () => {
+  it("does not include a cancellation link by default", () => {
     const daResult = buildAdminNotification(baseInput);
     expect(daResult.bodyHtml).not.toContain("Afmeld din booking");
 
     const enResult = buildAdminNotification({ ...baseInput, language: "en" });
     expect(enResult.bodyHtml).not.toContain("Cancel my booking");
+  });
+
+  it("renders a placeholder cancel section when cancellationLinkPlaceholder is true", () => {
+    const daResult = buildAdminNotification({
+      ...baseInput,
+      cancellationLinkPlaceholder: true,
+    });
+    expect(daResult.bodyHtml).toContain("Afmeld dit bord");
+    expect(daResult.bodyHtml).toContain(
+      "Et personligt afmeldingslink til modtageren indsættes her",
+    );
+    expect(daResult.bodyHtml).not.toContain("Afmeld din booking</a>");
+  });
+
+  it("renders a live cancel link when cancellationUrl is provided", () => {
+    const daResult = buildAdminNotification({
+      ...baseInput,
+      cancellationUrl: "https://example.test/cancel?token=admin",
+    });
+    expect(daResult.bodyHtml).toContain("Afmeld din booking");
+    expect(daResult.bodyHtml).toContain("https://example.test/cancel?token=admin");
+    expect(daResult.bodyHtml).not.toContain(
+      "Et personligt afmeldingslink til modtageren indsættes her",
+    );
   });
 
   it("does not include price or DKK", () => {
@@ -145,9 +169,29 @@ describe("buildAdminNotification — waitlist_assign", () => {
     expect(daResult.bodyHtml).toContain("Retningslinjer for sælgere");
   });
 
-  it("does not include a cancellation link", () => {
+  it("does not include a cancellation link by default", () => {
     const daResult = buildAdminNotification(waitlistInput);
     expect(daResult.bodyHtml).not.toContain("Afmeld din booking");
+  });
+
+  it("renders a live cancel link when cancellationUrl is provided", () => {
+    const daResult = buildAdminNotification({
+      ...waitlistInput,
+      cancellationUrl: "https://example.test/cancel?token=wl-admin",
+    });
+    expect(daResult.bodyHtml).toContain("Afmeld din booking");
+    expect(daResult.bodyHtml).toContain("https://example.test/cancel?token=wl-admin");
+  });
+
+  it("renders a placeholder cancel section when cancellationLinkPlaceholder is true", () => {
+    const daResult = buildAdminNotification({
+      ...waitlistInput,
+      cancellationLinkPlaceholder: true,
+    });
+    expect(daResult.bodyHtml).toContain("Afmeld dit bord");
+    expect(daResult.bodyHtml).toContain(
+      "Et personligt afmeldingslink til modtageren indsættes her",
+    );
   });
 });
 
