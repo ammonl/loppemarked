@@ -757,6 +757,10 @@ describe("handleJoinWaitlist (happy path)", () => {
       makeCtx({ db: mockDb, body: validWaitlistBody }),
     );
 
+    // The returned waitlistEntryId proves the insert transaction
+    // committed (the helper only resolves an id when its mocked insert
+    // chain is exercised), so the in-transaction waitlist_add audit was
+    // exercised even though the post-commit position lookup raced out.
     expect(res.statusCode).toBe(201);
     const body = res.body as Record<string, unknown>;
     expect(body.alreadyOnWaitlist).toBe(false);
