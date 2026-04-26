@@ -3,6 +3,7 @@ import {
   getTableById,
 } from "@loppemarked/shared";
 import type { Language } from "@loppemarked/shared";
+import { buildConfirmationEmail } from "./email-templates.js";
 
 export type AdminNotificationAction = "add" | "move" | "remove" | "waitlist_assign";
 
@@ -36,12 +37,10 @@ export interface NotificationPreview {
 
 const translations = {
   da: {
-    addSubject: "Bekræftelse af din loppebord-booking – UN17 Village Loppemarked",
     moveSubject: "Ændring af dit loppebord – UN17 Village Loppemarked",
     removeSubject: "Din loppebord-booking er fjernet – UN17 Village Loppemarked",
 
     greeting: (name: string) => `Kære ${name},`,
-    addIntro: "Du har booket et loppebord til UN17 Village Loppemarked. Din booking er nu bekræftet.",
     moveIntro: "Din loppebord-booking til UN17 Village Loppemarked er blevet ændret.",
     moveDetail: (oldLabel: string, newLabel: string) =>
       `Dit loppebord er blevet flyttet fra ${oldLabel} til ${newLabel}.`,
@@ -59,12 +58,10 @@ const translations = {
     teamSignature: "UN17 Village Loppemarked-teamet",
   },
   en: {
-    addSubject: "Confirmation of your table booking – UN17 Village Loppemarked",
     moveSubject: "Change to your table – UN17 Village Loppemarked",
     removeSubject: "Your table booking has been removed – UN17 Village Loppemarked",
 
     greeting: (name: string) => `Dear ${name},`,
-    addIntro: "You have booked a table for UN17 Village Loppemarked. Your booking is now confirmed.",
     moveIntro: "Your table booking for UN17 Village Loppemarked has been updated.",
     moveDetail: (oldLabel: string, newLabel: string) =>
       `Your table has been moved from ${oldLabel} to ${newLabel}.`,
@@ -157,21 +154,27 @@ function wrapEmailHtml(language: Language, subject: string, contentHtml: string)
 }
 
 function buildAddNotification(data: NotificationPreviewInput): NotificationPreview {
-  const t = translations[data.language];
-  const tableDetailsHtml = buildTableDetailsHtml(t, data.tableId);
-  const contactHtml = buildContactHtml(t);
-
-  const contentHtml = `
-      <p style="margin-top: 0;">${escapeHtml(t.greeting(data.recipientName))}</p>
-      <p>${escapeHtml(t.addIntro)}</p>
-      ${tableDetailsHtml}
-      ${contactHtml}
-      <p style="margin-top: 28px;">${escapeHtml(t.closing)}</p>
-      <p style="font-weight: bold; color: ${BRAND.greenDark};">${escapeHtml(t.teamSignature)}</p>`;
+  // Admin-created bookings and waitlist assignments share the structure and
+  // content of the self-registration confirmation email — only the intro
+  // wording differs to reflect that the booking was created by an admin or
+  // assigned from the waitlist. The cancellation-link section stays exclusive
+  // to the self flow because it requires a per-registration token that the
+  // admin preview pipeline does not mint.
+  // We intentionally drop EmailContent.from / replyTo: queueAndSendEmail
+  // resolves both from env defaults, mirroring how public.ts consumes
+  // buildConfirmationEmail.
+  const flow = data.action === "waitlist_assign" ? "waitlist_assign" : "admin_add";
+  const email = buildConfirmationEmail({
+    recipientName: data.recipientName,
+    recipientEmail: data.recipientEmail,
+    language: data.language,
+    tableId: data.tableId,
+    flow,
+  });
 
   return {
-    subject: t.addSubject,
-    bodyHtml: wrapEmailHtml(data.language, t.addSubject, contentHtml),
+    subject: email.subject,
+    bodyHtml: email.bodyHtml,
     recipientEmail: data.recipientEmail,
     language: data.language,
   };

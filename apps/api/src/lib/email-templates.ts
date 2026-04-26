@@ -8,6 +8,8 @@ import {
 } from "@loppemarked/shared";
 import type { Language, TableCatalogEntry } from "@loppemarked/shared";
 
+export type ConfirmationFlow = "self" | "admin_add" | "waitlist_assign";
+
 export interface ConfirmationEmailData {
   recipientName: string;
   recipientEmail: string;
@@ -15,6 +17,12 @@ export interface ConfirmationEmailData {
   tableId: number;
   switchedFromTableId?: number;
   cancellationUrl?: string;
+  /**
+   * Which flow produced this booking. Drives the intro wording so admin-driven
+   * flows say "you have been assigned a table" rather than "you have booked".
+   * Defaults to "self".
+   */
+  flow?: ConfirmationFlow;
 }
 
 export interface CancellationConfirmationEmailData {
@@ -65,6 +73,10 @@ const translations = {
     greeting: (name: string) => `Kære ${name},`,
     confirmationIntro:
       "Tak for din tilmelding til UN17 Village Loppemarked i Fælledhuset! Din bordbooking er nu bekræftet.",
+    adminAddIntro:
+      "Du er blevet tildelt et bord til UN17 Village Loppemarked i Fælledhuset. Din bordbooking er nu bekræftet.",
+    waitlistAssignIntro:
+      "Du er blevet tildelt et bord fra ventelisten til UN17 Village Loppemarked i Fælledhuset. Din bordbooking er nu bekræftet.",
     switchNote: (oldTableNumber: string) =>
       `Bemærk: Din tidligere reservation af bord ${oldTableNumber} er blevet frigivet, og din booking er flyttet til det bord, der er vist nedenfor.`,
     tableDetailsTitle: "Dit bord",
@@ -122,6 +134,10 @@ const translations = {
     greeting: (name: string) => `Dear ${name},`,
     confirmationIntro:
       "Thank you for signing up for UN17 Village Loppemarked at Fælledhuset! Your table booking is now confirmed.",
+    adminAddIntro:
+      "You have been assigned a table at UN17 Village Loppemarked at Fælledhuset. Your table booking is now confirmed.",
+    waitlistAssignIntro:
+      "You have been assigned a table from the waitlist for UN17 Village Loppemarked at Fælledhuset. Your table booking is now confirmed.",
     switchNote: (oldTableNumber: string) =>
       `Note: Your previous booking for table ${oldTableNumber} has been released, and your reservation has been moved to the table shown below.`,
     tableDetailsTitle: "Your table",
@@ -256,8 +272,27 @@ function buildTableLocationCellHtml(
   );
 }
 
+type Translations = (typeof translations)[keyof typeof translations];
+
+function pickIntro(flow: ConfirmationFlow, t: Translations): string {
+  switch (flow) {
+    case "admin_add":
+      return t.adminAddIntro;
+    case "waitlist_assign":
+      return t.waitlistAssignIntro;
+    case "self":
+      return t.confirmationIntro;
+    default: {
+      const _exhaustive: never = flow;
+      return _exhaustive;
+    }
+  }
+}
+
 export function buildConfirmationEmail(data: ConfirmationEmailData): EmailContent {
   const t = translations[data.language];
+  const flow: ConfirmationFlow = data.flow ?? "self";
+  const introText = pickIntro(flow, t);
   const table = describeTable(data.tableId, t);
   const bookedTableEntry = getTableById(data.tableId);
   const locationCellHtml = buildTableLocationCellHtml(
@@ -306,7 +341,7 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
 
     <div style="padding: 32px;">
       <p style="margin-top: 0;">${escapeHtml(t.greeting(data.recipientName))}</p>
-      <p>${escapeHtml(t.confirmationIntro)}</p>
+      <p>${escapeHtml(introText)}</p>
 
       ${switchHtml}
 

@@ -31,7 +31,42 @@ describe("buildAdminNotification — add", () => {
   it("includes table number and size", () => {
     const result = buildAdminNotification(baseInput);
     expect(result.bodyHtml).toContain("#3");
-    expect(result.bodyHtml).toContain("2 m");
+    expect(result.bodyHtml).toContain("2 meter");
+  });
+
+  it("uses assignment wording instead of self-booking wording", () => {
+    const daResult = buildAdminNotification(baseInput);
+    expect(daResult.bodyHtml).toContain("Du er blevet tildelt et bord");
+    expect(daResult.bodyHtml).not.toContain("Du har booket");
+
+    const enResult = buildAdminNotification({ ...baseInput, language: "en" });
+    expect(enResult.bodyHtml).toContain("You have been assigned a table");
+    expect(enResult.bodyHtml).not.toContain("You have booked");
+  });
+
+  it("matches the self-registration email's structure: SVG map + caption", () => {
+    const daResult = buildAdminNotification(baseInput);
+    expect(daResult.bodyHtml).toContain("<svg");
+    expect(daResult.bodyHtml).toContain("Fælledhuset · Bord #3");
+    expect(daResult.bodyHtml).toContain("Bord #3 er markeret med rødt");
+  });
+
+  it("matches the self-registration email's seller-guidelines section", () => {
+    const daResult = buildAdminNotification(baseInput);
+    expect(daResult.bodyHtml).toContain("Retningslinjer for sælgere");
+    expect(daResult.bodyHtml).toContain("prismærkning");
+
+    const enResult = buildAdminNotification({ ...baseInput, language: "en" });
+    expect(enResult.bodyHtml).toContain("Seller Guidelines");
+    expect(enResult.bodyHtml).toContain("pricing");
+  });
+
+  it("does not include a cancellation link", () => {
+    const daResult = buildAdminNotification(baseInput);
+    expect(daResult.bodyHtml).not.toContain("Afmeld din booking");
+
+    const enResult = buildAdminNotification({ ...baseInput, language: "en" });
+    expect(enResult.bodyHtml).not.toContain("Cancel my booking");
   });
 
   it("does not include price or DKK", () => {
@@ -82,13 +117,36 @@ describe("buildAdminNotification — add", () => {
 });
 
 describe("buildAdminNotification — waitlist_assign", () => {
-  it("uses same template as add action", () => {
+  const waitlistInput: NotificationPreviewInput = {
+    ...baseInput,
+    action: "waitlist_assign",
+  };
+
+  it("uses the same subject as the add action", () => {
     const addResult = buildAdminNotification(baseInput);
-    const waitlistResult = buildAdminNotification({
-      ...baseInput,
-      action: "waitlist_assign",
-    });
+    const waitlistResult = buildAdminNotification(waitlistInput);
     expect(waitlistResult.subject).toBe(addResult.subject);
+  });
+
+  it("calls out that the table came from the waitlist in the intro", () => {
+    const daResult = buildAdminNotification(waitlistInput);
+    expect(daResult.bodyHtml).toContain("fra ventelisten");
+    expect(daResult.bodyHtml).toContain("Du er blevet tildelt et bord");
+
+    const enResult = buildAdminNotification({ ...waitlistInput, language: "en" });
+    expect(enResult.bodyHtml).toContain("from the waitlist");
+    expect(enResult.bodyHtml).toContain("You have been assigned a table");
+  });
+
+  it("matches the self-registration email's structure: SVG map + guidelines", () => {
+    const daResult = buildAdminNotification(waitlistInput);
+    expect(daResult.bodyHtml).toContain("<svg");
+    expect(daResult.bodyHtml).toContain("Retningslinjer for sælgere");
+  });
+
+  it("does not include a cancellation link", () => {
+    const daResult = buildAdminNotification(waitlistInput);
+    expect(daResult.bodyHtml).not.toContain("Afmeld din booking");
   });
 });
 

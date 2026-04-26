@@ -287,6 +287,40 @@ describe("buildConfirmationEmail", () => {
     expect(result.bodyHtml).not.toContain("<script>alert(1)</script>");
     expect(result.bodyHtml).toContain("&lt;script&gt;");
   });
+
+  it("uses the self-flow intro by default", () => {
+    const daResult = buildConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("Tak for din tilmelding");
+
+    const enResult = buildConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("Thank you for signing up");
+  });
+
+  it("uses the admin-add intro when flow is admin_add", () => {
+    const daResult = buildConfirmationEmail({ ...baseData, flow: "admin_add" });
+    expect(daResult.bodyHtml).toContain("Du er blevet tildelt et bord");
+    expect(daResult.bodyHtml).not.toContain("Tak for din tilmelding");
+
+    const enResult = buildConfirmationEmail({
+      ...baseData,
+      language: "en",
+      flow: "admin_add",
+    });
+    expect(enResult.bodyHtml).toContain("You have been assigned a table");
+    expect(enResult.bodyHtml).not.toContain("Thank you for signing up");
+  });
+
+  it("uses the waitlist-assign intro when flow is waitlist_assign", () => {
+    const daResult = buildConfirmationEmail({ ...baseData, flow: "waitlist_assign" });
+    expect(daResult.bodyHtml).toContain("fra ventelisten");
+
+    const enResult = buildConfirmationEmail({
+      ...baseData,
+      language: "en",
+      flow: "waitlist_assign",
+    });
+    expect(enResult.bodyHtml).toContain("from the waitlist");
+  });
 });
 
 describe("buildCancellationConfirmationEmail", () => {
