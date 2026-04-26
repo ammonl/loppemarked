@@ -93,6 +93,21 @@ export function PreOpenPage({ openingDatetime, serverTimeOffsetMs = 0 }: PreOpen
             </h1>
             <p className="flea-landing__body">{t("status.preOpenDescription")}</p>
 
+            <dl className="flea-preopen__event" data-testid="flea-preopen-event">
+              <div className="flea-preopen__event-row">
+                <dt className="flea-preopen__event-label">{t("status.eventDateLabel")}</dt>
+                <dd className="flea-preopen__event-value">{t("landing.eventDate")}</dd>
+              </div>
+              <div className="flea-preopen__event-row">
+                <dt className="flea-preopen__event-label">{t("status.eventTimeLabel")}</dt>
+                <dd className="flea-preopen__event-value">{t("landing.eventTime")}</dd>
+              </div>
+              <div className="flea-preopen__event-row">
+                <dt className="flea-preopen__event-label">{t("status.eventPlaceLabel")}</dt>
+                <dd className="flea-preopen__event-value">{t("landing.eventPlace")}</dd>
+              </div>
+            </dl>
+
             <FlipBoardCountdown
               parts={parts}
               labels={{

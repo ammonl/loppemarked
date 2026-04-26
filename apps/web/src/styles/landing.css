@@ -378,6 +378,44 @@
   line-height: 1;
 }
 
+.flea-preopen__event {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1.2rem;
+  row-gap: 0.45rem;
+  align-items: baseline;
+  margin: 0.6rem 0 0.2rem;
+  padding: 0.85rem 1.1rem;
+  border-top: 1px dashed rgba(110, 75, 50, 0.3);
+  border-bottom: 1px dashed rgba(110, 75, 50, 0.3);
+}
+
+.flea-preopen__event-row {
+  display: contents;
+}
+
+.flea-preopen__event-label {
+  margin: 0;
+  font-family: "Montserrat", "Inter", system-ui, sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--scene-ink-soft);
+  opacity: 0.85;
+  text-align: right;
+}
+
+.flea-preopen__event-value {
+  margin: 0;
+  font-family: "Caveat", "Amatic SC", cursive;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  color: var(--scene-accent-ink);
+  font-weight: 700;
+  text-align: left;
+}
+
 .flea-preopen__opens {
   position: relative;
   display: flex;
@@ -590,6 +628,20 @@
 
   .flea-preopen__copy {
     padding: 1.35rem 1.35rem 1.5rem;
+  }
+
+  .flea-preopen__event {
+    column-gap: 0.85rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .flea-preopen__event-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+  }
+
+  .flea-preopen__event-value {
+    font-size: 1.25rem;
   }
 }
 
