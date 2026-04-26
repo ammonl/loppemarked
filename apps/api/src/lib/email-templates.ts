@@ -272,10 +272,9 @@ function buildTableLocationCellHtml(
   );
 }
 
-function pickIntro(
-  flow: ConfirmationFlow,
-  t: (typeof translations)["da" | "en"],
-): string {
+type Translations = (typeof translations)[keyof typeof translations];
+
+function pickIntro(flow: ConfirmationFlow, t: Translations): string {
   switch (flow) {
     case "admin_add":
       return t.adminAddIntro;
@@ -283,6 +282,10 @@ function pickIntro(
       return t.waitlistAssignIntro;
     case "self":
       return t.confirmationIntro;
+    default: {
+      const _exhaustive: never = flow;
+      return _exhaustive;
+    }
   }
 }
 

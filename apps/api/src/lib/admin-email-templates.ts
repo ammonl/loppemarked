@@ -160,6 +160,9 @@ function buildAddNotification(data: NotificationPreviewInput): NotificationPrevi
   // assigned from the waitlist. The cancellation-link section stays exclusive
   // to the self flow because it requires a per-registration token that the
   // admin preview pipeline does not mint.
+  // We intentionally drop EmailContent.from / replyTo: queueAndSendEmail
+  // resolves both from env defaults, mirroring how public.ts consumes
+  // buildConfirmationEmail.
   const flow = data.action === "waitlist_assign" ? "waitlist_assign" : "admin_add";
   const email = buildConfirmationEmail({
     recipientName: data.recipientName,
