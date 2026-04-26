@@ -18,7 +18,10 @@ import {
   getPublicWebBaseUrl,
   resolveCancellationToken,
 } from "../lib/cancellation-tokens.js";
-import { buildConfirmationEmail } from "../lib/email-templates.js";
+import {
+  buildCancellationConfirmationEmail,
+  buildConfirmationEmail,
+} from "../lib/email-templates.js";
 import { queueAndSendEmail } from "../lib/email-service.js";
 import { badRequest, conflict, notFound } from "../lib/errors.js";
 import { logger } from "../lib/logger.js";
@@ -504,6 +507,19 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
     });
 
     const position = await getWaitlistPosition(ctx, apartmentKey);
+
+    // The existence check and position lookup are independent reads, so an
+    // admin remove/assign in between can leave `existing` set while the
+    // position lookup finds nothing. Surface the post-race state ("not on
+    // waitlist anymore") instead of leaking the original entry's stale
+    // timestamp alongside a missing position.
+    if (position === null) {
+      return {
+        statusCode: 200,
+        body: { alreadyOnWaitlist: false, position: null },
+      };
+    }
+
     return {
       statusCode: 200,
       body: {
@@ -555,24 +571,31 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
 
   const position = await getWaitlistPosition(ctx, apartmentKey);
 
-  try {
-    const email = buildWaitlistJoinConfirmationEmail({
-      recipientName: body.name!,
-      recipientEmail: body.email!,
-      language: body.language!,
-      position,
-    });
+  // Position is read outside the insert transaction, so an admin can
+  // remove or assign the just-inserted entry before this read completes.
+  // When that happens, skip the confirmation email — its position field
+  // would mislead the resident — and surface a null position to the
+  // client. The entry was created, so we still return 201.
+  if (position !== null) {
+    try {
+      const email = buildWaitlistJoinConfirmationEmail({
+        recipientName: body.name!,
+        recipientEmail: body.email!,
+        language: body.language!,
+        position,
+      });
 
-    await queueAndSendEmail(ctx.db, {
-      recipientEmail: body.email!,
-      language: body.language!,
-      subject: email.subject,
-      bodyHtml: email.bodyHtml,
-    });
-  } catch (err) {
-    // The signup itself succeeded; the email is best-effort and must not
-    // surface a failure to the resident.
-    logger.error("Failed to send waitlist signup confirmation email", err);
+      await queueAndSendEmail(ctx.db, {
+        recipientEmail: body.email!,
+        language: body.language!,
+        subject: email.subject,
+        bodyHtml: email.bodyHtml,
+      });
+    } catch (err) {
+      // The signup itself succeeded; the email is best-effort and must not
+      // surface a failure to the resident.
+      logger.error("Failed to send waitlist signup confirmation email", err);
+    }
   }
 
   return {
@@ -586,12 +609,13 @@ export async function handleJoinWaitlist(ctx: RequestContext): Promise<RouteResp
 }
 
 // Returns a 1-based, user-facing FIFO position. The first person in line is
-// `#1`, never `#0`. Returns 0 only as a sentinel meaning "this apartment is
-// not currently waiting" (callers must guard accordingly).
+// `#1`, never `#0`. Returns `null` when the apartment is not currently
+// waiting (entry missing, or removed/assigned between caller reads), so the
+// position-0 sentinel never escapes this function's contract.
 async function getWaitlistPosition(
   ctx: RequestContext,
   apartmentKey: string,
-): Promise<number> {
+): Promise<number | null> {
   const entry = await ctx.db
     .selectFrom("waitlist_entries")
     .select(["created_at"])
@@ -599,7 +623,7 @@ async function getWaitlistPosition(
     .where("status", "=", "waiting")
     .executeTakeFirst();
 
-  if (!entry) return 0;
+  if (!entry) return null;
 
   const result = await ctx.db
     .selectFrom("waitlist_entries")
@@ -634,11 +658,10 @@ export async function handleWaitlistPosition(ctx: RequestContext): Promise<Route
   const position = await getWaitlistPosition(ctx, apartmentKey);
 
   // The two reads above run outside a transaction, so an admin
-  // remove/assign between them can leave `entry` set while
-  // `getWaitlistPosition` returns the `0` "no longer waiting" sentinel.
-  // Collapse that race into the same shape as the no-entry branch so the
-  // sentinel never escapes the API contract.
-  if (position === 0) {
+  // remove/assign between them can leave `entry` set while the position
+  // lookup finds nothing. Collapse that race into the no-entry response
+  // shape.
+  if (position === null) {
     return {
       statusCode: 200,
       body: { onWaitlist: false, position: null },
@@ -808,6 +831,26 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
         tableId: outcome.tableId ?? null,
       },
     };
+  }
+
+  try {
+    const email = buildCancellationConfirmationEmail({
+      recipientName: outcome.recipientName,
+      recipientEmail: outcome.recipientEmail,
+      language: outcome.language,
+      tableId: outcome.tableId,
+    });
+
+    await queueAndSendEmail(ctx.db, {
+      recipientEmail: outcome.recipientEmail,
+      language: outcome.language,
+      subject: email.subject,
+      bodyHtml: email.bodyHtml,
+    });
+  } catch (err) {
+    // The cancellation itself succeeded; the confirmation email is best-effort
+    // and must not surface a failure to the resident.
+    logger.error("Failed to send cancellation confirmation email", err);
   }
 
   await notifyAdmins(ctx.db, {

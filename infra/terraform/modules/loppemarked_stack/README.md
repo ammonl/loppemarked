@@ -12,7 +12,7 @@ the staging and production environment stacks.
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
 | `dns.tf`         | Route 53 hosted zone, SES verification/DKIM DNS records    |
-| `monitoring.tf`  | CloudWatch log groups, KMS encryption key                  |
+| `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `amplify.tf`     | Amplify app, branch, and custom domain association         |
 
@@ -74,6 +74,7 @@ to `https://loppemarked.staging.un17hub.com` for staging and
 | `ses_sender_domain`           | Domain for SES identity and Route 53 zone            |
 | `ses_reply_to_email`          | Default Reply-To (defaults to `ammonl@hotmail.com`)  |
 | `db_instance_class`           | RDS instance class                                   |
+| `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |
 
 See `variables.tf` for the full list with descriptions and defaults.
 

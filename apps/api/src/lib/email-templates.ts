@@ -17,6 +17,13 @@ export interface ConfirmationEmailData {
   cancellationUrl?: string;
 }
 
+export interface CancellationConfirmationEmailData {
+  recipientName: string;
+  recipientEmail: string;
+  language: Language;
+  tableId: number;
+}
+
 interface EmailContent {
   subject: string;
   bodyHtml: string;
@@ -97,6 +104,18 @@ const translations = {
       "Linket er personligt og må ikke deles. Når du har afmeldt, vil arrangørerne gennemgå bordet, før det eventuelt frigives igen.",
     closing: "Vi glæder os til at se dig i Fælledhuset!",
     teamSignature: "UN17 Village Loppemarked-teamet",
+    cancellationConfirmationSubject:
+      "Din afmelding er bekræftet – UN17 Village Loppemarked",
+    cancellationConfirmationIntro:
+      "Vi bekræfter, at din bordbooking til UN17 Village Loppemarked i Fælledhuset er afmeldt.",
+    cancellationConfirmationDetail: (tableNumber: string) =>
+      `Din booking af bord ${tableNumber} er ikke længere aktiv.`,
+    cancellationConfirmationHoldNote:
+      "Bordet holdes som reserveret, indtil arrangørerne har gennemgået det. Du behøver ikke at gøre mere.",
+    cancellationConfirmationMistakeNote:
+      "Hvis du har afmeldt ved en fejl, skal du kontakte arrangørerne hurtigst muligt — bordet kan ikke genaktiveres automatisk.",
+    cancellationConfirmationClosing:
+      "Tak fordi du gav os besked.",
   },
   en: {
     subject: "Confirmation of your table booking – UN17 Village Loppemarked",
@@ -143,6 +162,18 @@ const translations = {
       "This link is personal — please don't share it. After you cancel, the organizers will review the table before it may be released again.",
     closing: "We look forward to seeing you at Fælledhuset!",
     teamSignature: "The UN17 Village Loppemarked Team",
+    cancellationConfirmationSubject:
+      "Your cancellation is confirmed – UN17 Village Loppemarked",
+    cancellationConfirmationIntro:
+      "We're confirming that your table booking for UN17 Village Loppemarked at Fælledhuset has been cancelled.",
+    cancellationConfirmationDetail: (tableNumber: string) =>
+      `Your booking for table ${tableNumber} is no longer active.`,
+    cancellationConfirmationHoldNote:
+      "The table is held as reserved until the organizers review it. No further action is needed from you.",
+    cancellationConfirmationMistakeNote:
+      "If you cancelled by mistake, please contact the organizers as soon as possible — the table cannot be reactivated automatically.",
+    cancellationConfirmationClosing:
+      "Thank you for letting us know.",
   },
 } as const;
 
@@ -319,6 +350,60 @@ export function buildConfirmationEmail(data: ConfirmationEmailData): EmailConten
 
   return {
     subject: t.subject,
+    bodyHtml,
+    from: EMAIL_FROM,
+    replyTo: EMAIL_REPLY_TO,
+  };
+}
+
+export function buildCancellationConfirmationEmail(
+  data: CancellationConfirmationEmailData,
+): EmailContent {
+  const t = translations[data.language];
+  const table = describeTable(data.tableId, t);
+  const subject = t.cancellationConfirmationSubject;
+
+  const bodyHtml = `<!DOCTYPE html>
+<html lang="${data.language}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: ${BRAND.pageBg}; color: ${BRAND.ink};">
+  <div style="max-width: 600px; margin: 0 auto; background: ${BRAND.cream};">
+    <div style="background: ${BRAND.green}; padding: 24px 32px; border-bottom: 4px solid ${BRAND.salmon};">
+      <h1 style="margin: 0; color: ${BRAND.cream}; font-size: 22px; letter-spacing: 0.02em;">UN17 Village Loppemarked</h1>
+    </div>
+
+    <div style="padding: 32px;">
+      <p style="margin-top: 0;">${escapeHtml(t.greeting(data.recipientName))}</p>
+      <p>${escapeHtml(t.cancellationConfirmationIntro)}</p>
+
+      <div style="background: ${BRAND.salmonSoft}; border-left: 4px solid ${BRAND.salmon}; padding: 12px 16px; margin: 16px 0 20px; border-radius: 4px;">
+        <p style="margin: 0; color: ${BRAND.salmonDark}; font-weight: 600;">${escapeHtml(t.cancellationConfirmationDetail(table.number))}</p>
+      </div>
+
+      <p>${escapeHtml(t.cancellationConfirmationHoldNote)}</p>
+      <p>${escapeHtml(t.cancellationConfirmationMistakeNote)}</p>
+
+      <h2 style="color: ${BRAND.greenDark}; font-size: 18px; border-bottom: 2px solid ${BRAND.greenSoft}; padding-bottom: 8px; margin-top: 28px;">${escapeHtml(t.contactTitle)}</h2>
+      <p>${escapeHtml(t.contactText)}</p>
+      <p style="margin: 8px 0 0;"><a href="mailto:${escapeHtml(EVENT_CONTACT.email)}" style="color: ${BRAND.salmonDark}; font-weight: 600; text-decoration: none;">${escapeHtml(EVENT_CONTACT.name)}</a></p>
+
+      <p style="margin-top: 28px;">${escapeHtml(t.cancellationConfirmationClosing)}</p>
+      <p style="font-weight: bold; color: ${BRAND.greenDark};">${escapeHtml(t.teamSignature)}</p>
+    </div>
+
+    <div style="background: ${BRAND.salmon}; padding: 16px 32px; font-size: 12px; color: ${BRAND.cream}; text-align: center;">
+      <p style="margin: 0;">UN17 Village Loppemarked &middot; Fælledhuset</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return {
+    subject,
     bodyHtml,
     from: EMAIL_FROM,
     replyTo: EMAIL_REPLY_TO,

@@ -56,8 +56,7 @@ module "loppemarked_stack" {
 
   ses_sender_domain = "staging.un17hub.com"
 
-  alarm_email                     = "ammonl@hotmail.com"
-  alarm_rds_connections_threshold = 50
+  enable_observability_alerts = false
 
   amplify_branch_name             = "main"
   amplify_enable_auto_build       = true

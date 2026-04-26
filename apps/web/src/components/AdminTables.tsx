@@ -495,10 +495,10 @@ export function AdminTables() {
             {t("admin.tables.confirmReserve")} – {activeDialog.table.tableLabel}
           </h3>
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button type="button" onClick={handleReserve} disabled={submitting} style={{ ...buttonTerracotta, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={handleReserve} disabled={submitting} style={{ ...buttonTerracotta, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.confirm")}
             </button>
-            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.cancel")}
             </button>
           </div>
@@ -512,10 +512,10 @@ export function AdminTables() {
             {t("admin.tables.confirmRelease")} – {activeDialog.table.tableLabel}
           </h3>
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button type="button" onClick={handleRelease} disabled={submitting} style={{ ...buttonPrimary, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={handleRelease} disabled={submitting} style={{ ...buttonPrimary, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.confirm")}
             </button>
-            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.cancel")}
             </button>
           </div>
@@ -566,12 +566,12 @@ export function AdminTables() {
                 background: colors.dustyRose,
                 color: colors.white,
                 border: "none",
-                cursor: submitting || (removeNotification.sendEmail && !removeNotification.valid) ? "not-allowed" : "pointer",
+                cursor: submitting ? "progress" : removeNotification.sendEmail && !removeNotification.valid ? "not-allowed" : "pointer",
               }}
             >
               {t("common.confirm")}
             </button>
-            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.cancel")}
             </button>
           </div>
@@ -672,12 +672,12 @@ export function AdminTables() {
               disabled={submitting || (addNotification.sendEmail && !addNotification.valid)}
               style={{
                 ...buttonPrimary,
-                cursor: submitting || (addNotification.sendEmail && !addNotification.valid) ? "not-allowed" : "pointer",
+                cursor: submitting ? "progress" : addNotification.sendEmail && !addNotification.valid ? "not-allowed" : "pointer",
               }}
             >
               {t("common.confirm")}
             </button>
-            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "not-allowed" : "pointer" }}>
+            <button type="button" onClick={closeDialog} disabled={submitting} style={{ ...buttonSecondary, cursor: submitting ? "progress" : "pointer" }}>
               {t("common.cancel")}
             </button>
           </div>

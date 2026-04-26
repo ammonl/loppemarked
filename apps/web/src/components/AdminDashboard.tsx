@@ -117,7 +117,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             border: `1px solid ${colors.fleaTerracottaDark}`,
             color: colors.fleaTerracottaDark,
             borderRadius: 6,
-            cursor: loggingOut ? "not-allowed" : "pointer",
+            cursor: loggingOut ? "progress" : "pointer",
             fontSize: "0.8rem",
             fontFamily: fonts.sans,
             fontWeight: 600,

@@ -138,6 +138,7 @@ resource "aws_flow_log" "vpc" {
 # ---------- SNS Topic for Alarm Notifications ----------
 
 resource "aws_sns_topic" "alarms" {
+  count             = var.enable_observability_alerts ? 1 : 0
   name              = "${local.naming_prefix}-alarms"
   kms_master_key_id = aws_kms_key.logs.id
 
@@ -147,8 +148,8 @@ resource "aws_sns_topic" "alarms" {
 }
 
 resource "aws_sns_topic_subscription" "alarm_email" {
-  count     = var.alarm_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.alarms.arn
+  count     = var.enable_observability_alerts && var.alarm_email != null ? 1 : 0
+  topic_arn = aws_sns_topic.alarms[0].arn
   protocol  = "email"
   endpoint  = var.alarm_email
 }
@@ -156,6 +157,7 @@ resource "aws_sns_topic_subscription" "alarm_email" {
 # ---------- CloudWatch Alarms: Lambda ----------
 
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-lambda-errors"
   alarm_description   = "API Lambda function errors detected"
   namespace           = "AWS/Lambda"
@@ -171,8 +173,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
     FunctionName = aws_lambda_function.api.function_name
   }
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-lambda-errors"
@@ -180,6 +182,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-lambda-throttles"
   alarm_description   = "API Lambda function throttled"
   namespace           = "AWS/Lambda"
@@ -195,8 +198,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
     FunctionName = aws_lambda_function.api.function_name
   }
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-lambda-throttles"
@@ -206,6 +209,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
 # ---------- CloudWatch Alarms: RDS ----------
 
 resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-cpu"
   alarm_description   = "RDS CPU utilization above 80%"
   namespace           = "AWS/RDS"
@@ -221,8 +225,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
     DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-rds-cpu"
@@ -230,6 +234,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-freeable-memory"
   alarm_description   = "RDS freeable memory below 128 MB"
   namespace           = "AWS/RDS"
@@ -245,8 +250,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
     DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-rds-freeable-memory"
@@ -254,6 +259,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_connections" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-connections"
   alarm_description   = "RDS database connections above threshold"
   namespace           = "AWS/RDS"
@@ -269,8 +275,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
     DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-rds-connections"
@@ -280,6 +286,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 # ---------- CloudWatch Alarms: SES ----------
 
 resource "aws_cloudwatch_metric_alarm" "ses_bounces" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-ses-bounces"
   alarm_description   = "SES bounce rate is elevated"
   namespace           = "AWS/SES"
@@ -291,8 +298,8 @@ resource "aws_cloudwatch_metric_alarm" "ses_bounces" {
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-ses-bounces"
@@ -300,6 +307,7 @@ resource "aws_cloudwatch_metric_alarm" "ses_bounces" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ses_complaints" {
+  count               = var.enable_observability_alerts ? 1 : 0
   alarm_name          = "${local.naming_prefix}-ses-complaints"
   alarm_description   = "SES complaint rate is elevated"
   namespace           = "AWS/SES"
@@ -311,8 +319,8 @@ resource "aws_cloudwatch_metric_alarm" "ses_complaints" {
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 
-  alarm_actions = [aws_sns_topic.alarms.arn]
-  ok_actions    = [aws_sns_topic.alarms.arn]
+  alarm_actions = [aws_sns_topic.alarms[0].arn]
+  ok_actions    = [aws_sns_topic.alarms[0].arn]
 
   tags = {
     Name = "${local.naming_prefix}-ses-complaints"
@@ -322,6 +330,7 @@ resource "aws_cloudwatch_metric_alarm" "ses_complaints" {
 # ---------- CloudWatch Dashboard ----------
 
 resource "aws_cloudwatch_dashboard" "main" {
+  count          = var.enable_observability_alerts ? 1 : 0
   dashboard_name = "${local.naming_prefix}-dashboard"
 
   dashboard_body = jsonencode({

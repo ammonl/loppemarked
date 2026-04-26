@@ -184,7 +184,12 @@ The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Conf
 
 ## Monitoring & Alerting
 
-CloudWatch alarms cover the major failure modes:
+Dashboards, alarms, and the alerting SNS topic are provisioned **only when
+the `enable_observability_alerts` module variable is `true`**. Production
+keeps the default (`true`); staging sets it to `false`, so the resources
+described below exist in production only.
+
+In production, CloudWatch alarms cover the major failure modes:
 
 | Alarm | Metric | Threshold |
 |-------|--------|-----------|

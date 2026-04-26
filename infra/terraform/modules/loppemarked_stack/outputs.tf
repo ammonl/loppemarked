@@ -160,11 +160,11 @@ output "logs_kms_key_arn" {
 }
 
 output "alarm_sns_topic_arn" {
-  description = "ARN of the SNS topic for CloudWatch alarm notifications."
-  value       = aws_sns_topic.alarms.arn
+  description = "ARN of the SNS topic for CloudWatch alarm notifications, or null when observability alerts are disabled."
+  value       = try(aws_sns_topic.alarms[0].arn, null)
 }
 
 output "dashboard_name" {
-  description = "Name of the CloudWatch operational dashboard."
-  value       = aws_cloudwatch_dashboard.main.dashboard_name
+  description = "Name of the CloudWatch operational dashboard, or null when observability alerts are disabled."
+  value       = try(aws_cloudwatch_dashboard.main[0].dashboard_name, null)
 }

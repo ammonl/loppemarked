@@ -245,8 +245,14 @@ variable "log_retention_days" {
   }
 }
 
+variable "enable_observability_alerts" {
+  description = "Whether to provision the CloudWatch dashboard, metric alarms, and SNS alerting topic for the environment."
+  type        = bool
+  default     = true
+}
+
 variable "alarm_email" {
-  description = "Email address for CloudWatch alarm notifications. Set to null to skip subscription."
+  description = "Email address for CloudWatch alarm notifications. Set to null to skip subscription. Ignored when enable_observability_alerts is false."
   type        = string
   default     = null
 }

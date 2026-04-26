@@ -714,6 +714,65 @@ describe("handleJoinWaitlist (happy path)", () => {
     );
     expect(auditCalls.length).toBeGreaterThan(0);
   });
+
+  // Regression for the race where the existence check at the top of the
+  // already-on-waitlist branch finds the entry, but an admin
+  // remove/assign lands before getWaitlistPosition's lookup. The handler
+  // must not return position: 0 alongside the now-stale joinedAt.
+  it("returns alreadyOnWaitlist false when existing entry vanishes before position lookup", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingEntry: { id: "wl-existing", created_at: "2026-03-01T08:00:00Z" },
+      // Position lookup returns no entry, simulating an admin
+      // remove/assign between the existence check and the position read.
+      positionEntryCreatedAt: undefined,
+    });
+
+    const res = await handleJoinWaitlist(
+      makeCtx({ db: mockDb, body: validWaitlistBody }),
+    );
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyOnWaitlist).toBe(false);
+    expect(body.position).toBeNull();
+    expect(body).not.toHaveProperty("joinedAt");
+  });
+
+  // Regression for the race where the insert transaction commits but an
+  // admin removes/assigns the just-inserted entry before
+  // getWaitlistPosition runs. The handler must not return position: 0
+  // and must not queue a confirmation email built around that sentinel.
+  it("returns position null and skips confirmation email when new entry is processed before position lookup", async () => {
+    const mockDb = makeMockDbForWaitlist({
+      availableCount: 0,
+      existingEntry: undefined,
+      newEntryId: "wl-raced",
+      // Position lookup after the insert finds nothing — admin already
+      // moved the entry out of `waiting`.
+      positionEntryCreatedAt: undefined,
+    });
+
+    const res = await handleJoinWaitlist(
+      makeCtx({ db: mockDb, body: validWaitlistBody }),
+    );
+
+    // The returned waitlistEntryId proves the insert transaction
+    // committed (the helper only resolves an id when its mocked insert
+    // chain is exercised), so the in-transaction waitlist_add audit was
+    // exercised even though the post-commit position lookup raced out.
+    expect(res.statusCode).toBe(201);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyOnWaitlist).toBe(false);
+    expect(body.waitlistEntryId).toBe("wl-raced");
+    expect(body.position).toBeNull();
+
+    const insertCalls = (mockDb.insertInto as ReturnType<typeof vi.fn>).mock.calls;
+    const emailCalls = insertCalls.filter(
+      (call: string[]) => call[0] === "emails",
+    );
+    expect(emailCalls.length).toBe(0);
+  });
 });
 
 // Regression tests: a malicious or buggy client can submit a
@@ -1903,9 +1962,11 @@ function makeMockDbForCancellation(opts: {
   tokenRow?: MockCancelTokenRow;
   regRow?: MockRegRow;
   updateNumRows?: number;
+  emailInserts?: Array<Record<string, unknown>>;
 }): Kysely<Database> {
   const tokenExecute = vi.fn().mockResolvedValue(opts.tokenRow);
   const regExecute = vi.fn().mockResolvedValue(opts.regRow);
+  const emailInserts = opts.emailInserts;
 
   return {
     selectFrom: vi.fn().mockImplementation((table: string) => {
@@ -1928,6 +1989,32 @@ function makeMockDbForCancellation(opts: {
         };
       }
       return {};
+    }),
+    insertInto: vi.fn().mockImplementation((table: string) => {
+      if (table === "emails") {
+        return {
+          values: vi.fn().mockImplementation((row: Record<string, unknown>) => {
+            emailInserts?.push(row);
+            return {
+              returning: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue([{ id: "email-cancel-1" }]),
+              }),
+            };
+          }),
+        };
+      }
+      return {
+        values: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue(undefined),
+        }),
+      };
+    }),
+    updateTable: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
     }),
     transaction: vi.fn().mockReturnValue({
       execute: vi.fn().mockImplementation(async (fn: (trx: unknown) => Promise<unknown>) => {
@@ -2170,6 +2257,11 @@ describe("handleCancellationInfo", () => {
 });
 
 describe("handleCancellationConfirm", () => {
+  beforeEach(() => {
+    const mockSes = { send: vi.fn().mockResolvedValue({}) };
+    setSesClient(mockSes as never);
+  });
+
   it("throws 404 for unknown token", async () => {
     const mockDb = makeMockDbForCancellation({ tokenRow: undefined });
     try {
@@ -2180,6 +2272,20 @@ describe("handleCancellationConfirm", () => {
     } catch (err) {
       expect((err as AppError).statusCode).toBe(404);
     }
+  });
+
+  it("does not queue a confirmation email when the token is invalid", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({ tokenRow: undefined, emailInserts });
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "unknown" } }),
+      );
+      expect.fail("should have thrown");
+    } catch {
+      // expected — assertion below
+    }
+    expect(emailInserts).toHaveLength(0);
   });
 
   it("rejects already-consumed token under concurrent use", async () => {
@@ -2237,6 +2343,129 @@ describe("handleCancellationConfirm", () => {
     expect(body.cancelled).toBe(true);
     expect(body.tableId).toBe(3);
     expect(body.tableLabel).toContain("#3");
+  });
+
+  it("queues a confirmation email to the resident on successful cancellation", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    expect(emailInserts).toHaveLength(1);
+    expect(emailInserts[0]).toMatchObject({
+      recipient_email: "anna@example.com",
+      language: "da",
+    });
+    expect(emailInserts[0].subject as string).toContain("afmelding");
+    expect(emailInserts[0].body_html as string).toContain("Anna Jensen");
+  });
+
+  it("uses the resident's stored language when sending the confirmation", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "en",
+        status: "active",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    expect(emailInserts).toHaveLength(1);
+    expect(emailInserts[0].language).toBe("en");
+    expect(emailInserts[0].subject as string).toContain("cancellation");
+  });
+
+  it("does not queue a confirmation email when the token is already consumed", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+      updateNumRows: 0,
+      emailInserts,
+    });
+
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "racing" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+    expect(emailInserts).toHaveLength(0);
+  });
+
+  it("does not queue a confirmation email when the registration is no longer active", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "removed",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyCancelled).toBe(true);
+    expect(emailInserts).toHaveLength(0);
   });
 
   it("hashes tokens deterministically for storage lookup", () => {
