@@ -51,7 +51,7 @@ const da = {
 
   "table.pageTitle": "Book dit loppemarked-bord",
   "table.pageIntro":
-    "Vælg et ledigt bord på planen over Fælledhuset. Bordstørrelserne er omtrentlige. Tryk på et bord for at se detaljer og reservere det.",
+    "Vælg et ledigt bord på planen over Fælledhuset. Bordstørrelser og placeringer er omtrentlige. Tryk på et bord for at se detaljer og reservere det.",
   "table.state.ledigt": "Ledigt",
   "table.state.reserveret": "Booket",
   "table.state.valgt": "Valgt",
@@ -493,7 +493,7 @@ const en: Record<TranslationKey, string> = {
 
   "table.pageTitle": "Book your loppemarked table",
   "table.pageIntro":
-    "Pick an available table on the Fælledhuset map. Table sizes are approximate. Tap a table to see its details and reserve it.",
+    "Pick an available table on the Fælledhuset map. Table sizes and locations are approximate. Tap a table to see its details and reserve it.",
   "table.state.ledigt": "Available",
   "table.state.reserveret": "Booked",
   "table.state.valgt": "Selected",
