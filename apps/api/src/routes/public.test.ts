@@ -1903,9 +1903,11 @@ function makeMockDbForCancellation(opts: {
   tokenRow?: MockCancelTokenRow;
   regRow?: MockRegRow;
   updateNumRows?: number;
+  emailInserts?: Array<Record<string, unknown>>;
 }): Kysely<Database> {
   const tokenExecute = vi.fn().mockResolvedValue(opts.tokenRow);
   const regExecute = vi.fn().mockResolvedValue(opts.regRow);
+  const emailInserts = opts.emailInserts;
 
   return {
     selectFrom: vi.fn().mockImplementation((table: string) => {
@@ -1928,6 +1930,32 @@ function makeMockDbForCancellation(opts: {
         };
       }
       return {};
+    }),
+    insertInto: vi.fn().mockImplementation((table: string) => {
+      if (table === "emails") {
+        return {
+          values: vi.fn().mockImplementation((row: Record<string, unknown>) => {
+            emailInserts?.push(row);
+            return {
+              returning: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue([{ id: "email-cancel-1" }]),
+              }),
+            };
+          }),
+        };
+      }
+      return {
+        values: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue(undefined),
+        }),
+      };
+    }),
+    updateTable: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
     }),
     transaction: vi.fn().mockReturnValue({
       execute: vi.fn().mockImplementation(async (fn: (trx: unknown) => Promise<unknown>) => {
@@ -2170,6 +2198,11 @@ describe("handleCancellationInfo", () => {
 });
 
 describe("handleCancellationConfirm", () => {
+  beforeEach(() => {
+    const mockSes = { send: vi.fn().mockResolvedValue({}) };
+    setSesClient(mockSes as never);
+  });
+
   it("throws 404 for unknown token", async () => {
     const mockDb = makeMockDbForCancellation({ tokenRow: undefined });
     try {
@@ -2180,6 +2213,20 @@ describe("handleCancellationConfirm", () => {
     } catch (err) {
       expect((err as AppError).statusCode).toBe(404);
     }
+  });
+
+  it("does not queue a confirmation email when the token is invalid", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({ tokenRow: undefined, emailInserts });
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "unknown" } }),
+      );
+      expect.fail("should have thrown");
+    } catch {
+      // expected — assertion below
+    }
+    expect(emailInserts).toHaveLength(0);
   });
 
   it("rejects already-consumed token under concurrent use", async () => {
@@ -2237,6 +2284,129 @@ describe("handleCancellationConfirm", () => {
     expect(body.cancelled).toBe(true);
     expect(body.tableId).toBe(3);
     expect(body.tableLabel).toContain("#3");
+  });
+
+  it("queues a confirmation email to the resident on successful cancellation", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    expect(emailInserts).toHaveLength(1);
+    expect(emailInserts[0]).toMatchObject({
+      recipient_email: "anna@example.com",
+      language: "da",
+    });
+    expect(emailInserts[0].subject as string).toContain("afmelding");
+    expect(emailInserts[0].body_html as string).toContain("Anna Jensen");
+  });
+
+  it("uses the resident's stored language when sending the confirmation", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "en",
+        status: "active",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    expect(emailInserts).toHaveLength(1);
+    expect(emailInserts[0].language).toBe("en");
+    expect(emailInserts[0].subject as string).toContain("cancellation");
+  });
+
+  it("does not queue a confirmation email when the token is already consumed", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "active",
+      },
+      updateNumRows: 0,
+      emailInserts,
+    });
+
+    try {
+      await handleCancellationConfirm(
+        makeCtx({ db: mockDb, params: { token: "racing" } }),
+      );
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as AppError).statusCode).toBe(404);
+    }
+    expect(emailInserts).toHaveLength(0);
+  });
+
+  it("does not queue a confirmation email when the registration is no longer active", async () => {
+    const emailInserts: Array<Record<string, unknown>> = [];
+    const mockDb = makeMockDbForCancellation({
+      tokenRow: {
+        id: "tok-1",
+        registration_id: "reg-1",
+        expires_at: new Date(Date.now() + 86_400_000),
+        consumed_at: null,
+      },
+      regRow: {
+        id: "reg-1",
+        table_id: 3,
+        name: "Anna Jensen",
+        email: "anna@example.com",
+        language: "da",
+        status: "removed",
+      },
+      emailInserts,
+    });
+
+    const res = await handleCancellationConfirm(
+      makeCtx({ db: mockDb, params: { token: "valid" } }),
+    );
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Record<string, unknown>;
+    expect(body.alreadyCancelled).toBe(true);
+    expect(emailInserts).toHaveLength(0);
   });
 
   it("hashes tokens deterministically for storage lookup", () => {

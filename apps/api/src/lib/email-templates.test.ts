@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildConfirmationEmail } from "./email-templates.js";
+import {
+  buildCancellationConfirmationEmail,
+  buildConfirmationEmail,
+} from "./email-templates.js";
 
 describe("buildConfirmationEmail", () => {
   const baseData = {
@@ -283,5 +286,84 @@ describe("buildConfirmationEmail", () => {
     });
     expect(result.bodyHtml).not.toContain("<script>alert(1)</script>");
     expect(result.bodyHtml).toContain("&lt;script&gt;");
+  });
+});
+
+describe("buildCancellationConfirmationEmail", () => {
+  const baseData = {
+    recipientName: "Anna Jensen",
+    recipientEmail: "anna@example.com",
+    tableId: 3,
+    language: "da" as const,
+  };
+
+  it("returns Danish subject and body for da language", () => {
+    const result = buildCancellationConfirmationEmail(baseData);
+    expect(result.subject).toContain("afmelding");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
+    expect(result.bodyHtml).toContain("afmeldt");
+    expect(result.bodyHtml).toContain("Anna Jensen");
+    expect(result.bodyHtml).toContain("#3");
+  });
+
+  it("returns English subject and body for en language", () => {
+    const result = buildCancellationConfirmationEmail({ ...baseData, language: "en" });
+    expect(result.subject).toContain("cancellation");
+    expect(result.subject).toContain("UN17 Village Loppemarked");
+    expect(result.bodyHtml).toContain("cancelled");
+    expect(result.bodyHtml).toContain("Anna Jensen");
+    expect(result.bodyHtml).toContain("#3");
+  });
+
+  it("includes a mistake-recovery instruction with organizer contact", () => {
+    const enResult = buildCancellationConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("contact the organizers");
+    expect(enResult.bodyHtml).toContain("mailto:ammonl@hotmail.com");
+
+    const daResult = buildCancellationConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("kontakte arrangørerne");
+  });
+
+  it("notes the table is held for organizer review", () => {
+    const enResult = buildCancellationConfirmationEmail({ ...baseData, language: "en" });
+    expect(enResult.bodyHtml).toContain("held as reserved");
+
+    const daResult = buildCancellationConfirmationEmail(baseData);
+    expect(daResult.bodyHtml).toContain("reserveret");
+  });
+
+  it("sets html lang attribute to match language", () => {
+    expect(buildCancellationConfirmationEmail(baseData).bodyHtml).toContain('lang="da"');
+    expect(
+      buildCancellationConfirmationEmail({ ...baseData, language: "en" }).bodyHtml,
+    ).toContain('lang="en"');
+  });
+
+  it("uses correct from and replyTo addresses", () => {
+    const result = buildCancellationConfirmationEmail(baseData);
+    expect(result.from).toBe("loppemarked@un17hub.com");
+    expect(result.replyTo).toBe("ammonl@hotmail.com");
+  });
+
+  it("escapes HTML in recipient name", () => {
+    const result = buildCancellationConfirmationEmail({
+      ...baseData,
+      recipientName: '<script>alert("xss")</script>',
+    });
+    expect(result.bodyHtml).not.toContain("<script>alert");
+    expect(result.bodyHtml).toContain("&lt;script&gt;");
+  });
+
+  it("does not include any cancel-link CTA — this email confirms a completed cancellation", () => {
+    const result = buildCancellationConfirmationEmail(baseData);
+    expect(result.bodyHtml).not.toContain("Afmeld din booking");
+    expect(
+      buildCancellationConfirmationEmail({ ...baseData, language: "en" }).bodyHtml,
+    ).not.toContain("Cancel my booking");
+  });
+
+  it("handles unknown table ID gracefully", () => {
+    const result = buildCancellationConfirmationEmail({ ...baseData, tableId: 999 });
+    expect(result.bodyHtml).toContain("#999");
   });
 });

@@ -18,7 +18,10 @@ import {
   getPublicWebBaseUrl,
   resolveCancellationToken,
 } from "../lib/cancellation-tokens.js";
-import { buildConfirmationEmail } from "../lib/email-templates.js";
+import {
+  buildCancellationConfirmationEmail,
+  buildConfirmationEmail,
+} from "../lib/email-templates.js";
 import { queueAndSendEmail } from "../lib/email-service.js";
 import { badRequest, conflict, notFound } from "../lib/errors.js";
 import { logger } from "../lib/logger.js";
@@ -808,6 +811,26 @@ export async function handleCancellationConfirm(ctx: RequestContext): Promise<Ro
         tableId: outcome.tableId ?? null,
       },
     };
+  }
+
+  try {
+    const email = buildCancellationConfirmationEmail({
+      recipientName: outcome.recipientName,
+      recipientEmail: outcome.recipientEmail,
+      language: outcome.language,
+      tableId: outcome.tableId,
+    });
+
+    await queueAndSendEmail(ctx.db, {
+      recipientEmail: outcome.recipientEmail,
+      language: outcome.language,
+      subject: email.subject,
+      bodyHtml: email.bodyHtml,
+    });
+  } catch (err) {
+    // The cancellation itself succeeded; the confirmation email is best-effort
+    // and must not surface a failure to the resident.
+    logger.error("Failed to send cancellation confirmation email", err);
   }
 
   await notifyAdmins(ctx.db, {
