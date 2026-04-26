@@ -74,7 +74,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             borderBottom: `1px solid ${colors.fleaSand}`,
             overflowX: "auto",
             flex: 1,
-            justifyContent: "center",
+            justifyContent: "safe center",
           }}
         >
           {TABS.map((tab) => (

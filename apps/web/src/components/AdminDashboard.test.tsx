@@ -47,6 +47,14 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("admin.tab.account")).toBeDefined();
   });
 
+  it("uses safe center alignment so long localized labels are not clipped on overflow", () => {
+    const onLogout = vi.fn();
+    render(<AdminDashboard onLogout={onLogout} />);
+
+    const nav = screen.getByRole("tablist");
+    expect(nav.style.justifyContent).toBe("safe center");
+  });
+
   it("shows tables tab by default", () => {
     const onLogout = vi.fn();
     render(<AdminDashboard onLogout={onLogout} />);
