@@ -566,6 +566,7 @@ describe("AdminRegistrations", () => {
       const moveBody = JSON.parse(moveCall[1].body);
       expect(moveBody.registrationId).toBe("r1");
       expect(moveBody.newTableId).toBe(3);
+      expect(moveBody).not.toHaveProperty("newBoxId");
       expect(screen.getByText("admin.registrations.moved")).toBeDefined();
     });
 
