@@ -812,8 +812,8 @@ describe("handleMoveRegistration (happy path)", () => {
   it("moves registration to a new table", async () => {
     const mockDb = makeMockMoveDb({
       reg: { id: "reg-1", table_id: 1, name: "Alice", email: "a@b.com", language: "da", status: "active" },
-      oldBox: { id: 1, state: "occupied" },
-      newBox: { id: 5, state: "available" },
+      oldTable: { id: 1, state: "occupied" },
+      newTable: { id: 5, state: "available" },
     });
 
     const result = await handleMoveRegistration(
@@ -879,8 +879,8 @@ describe("handleMoveRegistration (happy path)", () => {
   it("throws 409 when target table is occupied", async () => {
     const mockDb = makeMockMoveDb({
       reg: { id: "reg-1", table_id: 1, name: "A", email: "a@b.com", language: "da", status: "active" },
-      oldBox: { id: 1, state: "occupied" },
-      newBox: { id: 5, state: "occupied" },
+      oldTable: { id: 1, state: "occupied" },
+      newTable: { id: 5, state: "occupied" },
     });
 
     try {
@@ -1226,12 +1226,12 @@ describe("duplicate-address warning in admin create", () => {
 
 function makeMockMoveDb(opts: {
   reg?: { id: string; table_id: number; name: string; email: string; language: string; status: string };
-  oldBox?: { id: number; state: string };
-  newBox?: { id: number; state: string };
+  oldTable?: { id: number; state: string };
+  newTable?: { id: number; state: string };
 }): Kysely<Database> {
   // The production code queries old table first (line 297), then new table (line 308).
   // This counter relies on that ordering.
-  let boxCallCount = 0;
+  let tableCallCount = 0;
   const mockTrx = {
     selectFrom: vi.fn().mockImplementation((table: string) => {
       if (table === "registrations") {
@@ -1246,13 +1246,13 @@ function makeMockMoveDb(opts: {
         };
       }
       if (table === "tables") {
-        boxCallCount++;
-        const boxData = boxCallCount === 1 ? opts.oldBox : opts.newBox;
+        tableCallCount++;
+        const tableData = tableCallCount === 1 ? opts.oldTable : opts.newTable;
         return {
           select: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               forUpdate: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue(boxData),
+                executeTakeFirst: vi.fn().mockResolvedValue(tableData),
               }),
             }),
           }),
