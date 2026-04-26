@@ -4,9 +4,9 @@ import { useState } from "react";
 import {
   ELIGIBLE_STREET,
   EVENT_CONTACT,
+  formatTableSize,
   getTableById,
   isFloorDoorRequired,
-  STANDARD_TABLE_SIZE_LABEL,
   tableHasClothingRack,
   validateRegistrationInput,
   type Language,
@@ -205,7 +205,7 @@ export function RegistrationForm({ tableId, onCancel, onTableUnavailable, onSucc
 
       {table && (
         <div className="flea-paper-card flea-scene-form__summary-card">
-          <p className="flea-scene-form__summary-meta">{STANDARD_TABLE_SIZE_LABEL}</p>
+          <p className="flea-scene-form__summary-meta">{formatTableSize(table)}</p>
           {tableHasClothingRack(table.id) && (
             <p className="flea-scene-form__summary-meta">
               <span aria-hidden>🧥</span> {t("table.detailsRack")}

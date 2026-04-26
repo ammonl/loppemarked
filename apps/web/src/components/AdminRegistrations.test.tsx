@@ -125,7 +125,8 @@ describe("AdminRegistrations", () => {
 
       expect(screen.getByText("admin.registrations.tableSize")).toBeDefined();
       expect(screen.queryByText("admin.registrations.tablePrice")).toBeNull();
-      expect(screen.getByText("2 m")).toBeDefined();
+      // Alice books table 1, which is one of the 60x140 cm clothing-rack tables.
+      expect(screen.getByText("60x140 cm")).toBeDefined();
       expect(screen.queryByText(/DKK/)).toBeNull();
     });
 
@@ -408,13 +409,12 @@ describe("AdminRegistrations", () => {
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
       expect(options[0].value).toBe("");
-      expect(options[1].textContent).toBe("Table #1 · 2 m");
+      expect(options[1].textContent).toBe("Table #1 · 60x140 cm");
       expect(options[1].value).toBe("1");
-      // id 22 is intentionally absent from the published map; option index
-      // 22 corresponds to table 23 and the row count is 1 placeholder + 23
-      // visible tables.
-      expect(options[22].textContent).toBe("Table #23 · 2 m");
-      expect(options[22].value).toBe("23");
+      // The catalog now runs contiguously through id 23, so option 23
+      // is Table #23 (formerly #24 before the right-wall renumbering).
+      expect(options[23].textContent).toBe("Table #23 · 80x180 cm");
+      expect(options[23].value).toBe("23");
       expect(options).toHaveLength(24);
     });
 
@@ -586,7 +586,7 @@ describe("AdminRegistrations", () => {
 
       const options = Array.from(boxSelect.options);
       expect(options[0].textContent).toBe("admin.registrations.selectTable");
-      expect(options[22].textContent).toBe("Table #23 · 2 m");
+      expect(options[23].textContent).toBe("Table #23 · 80x180 cm");
     });
 
     it("does not disable the current table in move dialog", async () => {

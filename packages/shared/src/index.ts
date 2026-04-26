@@ -23,7 +23,6 @@ export type {
 export {
   TABLE_CATALOG,
   TABLE_MAP_VIEWBOX,
-  STANDARD_TABLE_SIZE_LABEL,
   CLOTHING_RACK_TABLE_IDS,
   CLOTHING_RACKS,
   VISIBLE_TABLE_IDS,
@@ -32,6 +31,7 @@ export {
   tableHasClothingRack,
   getClothingRackSide,
   formatTableLabel,
+  formatTableSize,
   DEFAULT_OPENING_DATETIME,
   OPENING_TIMEZONE,
   EMAIL_FROM,

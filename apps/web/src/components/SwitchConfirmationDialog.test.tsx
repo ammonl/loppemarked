@@ -132,8 +132,8 @@ describe("SwitchConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText(/Table #5.*2 meters/)).toBeDefined();
-    expect(screen.getByText(/Table #20.*2 meters/)).toBeDefined();
+    expect(screen.getByText(/Table #5.*80x180 cm/)).toBeDefined();
+    expect(screen.getByText(/Table #20.*150x135 cm/)).toBeDefined();
   });
 
   it("does not show price/DKK in the display", () => {

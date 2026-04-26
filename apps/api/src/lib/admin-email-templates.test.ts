@@ -31,7 +31,8 @@ describe("buildAdminNotification — add", () => {
   it("includes table number and size", () => {
     const result = buildAdminNotification(baseInput);
     expect(result.bodyHtml).toContain("#3");
-    expect(result.bodyHtml).toContain("2 meter");
+    // Table 3 is one of the 60x140 cm clothing-rack tables.
+    expect(result.bodyHtml).toContain("60x140 cm");
   });
 
   it("uses assignment wording instead of self-booking wording", () => {
@@ -187,7 +188,8 @@ describe("buildAdminNotification — move", () => {
   it("includes new table details table with number and size", () => {
     const result = buildAdminNotification(moveInput);
     expect(result.bodyHtml).toContain("#20");
-    expect(result.bodyHtml).toContain("2 m");
+    // Table 20 is one of the 150x135 cm large near-square tables.
+    expect(result.bodyHtml).toContain("150x135 cm");
   });
 
   it("includes event contact info", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { getTableById } from "@loppemarked/shared";
+import { formatTableSize, getTableById, type TableCatalogEntry } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { colors, fonts, alertWarning } from "@/styles/theme";
 
@@ -27,10 +27,10 @@ export function SwitchConfirmationDialog({
   const { t } = useLanguage();
   const existingTable = getTableById(switchDetails.existingTableId);
   const newTable = getTableById(switchDetails.newTableId);
-  const formatTable = (tableId: number, sizeMeters?: number) => {
+  const formatTable = (tableId: number, table?: TableCatalogEntry) => {
     const title = t("table.detailsTitle").replace("{number}", String(tableId));
-    if (sizeMeters === undefined) return title;
-    return `${title} (${sizeMeters} ${t("table.meters")})`;
+    if (!table) return title;
+    return `${title} (${formatTableSize(table)})`;
   };
 
   return (
@@ -82,10 +82,7 @@ export function SwitchConfirmationDialog({
             {t("registration.switchCurrentTable")}
           </div>
           <div style={{ fontWeight: 600 }}>
-            {formatTable(
-              switchDetails.existingTableId,
-              existingTable?.sizeMeters,
-            )}
+            {formatTable(switchDetails.existingTableId, existingTable)}
           </div>
         </div>
 
@@ -103,10 +100,7 @@ export function SwitchConfirmationDialog({
             {t("registration.switchNewTable")}
           </div>
           <div style={{ fontWeight: 600 }}>
-            {formatTable(
-              switchDetails.newTableId,
-              newTable?.sizeMeters,
-            )}
+            {formatTable(switchDetails.newTableId, newTable)}
           </div>
         </div>
       </div>

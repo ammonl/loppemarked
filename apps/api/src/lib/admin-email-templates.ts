@@ -1,5 +1,6 @@
 import {
   EVENT_CONTACT,
+  formatTableSize,
   getTableById,
 } from "@loppemarked/shared";
 import type { Language } from "@loppemarked/shared";
@@ -95,7 +96,7 @@ function buildTableDetailsHtml(
 ): string {
   const table = getTableById(tableId);
   const tableNumber = table?.number ?? tableId;
-  const size = table ? `${table.sizeMeters} m` : "\u2014";
+  const size = table ? formatTableSize(table) : "\u2014";
 
   return `
       <h2 style="color: ${BRAND.greenDark}; font-size: 18px; border-bottom: 2px solid ${BRAND.greenSoft}; padding-bottom: 8px;">${escapeHtml(t.tableDetailsTitle)}</h2>

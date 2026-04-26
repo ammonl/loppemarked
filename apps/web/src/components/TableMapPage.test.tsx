@@ -80,9 +80,10 @@ describe("TableMapPage", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/public/tables");
     expect(screen.getByTestId("table-tile-1")).toBeDefined();
-    expect(screen.getByTestId("table-tile-24")).toBeDefined();
-    // id 22 is intentionally absent from the published map.
-    expect(screen.queryByTestId("table-tile-22")).toBeNull();
+    expect(screen.getByTestId("table-tile-22")).toBeDefined();
+    expect(screen.getByTestId("table-tile-23")).toBeDefined();
+    // id 24 was renamed to 23 during the right-wall renumbering.
+    expect(screen.queryByTestId("table-tile-24")).toBeNull();
     expect(screen.getByText("table.pageTitle")).toBeDefined();
   });
 

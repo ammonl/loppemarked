@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TableCatalogEntry, TablePublic } from "@loppemarked/shared";
 import {
   VISIBLE_TABLE_IDS,
+  formatTableSize,
   getTableById,
-  STANDARD_TABLE_SIZE_LABEL,
   tableHasClothingRack,
 } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
@@ -266,7 +266,7 @@ function TableSummary({ tableId, isAvailable }: { tableId: number; isAvailable: 
   return (
     <div className="flea-map__summary">
       <p>
-        <strong>{t("table.detailsSize")}:</strong> {STANDARD_TABLE_SIZE_LABEL}
+        <strong>{t("table.detailsSize")}:</strong> {formatTableSize(table)}
       </p>
       {tableHasClothingRack(tableId) && (
         <p className="flea-map__summary-rack">
