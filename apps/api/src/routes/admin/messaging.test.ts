@@ -196,9 +196,6 @@ describe("handleGetRecipients", () => {
     }
   });
 
-  // Regression: ticket #153. The previous implementation joined registrations
-  // to tables with INNER JOIN, which silently dropped active registrations
-  // from both the recipient list and the language bucket counts.
   it("returns active Danish registrations alongside English ones", async () => {
     const mockRows = [
       { email: "self-da@test.com", name: "Self DA", language: "da" },
@@ -220,12 +217,48 @@ describe("handleGetRecipients", () => {
     expect(body.recipients.filter((r) => r.language === "en")).toHaveLength(1);
   });
 
-  it("dedups duplicate emails deterministically by created_at order", async () => {
-    // Same email registered twice: oldest "da" row comes first in SQL order
-    // (queryRecipients orders by created_at asc), so the kept row is "da".
+  it("includes every active-table participant regardless of language", async () => {
     const mockRows = [
-      { email: "user@test.com", name: "User", language: "da" },
+      { email: "en-1@test.com", name: "EN One", language: "en" },
+      { email: "da-1@test.com", name: "DA One", language: "da" },
+      { email: "en-2@test.com", name: "EN Two", language: "en" },
+      { email: "da-2@test.com", name: "DA Two", language: "da" },
+      { email: "en-3@test.com", name: "EN Three", language: "en" },
+    ];
+    const mockDb = buildQueryMock(mockRows);
+
+    const result = await handleGetRecipients(
+      makeCtx({ db: mockDb, body: { audience: "all" } }),
+    );
+
+    const body = result.body as {
+      count: number;
+      recipients: { email: string; language: string }[];
+    };
+    expect(body.count).toBe(5);
+    const englishEmails = body.recipients
+      .filter((r) => r.language === "en")
+      .map((r) => r.email)
+      .sort();
+    expect(englishEmails).toEqual([
+      "en-1@test.com",
+      "en-2@test.com",
+      "en-3@test.com",
+    ]);
+    const danishEmails = body.recipients
+      .filter((r) => r.language === "da")
+      .map((r) => r.email)
+      .sort();
+    expect(danishEmails).toEqual(["da-1@test.com", "da-2@test.com"]);
+  });
+
+  it("dedups duplicate emails by keeping the most recent active row", async () => {
+    // queryRecipients orders by created_at desc, so the newer "en"
+    // registration is returned first and wins the dedup over an older
+    // active "da" row sharing the same email.
+    const mockRows = [
       { email: "user@test.com", name: "User", language: "en" },
+      { email: "user@test.com", name: "User", language: "da" },
     ];
     const mockDb = buildQueryMock(mockRows);
 
@@ -238,7 +271,7 @@ describe("handleGetRecipients", () => {
       recipients: { language: string }[];
     };
     expect(body.count).toBe(1);
-    expect(body.recipients[0].language).toBe("da");
+    expect(body.recipients[0].language).toBe("en");
   });
 });
 
