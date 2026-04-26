@@ -38,7 +38,7 @@ export type ClothingRackSide = "above" | "below" | "left" | "right";
  */
 export const CLOTHING_RACKS: readonly { tableId: number; side: ClothingRackSide }[] = [
   { tableId: 2, side: "above" },
-  { tableId: 4, side: "below" },
+  { tableId: 3, side: "below" },
   { tableId: 5, side: "above" },
   { tableId: 12, side: "left" },
   { tableId: 13, side: "right" },
@@ -72,9 +72,9 @@ export function getClothingRackSide(id: number): ClothingRackSide | undefined {
  * are derived from the cm dimensions at 1 unit ≈ 15 cm.
  */
 export const TABLE_CATALOG: readonly TableCatalogEntry[] = [
-  { id: 1, number: 1, widthCm: 150, lengthCm: 135, x: 10.5, y: 14, width: 10, height: 9 },
-  { id: 2, number: 2, widthCm: 60, lengthCm: 140, x: 13, y: 32.9, width: 4, height: 9.3 },
-  { id: 3, number: 3, widthCm: 60, lengthCm: 110, x: 13, y: 44.5, width: 4, height: 7.3 },
+  { id: 1, number: 1, widthCm: 150, lengthCm: 135, x: 7, y: 20, width: 10, height: 9 },
+  { id: 2, number: 2, widthCm: 60, lengthCm: 140, x: 13, y: 36.9, width: 4, height: 9.3 },
+  { id: 3, number: 3, widthCm: 60, lengthCm: 110, x: 13, y: 48.9, width: 4, height: 7.3 },
   { id: 4, number: 4, widthCm: 60, lengthCm: 140, x: 13, y: 58.9, width: 4, height: 9.3 },
   { id: 5, number: 5, widthCm: 75, lengthCm: 150, x: 29.5, y: 26.5, width: 5, height: 10 },
   { id: 6, number: 6, widthCm: 80, lengthCm: 180, x: 29.4, y: 39.5, width: 5.3, height: 12 },
