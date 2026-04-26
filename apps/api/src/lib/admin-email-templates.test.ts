@@ -1,6 +1,8 @@
+import { formatTableSize, getTableById } from "@loppemarked/shared";
 import { describe, expect, it } from "vitest";
 import { buildAdminNotification, buildBulkEmailTemplate, wrapEmailHtml } from "./admin-email-templates.js";
 import type { NotificationPreviewInput } from "./admin-email-templates.js";
+import { buildConfirmationEmail } from "./email-templates.js";
 
 const baseInput: NotificationPreviewInput = {
   action: "add",
@@ -236,6 +238,29 @@ describe("buildAdminNotification — move", () => {
     expect(result.bodyHtml).toContain("150x135 cm");
   });
 
+  it("renders the table size in the same canonical format as the confirmation email", () => {
+    // Pin parity between the move renderer in admin-email-templates.ts and
+    // the shared confirmation template in email-templates.ts. Both must
+    // route table size through formatTableSize() so admins and recipients
+    // see a consistent string (no "2 m" vs "2 meters" drift). The first
+    // assertion locks the canonical shape locally; the next two assert
+    // that both renderers emit it for the same tableId.
+    const tableId = moveInput.tableId;
+    const expectedSize = formatTableSize(getTableById(tableId)!);
+    expect(expectedSize).toBe("150x135 cm");
+
+    const move = buildAdminNotification(moveInput);
+    const confirmation = buildConfirmationEmail({
+      recipientName: moveInput.recipientName,
+      recipientEmail: moveInput.recipientEmail,
+      language: moveInput.language,
+      tableId,
+    });
+
+    expect(move.bodyHtml).toContain(expectedSize);
+    expect(confirmation.bodyHtml).toContain(expectedSize);
+  });
+
   it("includes event contact info", () => {
     const result = buildAdminNotification(moveInput);
     expect(result.bodyHtml).toContain("ammonl@hotmail.com");
@@ -277,6 +302,17 @@ describe("buildAdminNotification — remove", () => {
   it("does not include table details section for remove action", () => {
     const result = buildAdminNotification(removeInput);
     expect(result.bodyHtml).not.toContain("tableDetailsTitle");
+  });
+
+  it("does not render any size string from the catalog (no table-details block)", () => {
+    // The remove notification deliberately omits the table-details block, so
+    // there is no size string to keep aligned with the confirmation email. If
+    // a future change re-introduces a table block here, this test will fail
+    // and force a parity decision (mirror buildConfirmationEmail or stay
+    // size-less).
+    const result = buildAdminNotification(removeInput);
+    const expectedSize = formatTableSize(getTableById(removeInput.tableId)!);
+    expect(result.bodyHtml).not.toContain(expectedSize);
   });
 
   it("includes event contact info", () => {
