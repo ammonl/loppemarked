@@ -5,6 +5,7 @@ import {
   TABLE_CATALOG,
   TABLE_MAP_VIEWBOX,
   getClothingRackSide,
+  getTableById,
   tableHasClothingRack,
 } from "@loppemarked/shared";
 import { useLanguage } from "@/i18n/LanguageProvider";
@@ -23,6 +24,16 @@ const STATE_COLORS: Record<TableMapState, { fill: string; stroke: string; text: 
 const FLOOR_PLAN_INSET_X = 4;
 const FLOOR_PLAN_INSET_TOP = 8;
 const FLOOR_PLAN_INSET_BOTTOM = 8;
+
+// The entrance label sits horizontally between tables 19 and 23, the two
+// rightmost columns adjacent to the venue door. Derived from the catalog so
+// the label tracks any future moves of those tables.
+const ENTRANCE_LABEL_X = (() => {
+  const t19 = getTableById(19);
+  const t23 = getTableById(23);
+  if (!t19 || !t23) return 90.05;
+  return (t19.x + t19.width / 2 + (t23.x + t23.width / 2)) / 2;
+})();
 
 /**
  * Returns the rectangle for a clothing rack drawn on the side of the table
@@ -177,11 +188,11 @@ export function TableMap({ tablesById, selectedId, onSelect }: TableMapProps) {
         </text>
 
         <text
-          x={width - 7}
+          x={ENTRANCE_LABEL_X}
           y={height - 11}
           fontSize={3.2}
           fontWeight={700}
-          textAnchor="end"
+          textAnchor="middle"
           fill={colors.fleaAccentInk}
           fontFamily="'Caveat', cursive"
         >
