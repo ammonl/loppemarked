@@ -290,6 +290,8 @@ Core principles
 - Use asyncio only for I/O concurrency; avoid making everything async.
 - Do not block the event loop; if forced to call blocking code from async code, use `asyncio.to_thread()`.
 - Do not add numbering to comments.
+- Do not mention specific tickets, issues, or bug numbers in comments.
+- If a change is a reaction to a bug in existing code and would not have been commented if the code had been written that way initially, do not add that comment.
 
 ---
 

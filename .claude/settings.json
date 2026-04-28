@@ -128,6 +128,8 @@
       "mcp__linear__get_issue",
       "mcp__linear__update_issue",
       "mcp__linear__list_issues",
+      "mcp__playwright*",
+      "mcp__playwright__browser_resize",
       "mcp__sequential-thinking*",
       "Edit",
       "Read",
