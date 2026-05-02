@@ -56,28 +56,12 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# ---------- NAT Gateway (single AZ to control cost) ----------
-
-resource "aws_eip" "nat" {
-  domain = "vpc"
-
-  tags = {
-    Name = "${local.naming_prefix}-nat-eip"
-  }
-}
-
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
-
-  tags = {
-    Name = "${local.naming_prefix}-nat"
-  }
-
-  depends_on = [aws_internet_gateway.main]
-}
-
 # ---------- Private Subnets ----------
+#
+# Private subnets have no default route to the internet. The Lambda's
+# only external dependencies are AWS SES (outbound email) and AWS
+# Secrets Manager (DB password lookup at cold start), both reached via
+# VPC interface endpoints declared below.
 
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
@@ -97,12 +81,6 @@ resource "aws_route_table" "private" {
   tags = {
     Name = "${local.naming_prefix}-private-rt"
   }
-}
-
-resource "aws_route" "private_nat" {
-  route_table_id         = aws_route_table.private.id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.main.id
 }
 
 resource "aws_route_table_association" "private" {
@@ -156,4 +134,63 @@ resource "aws_vpc_security_group_ingress_rule" "db_from_api" {
   from_port                    = 5432
   to_port                      = 5432
   referenced_security_group_id = aws_security_group.api.id
+}
+
+# ---------- VPC Interface Endpoints ----------
+#
+# The API Lambda's only outbound dependencies are SES (email send) and
+# Secrets Manager (DB password retrieval at cold start). Both are
+# reached through interface endpoints in lieu of a NAT gateway. KMS is
+# not required: the Secrets Manager secret uses a CMK, but the
+# decryption happens server-side inside Secrets Manager, not from the
+# Lambda. CloudWatch Logs traffic from a VPC Lambda flows over the
+# Lambda service network and bypasses the customer VPC entirely.
+
+resource "aws_security_group" "vpc_endpoints" {
+  name_prefix = "${local.naming_prefix}-vpce-"
+  description = "Security group for VPC interface endpoints"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "${local.naming_prefix}-vpce-sg"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "vpc_endpoints_from_api" {
+  security_group_id            = aws_security_group.vpc_endpoints.id
+  description                  = "HTTPS from API security group"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = aws_security_group.api.id
+}
+
+resource "aws_vpc_endpoint" "ses" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.id}.email"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${local.naming_prefix}-ses-endpoint"
+  }
+}
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.id}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${local.naming_prefix}-secretsmanager-endpoint"
+  }
 }

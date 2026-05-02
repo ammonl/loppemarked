@@ -334,7 +334,7 @@ graph TB
             PUB_SUB[Public Subnets]
             PRIV_SUB[Private Subnets]
             IGW[Internet Gateway]
-            NAT[NAT Gateway]
+            VPCE[VPC Interface Endpoints<br/>SES, Secrets Manager]
         end
 
         subgraph "Compute"
@@ -396,7 +396,7 @@ graph TB
     VPC --> PUB_SUB
     VPC --> PRIV_SUB
     PUB_SUB --> IGW
-    PRIV_SUB --> NAT
+    PRIV_SUB --> VPCE
     R53 --> SES_ID
     SES_ID --> SES_DKIM
 ```
