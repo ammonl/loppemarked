@@ -12,6 +12,8 @@ applications:
       phases:
         preBuild:
           commands:
+            - nvm install 22
+            - nvm use 22
             - cd ../.. && npm ci
         build:
           commands:
