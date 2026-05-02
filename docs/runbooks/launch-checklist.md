@@ -22,7 +22,7 @@ Complete all checks in the staging environment before proceeding to production.
 - [x] RDS instance is running, migrations applied, seed data present
 - [x] VPC networking: Lambda can reach RDS via private subnet
   - Verified: Lambda successfully queries RDS (confirmed by successful `/health` and `/public/status` responses)
-- [x] NAT gateway operational (Lambda can reach SES and external services)
+- [x] VPC interface endpoints operational (Lambda can reach SES and Secrets Manager)
 - [x] CloudWatch log group is receiving Lambda logs
   - Log group: `/loppemarked-staging-2026/api`
 - [x] KMS key is active for log encryption

@@ -7,7 +7,7 @@ the staging and production environment stacks.
 
 | File             | Resources                                                  |
 |------------------|------------------------------------------------------------|
-| `networking.tf`  | VPC, public/private subnets, internet gateway, NAT gateway |
+| `networking.tf`  | VPC, public/private subnets, internet gateway, SES + Secrets Manager VPC interface endpoints |
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
