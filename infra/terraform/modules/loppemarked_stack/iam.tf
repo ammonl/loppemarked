@@ -294,6 +294,8 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "ec2:DeleteVpcEndpoints",
       "ec2:ModifyVpcEndpoint",
       "ec2:DescribeVpcEndpoints",
+      "ec2:DescribeVpcEndpointServices",
+      "ec2:DescribePrefixLists",
       "ec2:CreateNatGateway",
       "ec2:DeleteNatGateway",
       "ec2:DescribeNatGateways",
