@@ -61,9 +61,7 @@ resource "aws_route_table_association" "public" {
 # Private subnets have no default route to the internet. The Lambda's
 # only external dependencies are AWS SES (outbound email) and AWS
 # Secrets Manager (DB password lookup at cold start), both reached via
-# VPC interface endpoints declared below. Removing the NAT gateway
-# saves ~$66/mo across staging + prod for traffic that was effectively
-# zero bytes.
+# VPC interface endpoints declared below.
 
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
