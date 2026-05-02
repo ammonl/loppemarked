@@ -3,7 +3,7 @@
 resource "aws_lambda_function" "api" {
   function_name = "${local.naming_prefix}-api"
   role          = aws_iam_role.api_runtime.arn
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs24.x"
   handler       = "index.handler"
   filename      = "${path.module}/files/api-placeholder.zip"
 

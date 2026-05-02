@@ -33,7 +33,7 @@ Primary product specification:
 
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 24
 - PostgreSQL 16 (via Docker or a local install)
 
 ### 1. Start PostgreSQL
