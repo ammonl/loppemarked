@@ -8,6 +8,8 @@ variables {
   public_subnet_cidrs  = ["10.99.1.0/24", "10.99.2.0/24"]
   private_subnet_cidrs = ["10.99.10.0/24", "10.99.11.0/24"]
 
+  github_oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+
   ses_sender_domain = "test.example.com"
 }
 

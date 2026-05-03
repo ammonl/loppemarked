@@ -65,18 +65,6 @@ variable "github_repo" {
   default     = "ammonlarson/loppemarked"
 }
 
-variable "tf_state_bucket" {
-  description = "S3 bucket name for Terraform remote state."
-  type        = string
-  default     = "loppemarked-2026-tfstate"
-}
-
-variable "tf_lock_table" {
-  description = "DynamoDB table name for Terraform state locking."
-  type        = string
-  default     = "loppemarked-2026-tflock"
-}
-
 variable "github_environment" {
   description = "GitHub Actions environment name for OIDC trust (may differ from var.environment). Defaults to var.environment."
   type        = string

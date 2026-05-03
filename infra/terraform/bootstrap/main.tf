@@ -21,6 +21,10 @@ provider "aws" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 # ---------- S3 bucket for Terraform state ----------
 
 resource "aws_s3_bucket" "tfstate" {
@@ -94,26 +98,4 @@ resource "aws_iam_openid_connect_provider" "github" {
   lifecycle {
     prevent_destroy = true
   }
-}
-
-# ---------- Outputs ----------
-
-output "state_bucket_name" {
-  description = "S3 bucket holding Terraform remote state."
-  value       = aws_s3_bucket.tfstate.bucket
-}
-
-output "state_bucket_arn" {
-  description = "ARN of the state bucket."
-  value       = aws_s3_bucket.tfstate.arn
-}
-
-output "lock_table_name" {
-  description = "DynamoDB table used for state locking."
-  value       = aws_dynamodb_table.tflock.name
-}
-
-output "github_oidc_provider_arn" {
-  description = "ARN of the GitHub Actions OIDC identity provider."
-  value       = aws_iam_openid_connect_provider.github.arn
 }

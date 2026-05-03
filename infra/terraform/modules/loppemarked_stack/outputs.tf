@@ -38,8 +38,8 @@ output "ci_deploy_role_arn" {
 }
 
 output "ci_terraform_role_arn" {
-  description = "ARN of the CI Terraform role for plan/apply via GitHub Actions OIDC."
-  value       = aws_iam_role.ci_terraform.arn
+  description = "ARN of the CI Terraform role for plan/apply via GitHub Actions OIDC. The role is owned by the bootstrap stack; this module looks it up by name."
+  value       = data.aws_iam_role.ci_terraform.arn
 }
 
 # ---------- Database ----------

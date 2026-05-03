@@ -57,6 +57,24 @@ other stacks depend on. Run this once before initializing environments.
 | S3 bucket                      | Terraform remote state                        |
 | DynamoDB table                 | State locking                                 |
 | IAM OIDC identity provider     | GitHub Actions OIDC trust (keyless CI auth)   |
+| `ci_terraform` IAM role + inline policies | Per-environment plan/apply role assumed by the Terraform workflow |
+
+The `ci_terraform` role is intentionally owned by bootstrap (not by the
+per-environment stack it governs). When a permission is added to the
+inline policies, IAM eventual consistency briefly denies the new action
+to a session that was created moments earlier with the old policy. If
+the policy were updated by an apply that the role itself executes — as
+it was before — that same apply would attempt to use the new permission
+within the propagation window and fail. Granting permissions from
+bootstrap (with admin credentials) ensures the policy is in effect
+before any environment apply assumes the role.
+
+To grant a new permission:
+
+1. Edit `bootstrap/ci_terraform_role.tf` and add the action / resource.
+2. From `infra/terraform/bootstrap/`, run `terraform apply` with admin
+   credentials.
+3. The next environment apply (CI or local) sees the new permission.
 
 ### Steps
 
@@ -80,6 +98,22 @@ cd infra/terraform/bootstrap
 terraform import aws_iam_openid_connect_provider.github \
   arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
 ```
+
+### Adding a new environment
+
+To stand up a third environment (e.g. `dev`):
+
+1. Add the env to `var.ci_terraform_environments` in
+   `infra/terraform/bootstrap/variables.tf`. The map key must match
+   the `environment` input you will pass to the `loppemarked_stack`
+   module from `environments/<env>/main.tf`. If the names drift,
+   `terraform plan` against the env stack fails with `no IAM role
+   found` from the `data "aws_iam_role" "ci_terraform"` lookup.
+2. From `infra/terraform/bootstrap/`, `terraform apply` with admin
+   credentials so the role is created before the env stack tries to
+   look it up.
+3. Create `environments/<env>/main.tf` and run `terraform init` /
+   `apply` there.
 
 ## Environment Init / Apply Workflow
 
