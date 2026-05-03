@@ -49,6 +49,13 @@ resource "aws_iam_role" "bootstrap_drift_detect" {
 
   lifecycle {
     prevent_destroy = true
+    # The aws_iam_role.inline_policy attribute and the standalone
+    # aws_iam_role_policy resource both manage inline policies on the
+    # role; refresh of the role pulls in the policy created by the
+    # standalone resource and reports it as "added outside Terraform".
+    # The policy itself is still managed by aws_iam_role_policy below,
+    # so silence the cosmetic refresh noise.
+    ignore_changes = [inline_policy]
   }
 }
 
@@ -56,16 +63,15 @@ data "aws_iam_policy_document" "bootstrap_drift_detect" {
   statement {
     sid    = "TerraformStateBucketRead"
     effect = "Allow"
+    # `terraform plan -refresh-only` against `aws_s3_bucket` calls a
+    # broad set of GetBucket* APIs (CORS, lifecycle, replication,
+    # logging, website, etc.) that the AWS provider reads regardless of
+    # whether the feature is configured. Granting Get*/List* on this
+    # one specific bucket keeps the refresh forward-compatible with
+    # provider updates without widening blast radius.
     actions = [
-      "s3:GetBucketVersioning",
-      "s3:GetBucketLocation",
-      "s3:GetBucketPolicy",
-      "s3:GetBucketAcl",
-      "s3:GetBucketTagging",
-      "s3:GetBucketPublicAccessBlock",
-      "s3:GetEncryptionConfiguration",
-      "s3:ListBucket",
-      "s3:ListBucketVersions",
+      "s3:Get*",
+      "s3:List*",
     ]
     resources = [
       "arn:aws:s3:::${var.state_bucket_name}",
@@ -127,7 +133,6 @@ data "aws_iam_policy_document" "bootstrap_drift_detect" {
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/loppemarked-bootstrap-drift-detect",
     ]
   }
-
 }
 
 resource "aws_iam_role_policy" "bootstrap_drift_detect" {
