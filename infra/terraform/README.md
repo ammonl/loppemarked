@@ -113,16 +113,26 @@ trust policy, and inline policies stay the same).
 > runs in that window will plan to recreate the role and fail with
 > `EntityAlreadyExists`.
 
-> **Precondition.** `terraform init` has already been run in
-> `infra/terraform/bootstrap/` against the real S3 backend.
+> **Preconditions.**
+>
+> - Your working tree is on the branch / commit that introduces
+>   `infra/terraform/bootstrap/ci_terraform_role.tf`. The
+>   `terraform import` step reads bootstrap's local config to resolve
+>   the resource addresses; on `main` (before this change) those
+>   addresses do not exist and import will fail with `"resource
+>   address … does not exist in the configuration"`.
+> - `terraform init` has been run in `infra/terraform/bootstrap/`
+>   against the real S3 backend.
 
 ```bash
 # 1. Drop the role + its inline policies from each environment's state.
+#    The env stacks wrap the module under `module.loppemarked_stack`,
+#    so the state addresses are module-prefixed.
 for ENV in staging prod; do
   terraform -chdir=infra/terraform/environments/$ENV state rm \
-    aws_iam_role.ci_terraform \
-    aws_iam_role_policy.ci_terraform_state \
-    aws_iam_role_policy.ci_terraform_resources
+    module.loppemarked_stack.aws_iam_role.ci_terraform \
+    module.loppemarked_stack.aws_iam_role_policy.ci_terraform_state \
+    module.loppemarked_stack.aws_iam_role_policy.ci_terraform_resources
 done
 
 # 2. Import the role + policies into bootstrap state.
