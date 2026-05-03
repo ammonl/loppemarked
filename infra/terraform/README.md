@@ -57,6 +57,24 @@ other stacks depend on. Run this once before initializing environments.
 | S3 bucket                      | Terraform remote state                        |
 | DynamoDB table                 | State locking                                 |
 | IAM OIDC identity provider     | GitHub Actions OIDC trust (keyless CI auth)   |
+| `ci_terraform` IAM role + inline policies | Per-environment plan/apply role assumed by the Terraform workflow |
+
+The `ci_terraform` role is intentionally owned by bootstrap (not by the
+per-environment stack it governs). When a permission is added to the
+inline policies, IAM eventual consistency briefly denies the new action
+to a session that was created moments earlier with the old policy. If
+the policy were updated by an apply that the role itself executes — as
+it was before — that same apply would attempt to use the new permission
+within the propagation window and fail. Granting permissions from
+bootstrap (with admin credentials) ensures the policy is in effect
+before any environment apply assumes the role.
+
+To grant a new permission:
+
+1. Edit `bootstrap/ci_terraform_role.tf` and add the action / resource.
+2. From `infra/terraform/bootstrap/`, run `terraform apply` with admin
+   credentials.
+3. The next environment apply (CI or local) sees the new permission.
 
 ### Steps
 
@@ -79,6 +97,45 @@ Console, import it into bootstrap state before applying:
 cd infra/terraform/bootstrap
 terraform import aws_iam_openid_connect_provider.github \
   arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
+```
+
+### Migrating ci_terraform role from environment state to bootstrap state
+
+The `ci_terraform` role used to be created by the per-environment stack.
+On environments provisioned before that change, run the following one
+time before applying bootstrap. The commands relocate ownership of the
+existing role into bootstrap state without recreating it (the role ARN,
+trust policy, and inline policies stay the same).
+
+```bash
+# 1. Drop the role + its inline policies from each environment's state.
+for ENV in staging prod; do
+  terraform -chdir=infra/terraform/environments/$ENV state rm \
+    aws_iam_role.ci_terraform \
+    aws_iam_role_policy.ci_terraform_state \
+    aws_iam_role_policy.ci_terraform_resources
+done
+
+# 2. Import the role + policies into bootstrap state.
+cd infra/terraform/bootstrap
+terraform import 'aws_iam_role.ci_terraform["staging"]' \
+  loppemarked-staging-2026-ci-terraform
+terraform import 'aws_iam_role.ci_terraform["prod"]' \
+  loppemarked-prod-2026-ci-terraform
+terraform import 'aws_iam_role_policy.ci_terraform_state["staging"]' \
+  loppemarked-staging-2026-ci-terraform:terraform-state
+terraform import 'aws_iam_role_policy.ci_terraform_state["prod"]' \
+  loppemarked-prod-2026-ci-terraform:terraform-state
+terraform import 'aws_iam_role_policy.ci_terraform_resources["staging"]' \
+  loppemarked-staging-2026-ci-terraform:terraform-resources
+terraform import 'aws_iam_role_policy.ci_terraform_resources["prod"]' \
+  loppemarked-prod-2026-ci-terraform:terraform-resources
+
+# 3. Plan + apply. Expected diff: tag additions (environment=staging|prod)
+#    and the broadened DenySelfModify statement (now also denies
+#    iam:PutRolePolicy / iam:DeleteRolePolicy on the role itself).
+terraform plan -out=tfplan
+terraform apply tfplan
 ```
 
 ## Environment Init / Apply Workflow
