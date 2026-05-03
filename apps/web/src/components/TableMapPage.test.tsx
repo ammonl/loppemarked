@@ -178,7 +178,7 @@ describe("TableMapPage", () => {
     expect(notice).not.toBeNull();
     expect(back).not.toBeNull();
     if (notice && back) {
-      expect(back.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(back.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     }
   });
 

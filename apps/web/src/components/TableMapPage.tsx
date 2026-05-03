@@ -103,10 +103,10 @@ export function TableMapPage({ onBack }: TableMapPageProps) {
           </header>
 
           <SellerNotes />
+
+          <hr className="flea-map__divider" aria-hidden="true" />
         </>
       )}
-
-      <hr className="flea-map__divider" aria-hidden="true" />
 
       <div className="flea-map__counts">
         <span>
@@ -308,7 +308,7 @@ function FullCapacityNotice({ onJoinWaitlist }: { onJoinWaitlist: () => void }) 
   const { t } = useLanguage();
   return (
     <section className="flea-paper-card flea-map__full-notice">
-      <h3 className="flea-map__full-notice-title">{t("table.allBookedTitle")}</h3>
+      <h2 className="flea-map__full-notice-title">{t("table.allBookedTitle")}</h2>
       <p className="flea-map__full-notice-body">{t("table.allBookedBody")}</p>
       <button
         type="button"
