@@ -7,6 +7,19 @@ terraform {
       version = ">= 5.0"
     }
   }
+
+  # State for the bootstrap stack itself lives in the bucket bootstrap
+  # creates. Initial provisioning uses local state; once the bucket and
+  # lock table exist, run `terraform init -migrate-state` to move it
+  # here. CI drift detection assumes this remote backend so it can read
+  # state without operator credentials.
+  backend "s3" {
+    bucket         = "loppemarked-2026-tfstate"
+    key            = "bootstrap/terraform.tfstate"
+    region         = "eu-north-1"
+    dynamodb_table = "loppemarked-2026-tflock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
