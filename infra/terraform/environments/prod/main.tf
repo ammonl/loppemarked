@@ -47,11 +47,11 @@ module "loppemarked_stack" {
   private_subnet_cidrs = ["10.1.10.0/24", "10.1.11.0/24"]
   log_retention_days   = 90
 
-  db_instance_class        = "db.t4g.small"
+  db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20
   db_max_allocated_storage = 100
   db_backup_retention_days = 35
-  db_multi_az              = true
+  db_multi_az              = false
 
   lambda_reserved_concurrency = -1
 
