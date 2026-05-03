@@ -65,6 +65,10 @@ jobs:
         id: plan
         working-directory: ${{ matrix.working_directory }}
         shell: bash
+        # ${{ matrix.extra_plan_args }} is intentionally unquoted so the
+        # space-separated flags (e.g. `-refresh-only -lock=false`)
+        # word-split into separate terraform arguments. The matrix
+        # values are repo-controlled, not user input.
         run: |
           set +e
           terraform plan -input=false -no-color -detailed-exitcode ${{ matrix.extra_plan_args }} -out=tfplan 2>&1 | tee plan-output.txt

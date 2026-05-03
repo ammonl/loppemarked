@@ -23,7 +23,11 @@ data "aws_iam_policy_document" "bootstrap_drift_detect_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Drift detection runs on schedule + workflow_dispatch from main only.
+    # Drift detection runs only on schedule (which always uses the
+    # default branch) and workflow_dispatch from main. StringEquals
+    # (rather than StringLike used by ci_terraform) is intentional —
+    # this role has no PR or per-environment use-case, so the trust
+    # surface stays as narrow as possible.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -80,13 +84,16 @@ data "aws_iam_policy_document" "bootstrap_drift_detect" {
     ]
   }
 
-  # `-lock=false` skips DynamoDB writes; describe + tag-read cover the
-  # refresh of the `aws_dynamodb_table.tflock` resource itself.
+  # `-lock=false` skips DynamoDB writes; the describe/read trio matches
+  # the AWS provider's refresh path for `aws_dynamodb_table` (the
+  # backend itself is unused thanks to `-lock=false`).
   statement {
     sid    = "TerraformLockTableRead"
     effect = "Allow"
     actions = [
       "dynamodb:DescribeTable",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:DescribeTimeToLive",
       "dynamodb:ListTagsOfResource",
     ]
     resources = [
@@ -99,6 +106,7 @@ data "aws_iam_policy_document" "bootstrap_drift_detect" {
     effect = "Allow"
     actions = [
       "iam:GetOpenIDConnectProvider",
+      "iam:ListOpenIDConnectProviderTags",
       "iam:ListOpenIDConnectProviders",
     ]
     resources = ["*"]
