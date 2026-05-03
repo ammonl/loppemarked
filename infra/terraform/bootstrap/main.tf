@@ -65,6 +65,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
     }
     bucket_key_enabled = true
   }
+
+  # The AWS provider's refresh of this resource serializes
+  # `blocked_encryption_types` differently than apply does: the bucket
+  # is created with the field unset (which AWS surfaces as `["SSE-C"]`
+  # via GetBucketEncryption), so every refresh-only plan reports a
+  # full rule-replace diff. The remote configuration is unchanged.
+  # Ignoring the entire rule is acceptable here — its contents are two
+  # trivial fields that get re-applied from this config on any real
+  # operator run, and the attributes that change rarely (sse_algorithm,
+  # bucket_key_enabled) are still owned by terraform on apply.
+  lifecycle {
+    ignore_changes = [rule]
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "tfstate" {
