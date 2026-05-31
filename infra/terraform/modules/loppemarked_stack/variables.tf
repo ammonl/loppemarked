@@ -62,7 +62,7 @@ variable "github_oidc_provider_arn" {
 variable "github_repo" {
   description = "GitHub repository in owner/name format for OIDC trust."
   type        = string
-  default     = "ammonlarson/loppemarked"
+  default     = "ammonl/loppemarked"
 }
 
 variable "github_environment" {
