@@ -41,10 +41,15 @@ module "loppemarked_stack" {
 
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
-  vpc_cidr             = "10.3.0.0/16"
+  # Prod re-IP is deferred to a scheduled maintenance window. Prod RDS has
+  # deletion_protection enabled, so a CIDR change (which forces a VPC/subnet
+  # and therefore RDS replacement) would fail mid-destroy and leave prod in a
+  # half-torn-down state. Re-IP prod only after disabling deletion protection
+  # and confirming a snapshot, off-hours. Staging re-IPs to 10.2.0.0/16 now.
+  vpc_cidr             = "10.1.0.0/16"
   availability_zones   = ["eu-north-1a", "eu-north-1b"]
-  public_subnet_cidrs  = ["10.3.1.0/24", "10.3.2.0/24"]
-  private_subnet_cidrs = ["10.3.10.0/24", "10.3.11.0/24"]
+  public_subnet_cidrs  = ["10.1.1.0/24", "10.1.2.0/24"]
+  private_subnet_cidrs = ["10.1.10.0/24", "10.1.11.0/24"]
   log_retention_days   = 90
 
   # Requester-side peering into the shared-db VPC (Phase B). db_secret_id is

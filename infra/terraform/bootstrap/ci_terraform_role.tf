@@ -176,6 +176,17 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "ec2:DeleteTags",
       "ec2:DescribeTags",
       "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeNetworkInterfaceAttribute",
+      # ENI management is required to tear down subnets during a VPC re-IP: the
+      # provider must detach and delete the leftover RDS and Lambda ENIs once
+      # those resources are destroyed before the old subnets can be removed.
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:AttachNetworkInterface",
+      "ec2:DetachNetworkInterface",
+      "ec2:ModifyNetworkInterfaceAttribute",
+      "ec2:CreateNetworkInterfacePermission",
+      "ec2:DeleteNetworkInterfacePermission",
       "ec2:DescribeAvailabilityZones",
     ]
     resources = ["*"]

@@ -44,6 +44,11 @@ resource "aws_lambda_function" "api" {
 
   lifecycle {
     ignore_changes = [filename, source_code_hash]
+    # A VPC re-IP replaces the private subnets this function attaches to. Its
+    # hyperplane ENIs must leave the old subnets before they can be deleted, so
+    # recreate the function on a VPC id change rather than deadlocking the
+    # subnet delete on still-attached Lambda ENIs.
+    replace_triggered_by = [aws_vpc.main.id]
   }
 
   depends_on = [
