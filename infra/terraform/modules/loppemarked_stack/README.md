@@ -86,7 +86,7 @@ to `https://loppemarked.staging.un17hub.com` for staging and
 | `db_instance_class`           | RDS instance class                                   |
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |
 | `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering. |
-| `shared_db_cidr`              | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
+| `shared_db_vpc_cidr`          | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
 | `db_secret_id`                | Shared-db credentials secret id/name. When set, the runtime reads its DB connection from this secret. Null keeps the dedicated DB active. |
 
 See `variables.tf` for the full list with descriptions and defaults.

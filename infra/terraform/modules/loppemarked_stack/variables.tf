@@ -58,16 +58,21 @@ variable "shared_db_vpc_id" {
   description = "VPC id of the shared-db VPC to peer with (Phase A output from infra-shared-db). Null disables requester-side peering."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.shared_db_vpc_id == null || can(regex("^vpc-[0-9a-f]+$", var.shared_db_vpc_id))
+    error_message = "shared_db_vpc_id must be a valid VPC id (vpc-...) or null."
+  }
 }
 
-variable "shared_db_cidr" {
+variable "shared_db_vpc_cidr" {
   description = "CIDR block of the shared-db VPC, used for the requester-side peering route. Required when shared_db_vpc_id is set."
   type        = string
   default     = null
 
   validation {
-    condition     = var.shared_db_cidr == null || can(cidrhost(var.shared_db_cidr, 0))
-    error_message = "shared_db_cidr must be a valid CIDR block or null."
+    condition     = var.shared_db_vpc_cidr == null || can(cidrhost(var.shared_db_vpc_cidr, 0))
+    error_message = "shared_db_vpc_cidr must be a valid CIDR block or null."
   }
 }
 

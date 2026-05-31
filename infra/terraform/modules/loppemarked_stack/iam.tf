@@ -38,13 +38,16 @@ data "aws_iam_policy_document" "api_secrets" {
       "secretsmanager:GetSecretValue",
     ]
     # Dedicated DB credentials + app secret (active until Phase D), plus this
-    # project's own shared-db secret when wired. Scoped to specific ARNs only:
-    # never the shared-db master secret, never another project's secret.
+    # project's own shared-db secret when wired. Scoped to specific name
+    # prefixes only (the trailing -* matches Secrets Manager's random ARN
+    # suffix): never the shared-db master secret, never another project's.
     resources = concat(
       [
         "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:${local.naming_prefix}-*",
       ],
-      var.db_secret_id != null ? [data.aws_secretsmanager_secret.shared_db[0].arn] : []
+      var.db_secret_id != null ? [
+        "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:${var.db_secret_id}-*",
+      ] : []
     )
   }
 

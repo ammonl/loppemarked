@@ -50,8 +50,8 @@ module "loppemarked_stack" {
   # Requester-side peering into the shared-db VPC (Phase B). db_secret_id is
   # intentionally left unset here: the dedicated DB stays active until the
   # Phase D cutover wires DB_SECRET_ID = "rds/shared/loppemarked_prod".
-  shared_db_vpc_id = "vpc-908203f9"
-  shared_db_cidr   = "172.31.0.0/16"
+  shared_db_vpc_id   = "vpc-908203f9"
+  shared_db_vpc_cidr = "172.31.0.0/16"
 
   db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20

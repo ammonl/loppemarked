@@ -1,41 +1,51 @@
 # ---------- Shared-DB VPC Peering (requester side) ----------
 #
-# Requester-side peering into the shared-db VPC (Phase B of the shared-db
-# migration). The accepter side lives in infra-shared-db and its
-# data.aws_vpc_peering_connection lookup cannot resolve until this requester
-# apply exists, so this must be applied first. auto_accept works because both
-# VPCs are in the same account and region. DB traffic does not move onto this
-# peering until DB_SECRET_ID is wired in Phase D; the connection is preparatory.
+# Provides a private network path from the API Lambda (in this VPC's private
+# subnets) to the shared RDS instance owned by `infra-shared-db`. We create a
+# peering connection per environment so staging and prod fail independently and
+# each carries a distinct Name tag.
+#
+# Gated on `var.shared_db_vpc_id`: when null (the default) no peering resources
+# are created. The accepter-side route, RDS SG ingress, and
+# `accepter.allow_remote_vpc_dns_resolution` are owned by the shared-db repo,
+# whose `data.aws_vpc_peering_connection` lookup cannot resolve until this
+# requester apply exists. `auto_accept = true` works because both VPCs live in
+# the same AWS account and region. DB traffic does not move onto this peering
+# until DB_SECRET_ID is wired in Phase D; the connection is preparatory.
 
 resource "aws_vpc_peering_connection" "shared_db" {
-  count = var.shared_db_vpc_id != null ? 1 : 0
+  count = var.shared_db_vpc_id == null ? 0 : 1
 
   vpc_id      = aws_vpc.main.id
   peer_vpc_id = var.shared_db_vpc_id
   auto_accept = true
 
-  requester {
-    allow_remote_vpc_dns_resolution = true
-  }
-
   tags = {
-    Name = "loppemarked--2026-shared-db-peering"
+    Name = "${local.naming_prefix}-shared-db-peering"
   }
 
   lifecycle {
     precondition {
-      condition     = var.shared_db_cidr != null
-      error_message = "shared_db_cidr must be set when shared_db_vpc_id is set so the peering route can be created."
+      condition     = var.shared_db_vpc_cidr != null
+      error_message = "shared_db_vpc_cidr must be provided when shared_db_vpc_id is set; the private route table needs a destination CIDR for the peering route."
     }
   }
 }
 
-# Route private-subnet traffic destined for the shared-db CIDR over the peering
-# connection. The private route table otherwise has no route off-VPC.
+resource "aws_vpc_peering_connection_options" "shared_db" {
+  count = var.shared_db_vpc_id == null ? 0 : 1
+
+  vpc_peering_connection_id = aws_vpc_peering_connection.shared_db[0].id
+
+  requester {
+    allow_remote_vpc_dns_resolution = true
+  }
+}
+
 resource "aws_route" "private_to_shared_db" {
-  count = var.shared_db_vpc_id != null ? 1 : 0
+  count = var.shared_db_vpc_id == null ? 0 : 1
 
   route_table_id            = aws_route_table.private.id
-  destination_cidr_block    = var.shared_db_cidr
+  destination_cidr_block    = var.shared_db_vpc_cidr
   vpc_peering_connection_id = aws_vpc_peering_connection.shared_db[0].id
 }

@@ -1,14 +1,3 @@
-# ---------- Shared-DB Secret Lookup ----------
-#
-# Resolves the shared-db credentials secret owned by infra-shared-db so its ARN
-# can scope runtime IAM and its id can be injected as DB_SECRET_ID. Only looked
-# up when an environment opts into the shared-db secret.
-
-data "aws_secretsmanager_secret" "shared_db" {
-  count = var.db_secret_id != null ? 1 : 0
-  name  = var.db_secret_id
-}
-
 # ---------- Lambda Function ----------
 
 resource "aws_lambda_function" "api" {

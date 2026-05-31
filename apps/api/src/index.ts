@@ -175,13 +175,17 @@ async function resolveDbConfig(): Promise<DatabaseConfig> {
   const sharedSecretId = process.env["DB_SECRET_ID"];
   if (sharedSecretId) {
     const secret = await fetchSecretJson(sharedSecretId);
+    const port = Number(secret["port"] ?? "5432");
+    if (!Number.isFinite(port)) {
+      throw new Error(`Shared DB secret has non-numeric port: ${String(secret["port"])}`);
+    }
     return {
       host: secret["host"] ?? "",
-      port: Number(secret["port"] ?? "5432"),
+      port,
       database: secret["database"] ?? "",
       user: secret["username"] ?? "",
       password: secret["password"] ?? "",
-      ssl: process.env["DB_SSL"] !== "false",
+      ssl: process.env["DB_SSL"] === "true",
     };
   }
 
