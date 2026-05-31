@@ -19,7 +19,7 @@ variable "lock_table_name" {
 variable "github_repo" {
   description = "GitHub repository in owner/name format for OIDC trust on the per-environment ci-terraform roles."
   type        = string
-  default     = "ammonlarson/loppemarked"
+  default     = "ammonl/loppemarked"
 }
 
 variable "ci_terraform_environments" {
