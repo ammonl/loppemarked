@@ -46,11 +46,15 @@ module "loppemarked_stack" {
   private_subnet_cidrs = ["10.2.10.0/24", "10.2.11.0/24"]
   log_retention_days   = 14
 
-  # Requester-side peering into the shared-db VPC (Phase B). db_secret_id is
-  # intentionally left unset here: the dedicated DB stays active until the
-  # Phase D cutover wires DB_SECRET_ID = "rds/shared/loppemarked_staging".
+  # Requester-side peering into the shared-db VPC (Phase B), now activated for
+  # the Phase D cutover: db_secret_id points the API runtime at the shared-db
+  # credentials secret, so the Lambda builds its connection from that secret
+  # (over the peering link) instead of the dedicated DB env vars. Staging is
+  # cut over first; prod stays on its dedicated DB until staging is proven
+  # healthy end to end.
   shared_db_vpc_id   = "vpc-908203f9"
   shared_db_vpc_cidr = "172.31.0.0/16"
+  db_secret_id       = "rds/shared/loppemarked_staging"
 
   db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20
