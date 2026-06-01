@@ -141,7 +141,7 @@ resource "aws_db_instance" "main" {
   maintenance_window        = "mon:04:30-mon:05:30"
   copy_tags_to_snapshot     = true
   delete_automated_backups  = var.environment != "prod"
-  deletion_protection       = var.environment == "prod"
+  deletion_protection       = var.db_deletion_protection != null ? var.db_deletion_protection : var.environment == "prod"
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = var.environment == "prod" ? "${local.naming_prefix}-final" : null
 

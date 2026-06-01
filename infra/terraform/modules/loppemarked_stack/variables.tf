@@ -255,6 +255,12 @@ variable "db_master_username" {
   default     = "loppemarked"
 }
 
+variable "db_deletion_protection" {
+  description = "Override for RDS deletion protection. When null (the default), protection is enabled for prod and disabled for non-prod. Set to false on prod only for a planned destructive maintenance window (e.g. a VPC re-IP that replaces the instance), then restore it afterward. Disabling protection must be applied before the apply that triggers the replacement."
+  type        = bool
+  default     = null
+}
+
 # ---------- Monitoring ----------
 
 variable "log_retention_days" {
