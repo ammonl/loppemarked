@@ -1,6 +1,18 @@
 # Validates that IAM policies do not use wildcard resources.
 # Run with: terraform test
 
+# The module requires a us-east-1 provider alias for the CloudFront ACM
+# certificate (api_domain.tf). Define both provider configurations so the test
+# can plan the module.
+provider "aws" {
+  region = "eu-north-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 variables {
   environment          = "test"
   vpc_cidr             = "10.99.0.0/16"

@@ -30,6 +30,21 @@ provider "aws" {
   }
 }
 
+# CloudFront ACM certificates (stable API domain) must live in us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      project     = "loppemarked"
+      season      = "2026"
+      environment = "staging"
+      managed_by  = "terraform"
+    }
+  }
+}
+
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
@@ -37,6 +52,11 @@ data "aws_iam_openid_connect_provider" "github" {
 module "loppemarked_stack" {
   source      = "../../modules/loppemarked_stack"
   environment = "staging"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
@@ -121,6 +141,14 @@ output "api_function_name" {
 
 output "api_base_url" {
   value = module.loppemarked_stack.api_base_url
+}
+
+output "api_domain" {
+  value = module.loppemarked_stack.api_domain
+}
+
+output "api_cloudfront_domain" {
+  value = module.loppemarked_stack.api_cloudfront_domain
 }
 
 output "ses_domain_identity_arn" {

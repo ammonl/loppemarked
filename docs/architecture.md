@@ -340,6 +340,7 @@ graph TB
         subgraph "Compute"
             LAMBDA[Lambda<br/>API Function]
             LAMBDA_URL[Function URL]
+            CF[CloudFront<br/>Stable API Domain]
             EB[EventBridge<br/>Session Cleanup]
             RDS[(RDS PostgreSQL)]
         end
@@ -389,6 +390,9 @@ graph TB
     IAM_TF --> R53
     IAM_TF --> AMPLIFY
     LAMBDA_URL --> LAMBDA
+    CF -->|origin| LAMBDA_URL
+    R53 -->|api.<domain> alias| CF
+    AMPLIFY -->|API_URL rewrites| CF
     EB -->|hourly| LAMBDA
     LAMBDA --> RDS
     LAMBDA --> SES_ID
@@ -423,6 +427,7 @@ infra/terraform/
         ├── main.tf            Naming prefix, provider config
         ├── amplify.tf         Amplify app, branch, and domain association
         ├── api_runtime.tf     Lambda function, Function URL, EventBridge schedule
+        ├── api_domain.tf      Stable API domain: ACM cert, CloudFront, Route 53 alias
         ├── database.tf        RDS, Secrets Manager
         ├── dns.tf             Route 53 zone and records
         ├── iam.tf             IAM roles and policies

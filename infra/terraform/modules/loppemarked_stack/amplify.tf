@@ -31,7 +31,10 @@ applications:
 
   environment_variables = {
     AMPLIFY_MONOREPO_APP_ROOT = "apps/web"
-    API_URL                   = aws_lambda_function_url.api.function_url
+    # Point at the stable CloudFront domain (api_domain.tf) so a Lambda
+    # replacement no longer changes the URL baked into the web build. Falls
+    # back to the raw Function URL when the stable domain is disabled.
+    API_URL = var.enable_api_custom_domain ? "https://${local.api_domain_name}" : aws_lambda_function_url.api.function_url
   }
 
   enable_auto_branch_creation = var.amplify_enable_preview_branches
