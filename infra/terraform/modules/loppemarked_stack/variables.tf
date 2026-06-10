@@ -261,6 +261,31 @@ variable "db_deletion_protection" {
   default     = null
 }
 
+# ---------- Migration host (temporary) ----------
+
+variable "enable_db_migration_host" {
+  description = "Provision a temporary SSM-accessed EC2 host in a private subnet with PostgreSQL 16 client tools, for the prod shared-db data migration. Defaults to false; flip to true only for the migration window and back to false to tear it down."
+  type        = bool
+  default     = false
+}
+
+variable "db_migration_host_instance_type" {
+  description = "Instance type for the migration host (arm64, to match the AL2023 arm64 AMI)."
+  type        = string
+  default     = "t4g.micro"
+}
+
+variable "db_migration_host_volume_size" {
+  description = "Root volume size in GB for the migration host. Size for the largest dump/restore the move needs to stage on disk."
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.db_migration_host_volume_size >= 20 && var.db_migration_host_volume_size <= 500
+    error_message = "db_migration_host_volume_size must be between 20 and 500 GB."
+  }
+}
+
 # ---------- Monitoring ----------
 
 variable "log_retention_days" {

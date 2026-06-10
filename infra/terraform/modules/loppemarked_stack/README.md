@@ -16,6 +16,7 @@ the staging and production environment stacks.
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route |
 | `amplify.tf`     | Amplify app, branch, and custom domain association         |
+| `migration_host.tf` | Temporary SSM-accessed EC2 host + SSM/S3 endpoints for the prod shared-db data move (gated off by default) |
 
 ## Least-privilege IAM
 
@@ -88,6 +89,7 @@ to `https://loppemarked.staging.un17hub.com` for staging and
 | `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering. |
 | `shared_db_vpc_cidr`          | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
 | `db_secret_id`                | Shared-db credentials secret id/name. When set, the runtime reads its DB connection from this secret. Null keeps the dedicated DB active. |
+| `enable_db_migration_host`    | Provision a temporary SSM-accessed EC2 host with PostgreSQL 16 client tools for the prod shared-db data move. Defaults to `false`; see the [migration-host runbook](../../../docs/runbooks/prod-shared-db-migration-host.md). |
 
 See `variables.tf` for the full list with descriptions and defaults.
 

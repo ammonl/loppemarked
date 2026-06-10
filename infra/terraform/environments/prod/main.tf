@@ -64,6 +64,13 @@ module "loppemarked_stack" {
   db_backup_retention_days = 35
   db_multi_az              = false
 
+  # Temporary execution path for the prod shared-db data move (psql/pg_dump/
+  # pg_restore over SSM, reaching both the dedicated prod RDS and the shared-db
+  # prod RDS via peering). Left false: stand the host up only for the migration
+  # window by flipping this to true + apply, then set it back to false + apply to
+  # tear it down. See docs/runbooks/prod-shared-db-migration-host.md.
+  enable_db_migration_host = false
+
   lambda_reserved_concurrency = -1
 
   ses_sender_domain  = "un17hub.com"
@@ -116,6 +123,10 @@ output "db_secret_arn" {
 
 output "app_secret_arn" {
   value = module.loppemarked_stack.app_secret_arn
+}
+
+output "db_migration_host_instance_id" {
+  value = module.loppemarked_stack.db_migration_host_instance_id
 }
 
 output "api_function_name" {

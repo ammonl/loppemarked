@@ -64,6 +64,11 @@ output "app_secret_arn" {
   value       = aws_secretsmanager_secret.app.arn
 }
 
+output "db_migration_host_instance_id" {
+  description = "Instance id of the temporary shared-db migration host, or null when enable_db_migration_host is false. Use it to open a session: aws ssm start-session --target <id>."
+  value       = try(aws_instance.migration_host[0].id, null)
+}
+
 # ---------- SES ----------
 
 output "ses_domain_identity_arn" {

@@ -575,3 +575,92 @@ resource "aws_iam_role_policy" "ci_terraform_resources" {
   role   = aws_iam_role.ci_terraform[each.key].id
   policy = data.aws_iam_policy_document.ci_terraform_resources[each.key].json
 }
+
+# ---------- Migration-host compute (managed policy) ----------
+#
+# Permissions for the temporary shared-db migration host (gated off by default
+# via enable_db_migration_host). Kept in a separate managed policy rather than
+# the terraform-resources inline policy above, which is already near the 10,240
+# character inline-policy limit for a role; managed policies have their own quota
+# and do not count against that budget.
+data "aws_iam_policy_document" "ci_terraform_migration_host" {
+  for_each = var.ci_terraform_environments
+
+  # RunInstances and the describe calls do not support resource-level scoping, so
+  # they use a wildcard like the VPCNetworking statement; instance-profile and
+  # SSM-parameter actions stay scoped.
+  statement {
+    sid    = "EC2Compute"
+    effect = "Allow"
+    actions = [
+      "ec2:RunInstances",
+      "ec2:TerminateInstances",
+      "ec2:StartInstances",
+      "ec2:StopInstances",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceStatus",
+      "ec2:DescribeInstanceAttribute",
+      "ec2:DescribeInstanceTypes",
+      "ec2:DescribeInstanceCreditSpecifications",
+      "ec2:ModifyInstanceAttribute",
+      "ec2:DescribeImages",
+      "ec2:DescribeVolumes",
+      "ec2:DescribeIamInstanceProfileAssociations",
+      "ec2:AssociateIamInstanceProfile",
+      "ec2:DisassociateIamInstanceProfile",
+      "ec2:ReplaceIamInstanceProfileAssociation",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "IAMInstanceProfile"
+    effect = "Allow"
+    actions = [
+      "iam:CreateInstanceProfile",
+      "iam:DeleteInstanceProfile",
+      "iam:GetInstanceProfile",
+      "iam:AddRoleToInstanceProfile",
+      "iam:RemoveRoleFromInstanceProfile",
+      "iam:TagInstanceProfile",
+      "iam:UntagInstanceProfile",
+      "iam:ListInstanceProfileTags",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/${each.value.naming_prefix}-*",
+    ]
+  }
+
+  # The migration host AMI is resolved from the public AL2023 SSM parameter.
+  statement {
+    sid    = "SSMPublicParameters"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+    ]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.id}::parameter/aws/service/ami-amazon-linux-latest/*",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ci_terraform_migration_host" {
+  for_each = var.ci_terraform_environments
+
+  name        = "${each.value.naming_prefix}-ci-terraform-migration-host"
+  description = "Compute permissions for the temporary shared-db migration host (managed separately to stay under the role inline-policy size limit)."
+  policy      = data.aws_iam_policy_document.ci_terraform_migration_host[each.key].json
+
+  tags = {
+    Name        = "${each.value.naming_prefix}-ci-terraform-migration-host"
+    environment = each.key
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ci_terraform_migration_host" {
+  for_each = var.ci_terraform_environments
+
+  role       = aws_iam_role.ci_terraform[each.key].name
+  policy_arn = aws_iam_policy.ci_terraform_migration_host[each.key].arn
+}
