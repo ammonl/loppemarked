@@ -566,6 +566,56 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:apps/*",
     ]
   }
+
+  # ACM certificates for the stable API domain are requested in us-east-1
+  # (CloudFront requirement), so the ARN region is hardcoded rather than
+  # derived from the role's own region.
+  statement {
+    sid    = "ACMCertificates"
+    effect = "Allow"
+    actions = [
+      "acm:RequestCertificate",
+      "acm:DeleteCertificate",
+      "acm:DescribeCertificate",
+      "acm:GetCertificate",
+      "acm:AddTagsToCertificate",
+      "acm:RemoveTagsFromCertificate",
+      "acm:ListTagsForCertificate",
+    ]
+    resources = [
+      "arn:aws:acm:us-east-1:${data.aws_caller_identity.current.account_id}:certificate/*",
+    ]
+  }
+
+  statement {
+    sid       = "ACMList"
+    effect    = "Allow"
+    actions   = ["acm:ListCertificates"]
+    resources = ["*"]
+  }
+
+  # CloudFront actions do not support resource-level permissions, so the
+  # wildcard resource is required for the stable API domain distribution.
+  statement {
+    sid    = "CloudFrontManage"
+    effect = "Allow"
+    actions = [
+      "cloudfront:CreateDistribution",
+      "cloudfront:DeleteDistribution",
+      "cloudfront:GetDistribution",
+      "cloudfront:GetDistributionConfig",
+      "cloudfront:UpdateDistribution",
+      "cloudfront:ListDistributions",
+      "cloudfront:TagResource",
+      "cloudfront:UntagResource",
+      "cloudfront:ListTagsForResource",
+      "cloudfront:GetCachePolicy",
+      "cloudfront:ListCachePolicies",
+      "cloudfront:GetOriginRequestPolicy",
+      "cloudfront:ListOriginRequestPolicies",
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "ci_terraform_resources" {

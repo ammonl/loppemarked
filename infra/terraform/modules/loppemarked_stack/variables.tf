@@ -171,6 +171,25 @@ variable "amplify_enable_custom_domain" {
   default     = true
 }
 
+# ---------- API Domain ----------
+
+variable "enable_api_custom_domain" {
+  description = "Whether to front the API Lambda Function URL with a stable CloudFront domain (api.<ses_sender_domain>). When true, Amplify's API_URL points at the stable host so a Lambda replacement (e.g. a VPC re-IP) no longer changes the URL baked into the web build. When false, API_URL falls back to the raw Function URL."
+  type        = bool
+  default     = true
+}
+
+variable "api_domain_prefix" {
+  description = "Subdomain prefix for the stable API domain (e.g. 'api' -> api.<ses_sender_domain>)."
+  type        = string
+  default     = "api"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", var.api_domain_prefix))
+    error_message = "api_domain_prefix must be a valid subdomain label."
+  }
+}
+
 # ---------- Lambda ----------
 
 variable "lambda_memory_size" {
