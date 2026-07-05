@@ -197,8 +197,7 @@ Follow all Task Execution Workflow Customizations steps or instructions included
 
 Complete every **applicable** check before creating a PR. The commands below are
 examples — use the project's actual equivalents, and skip any check the project
-does not configure. (For example, this repo has no test/lint/build step; its
-validation is `npm run format:check` via Prettier.)
+does not configure.
 
 ### 3.1 Run Tests
 
