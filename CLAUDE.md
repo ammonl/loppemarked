@@ -246,6 +246,8 @@ When a change affects user-facing UI **and** the Playwright MCP server is availa
 
 Save screenshots under .agent/screenshots/ticket-<number>/ so they're traceable. Do not commit them — upload to the PR directly via gh pr comment --body-file referencing the image, or use gh to attach via a GitHub-hosted upload. If the change has no user-facing UI, or the Playwright MCP server is unavailable, skip this step (note the skip in the PR when relevant).
 
+If the affected surface requires authentication or a live backend that is not available in the current environment, Playwright cannot render it — treat this as an allowed skip, note it in the PR, and rely on the build and tests for confidence. Do not treat an un-verifiable surface as a blocker.
+
 **CHECKPOINT: All validation items complete?**
 
 **If NO, fix issues before proceeding.**
@@ -297,6 +299,13 @@ Review PR #<number> comprehensively and post findings as PR review comment
 
 If no review agent is available, perform a self-review of the diff instead and
 note that in the PR.
+
+Match the review effort to the change. For a **trivial diff** — copy/label text,
+comments, config or permission entries, or a mechanical rename with no logic
+change — a self-review posted as the review comment is sufficient; you do not
+need to spawn the `pr-reviewer` agent. Reserve the agent for diffs that change
+logic, control flow, data handling, or public contracts. Either way, the
+distinct reviewer comment in this step is still required.
 
 The reviewer must **always** leave a distinct PR review comment, even when the
 review finds nothing actionable (in that case the comment should say so
