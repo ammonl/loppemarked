@@ -80,6 +80,38 @@ integration is unavailable:
   rather than stopping.
 - Never fabricate the result of a step you could not actually run.
 
+## Requesting GitHub Repository Access
+
+If accessing a GitHub repository that we do not already have access to would
+help with the task — for example, to read source, clone a dependency, inspect
+issues/PRs, or push a branch — **stop and prompt the user to grant access**
+before continuing. Do not silently work around missing access or abandon the
+step; surface the blocker and ask.
+
+When you prompt, give the user **exact, actionable instructions** for granting
+the access needed. Tailor them to how access is actually missing (name the
+specific `owner/repo`), and cover the relevant path:
+
+- **`gh` CLI not authenticated / wrong account:** ask them to run
+  `gh auth login` (or `gh auth switch` to select the right account), and
+  `gh auth status` to confirm.
+- **Authenticated but lacking scopes** (e.g. `repo`, `read:org`): ask them to
+  run `gh auth refresh -h github.com -s repo,read:org` (list the exact scopes
+  needed).
+- **Private repo owned by an org/another user:** ask them to add our account
+  as a collaborator (Repo → Settings → Collaborators and teams → Add people),
+  or to have an org owner grant the team/account access to that repo.
+- **Org SSO enforced:** ask them to authorize the token/SSO for that org
+  (GitHub → Settings → Applications, or the "Configure SSO" button next to the
+  personal access token).
+- **A specific token is required:** tell them exactly which environment
+  variable or credential to set and where.
+
+Prefer suggesting they run the command themselves via the `!` prefix in the
+prompt (e.g. `! gh auth login`) so the output lands in this session. After they
+confirm access is granted, verify with a quick read (e.g. `gh repo view
+<owner>/<repo>`) before resuming the task.
+
 ## Provider-Specific Workflow Steps
 
 Some ticket/issue workflow steps in this file assume capabilities that not
@@ -190,6 +222,20 @@ when you are not already on a suitable working branch.
 
 **Workflow Customizations**
 Follow all Task Execution Workflow Customizations steps or instructions included in this file.
+
+### Debugging discipline
+
+When diagnosing a failure — especially an environment- or deployment-specific one — follow these before reaching for deep infrastructure theories:
+
+- **Config-parity first.** When the _same build/image_ is healthy in one environment and broken in another, diff the per-environment **configuration** (env vars, secrets, config maps) **before** investigating code, mounts, or timing. A green staging + red prod on an identical build is a config delta until proven otherwise.
+- **Diagnose the real process, not a convenience shell.** Env-dependent behavior (`$HOME`, `expanduser`, `PATH`) can differ between an interactive shell (`kubectl exec`, SSH) and the actual service process, because the runtime may inject env from the user's passwd entry for exec sessions only. Read the real process's environment (e.g. `/proc/1/environ`), not an exec shell's `echo $HOME`.
+- **Reproduce with the app's real inputs.** When something fails in-app but "works" in a manual test, make the manual test use the **same resolved config/arguments** the app uses — not hardcoded stand-ins. A hardcoded value that passes proves nothing about the config-derived path.
+- **Pick the single decisive check.** When each diagnostic round-trips through a human or slow tooling, choose the one test that discriminates between the leading hypotheses in a single step instead of iterating one theory at a time.
+- **Drop disproven theories and their artifacts immediately.** When a hypothesis is refuted, discard any half-built fix or branch for it — do not push a dead branch or apply a known no-op "just in case".
+
+### Permissions hygiene
+
+- **Never allowlist an interpreter or shell.** Entries like `Bash(python3:*)`, `Bash(node:*)`, `Bash(bash -c:*)`, `Bash(sh -c:*)`, or `Bash(xargs:*)` are effectively arbitrary code execution — the permission matcher only sees the command prefix, not what the interpreter runs, so they are no narrower than allowing everything. Allowlist the **specific read-only tools** the task needs instead (e.g. `Bash(jq:*)` for JSON processing, `Bash(kubectl logs:*)` / `Bash(gcloud logging read:*)` for reads). Keep state-mutating or code-executing commands behind manual approval.
 
 ---
 
