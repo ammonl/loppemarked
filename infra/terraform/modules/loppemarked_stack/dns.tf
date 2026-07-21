@@ -7,7 +7,7 @@
 #     ses_verification_token / ses_dkim_tokens outputs.
 #   - The API certificate's DNS validation record — see the api_acm_validation
 #     output.
-#   - The api.<domain> alias to CloudFront — see api_cloudfront_domain /
+#   - The loppemarked-api.<domain> alias to CloudFront — see api_cloudfront_domain /
 #     api_cloudfront_hosted_zone_id.
 #
 # The SES identity/DKIM (ses.tf), ACM certificate and CloudFront distribution

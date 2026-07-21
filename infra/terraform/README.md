@@ -238,8 +238,8 @@ Amplify uses the build spec embedded in the Terraform configuration:
 - **Artifacts**: `.next/**/*`
 
 The `API_URL` environment variable is automatically set to the stable API
-domain (`api.<domain>`, see [Stable API Domain](#stable-api-domain)), so
-Next.js API rewrites point to the correct backend. Next.js evaluates
+domain (`loppemarked-api.<domain>`, see [Stable API Domain](#stable-api-domain)),
+so Next.js API rewrites point to the correct backend. Next.js evaluates
 `rewrites()` at build time, so `API_URL` is baked into the deployed build.
 
 ### Stable API Domain
@@ -249,10 +249,14 @@ regenerated whenever the function is replaced (for example a VPC re-IP). To
 keep the build-time-baked `API_URL` stable, a CloudFront distribution fronts
 the Function URL behind a fixed hostname:
 
-| Environment | API domain               |
-| ----------- | ------------------------ |
-| staging     | `api.staging.un17hub.com` |
-| production  | `api.un17hub.com`         |
+| Environment | API domain                          |
+| ----------- | ----------------------------------- |
+| staging     | `loppemarked-api.staging.un17hub.com` |
+| production  | `loppemarked-api.un17hub.com`         |
+
+The `loppemarked-api` prefix (set via `api_domain_prefix`) is deliberately
+distinct from `api.<domain>`, which the un17hub DNS repo already owns for its
+own API Gateway backend.
 
 The CloudFront origin follows the current Function URL, so a Lambda
 replacement updates the origin on the next `terraform apply` without changing
@@ -262,8 +266,8 @@ through the module's `aws.us_east_1` provider alias. The distribution disables
 caching and forwards all viewer headers (except Host), cookies, and query
 strings, acting as a transparent API proxy.
 
-**DNS records live in the un17hub DNS repo, not here.** The `api.<domain>`
-alias and the certificate's DNS-validation record are published by that repo
+**DNS records live in the un17hub DNS repo, not here.** The
+`loppemarked-api.<domain>` alias and the certificate's DNS-validation record are published by that repo
 from the stack's `api_cloudfront_domain` / `api_cloudfront_hosted_zone_id` and
 `api_acm_validation` outputs. Because CloudFront can only attach an **issued**
 certificate, provisioning a net-new environment is two-phase: apply the stack

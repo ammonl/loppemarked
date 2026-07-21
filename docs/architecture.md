@@ -390,7 +390,7 @@ graph TB
     IAM_TF --> AMPLIFY
     LAMBDA_URL --> LAMBDA
     CF -->|origin| LAMBDA_URL
-    R53 -->|api.&lt;domain&gt; alias| CF
+    R53 -->|loppemarked-api.&lt;domain&gt; alias| CF
     AMPLIFY -->|API_URL rewrites| CF
     EB -->|hourly| LAMBDA
     LAMBDA --> RDS
