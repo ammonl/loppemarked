@@ -356,7 +356,7 @@ graph TB
         end
 
         subgraph "DNS"
-            R53[Route 53<br/>Hosted Zone]
+            R53[Route 53 Hosted Zone<br/>managed by un17hub DNS repo]
         end
 
         subgraph "Security"
@@ -387,11 +387,10 @@ graph TB
     IAM_TF --> LAMBDA
     IAM_TF --> RDS
     IAM_TF --> SES_ID
-    IAM_TF --> R53
     IAM_TF --> AMPLIFY
     LAMBDA_URL --> LAMBDA
     CF -->|origin| LAMBDA_URL
-    R53 -->|api.<domain> alias| CF
+    R53 -->|api.&lt;domain&gt; alias| CF
     AMPLIFY -->|API_URL rewrites| CF
     EB -->|hourly| LAMBDA
     LAMBDA --> RDS
@@ -427,9 +426,9 @@ infra/terraform/
         ├── main.tf            Naming prefix, provider config
         ├── amplify.tf         Amplify app, branch, and domain association
         ├── api_runtime.tf     Lambda function, Function URL, EventBridge schedule
-        ├── api_domain.tf      Stable API domain: ACM cert, CloudFront, Route 53 alias
+        ├── api_domain.tf      Stable API domain: ACM cert, CloudFront (DNS records in un17hub)
         ├── database.tf        RDS, Secrets Manager
-        ├── dns.tf             Route 53 zone and records
+        ├── dns.tf             DNS ownership notes (records live in the un17hub repo)
         ├── iam.tf             IAM roles and policies
         ├── monitoring.tf      CloudWatch, KMS, Alarms, Dashboard, SNS
         ├── networking.tf      VPC, subnets, gateways

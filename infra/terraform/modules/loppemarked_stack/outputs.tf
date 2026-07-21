@@ -72,12 +72,12 @@ output "ses_domain_identity_arn" {
 }
 
 output "ses_verification_token" {
-  description = "SES domain verification token (published via Route 53)."
+  description = "SES domain verification token. The un17hub DNS repo publishes it as the _amazonses.<domain> TXT record."
   value       = aws_ses_domain_identity.main.verification_token
 }
 
 output "ses_dkim_tokens" {
-  description = "DKIM CNAME tokens for the SES domain (published via Route 53)."
+  description = "DKIM tokens for the SES domain. The un17hub DNS repo publishes each as a <token>._domainkey.<domain> CNAME to <token>.dkim.amazonses.com."
   value       = aws_ses_domain_dkim.main.dkim_tokens
 }
 
@@ -94,18 +94,6 @@ output "ses_sender_email" {
 output "ses_reply_to_email" {
   description = "Default Reply-To address."
   value       = var.ses_reply_to_email
-}
-
-# ---------- DNS ----------
-
-output "route53_zone_id" {
-  description = "Route 53 hosted zone ID for the sender domain."
-  value       = data.aws_route53_zone.main.zone_id
-}
-
-output "route53_nameservers" {
-  description = "Nameservers for the Route 53 hosted zone. Delegate these from your registrar."
-  value       = data.aws_route53_zone.main.name_servers
 }
 
 # ---------- Amplify ----------
@@ -160,6 +148,22 @@ output "api_cloudfront_domain" {
 output "api_cloudfront_distribution_id" {
   description = "CloudFront distribution id for the stable API hostname, or null when disabled."
   value       = try(aws_cloudfront_distribution.api[0].id, null)
+}
+
+output "api_cloudfront_hosted_zone_id" {
+  description = "CloudFront hosted zone id for the stable API hostname, used as the alias target zone. The un17hub DNS repo publishes the api.<domain> A/AAAA alias to api_cloudfront_domain. Null when disabled."
+  value       = try(aws_cloudfront_distribution.api[0].hosted_zone_id, null)
+}
+
+output "api_acm_validation" {
+  description = "DNS validation records for the API ACM certificate (name/type/value). The un17hub DNS repo must publish these so the cert validates before CloudFront can attach it. Empty when the custom domain is disabled."
+  value = [
+    for dvo in try(aws_acm_certificate.api[0].domain_validation_options, []) : {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  ]
 }
 
 # ---------- Monitoring ----------

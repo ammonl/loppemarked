@@ -11,10 +11,10 @@ the staging and production environment stacks.
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
-| `dns.tf`         | Route 53 zone lookup, SES verification/DKIM DNS records    |
+| `dns.tf`         | None — documents that all Route 53 records are owned by the un17hub DNS repo (see outputs) |
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
-| `api_domain.tf`  | Stable API domain: us-east-1 ACM cert, CloudFront distribution fronting the Function URL, Route 53 alias records |
+| `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
 | `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route |
 | `amplify.tf`     | Amplify app, branch, and custom domain association         |
 
@@ -46,16 +46,30 @@ and can be overridden via `ses_sender_email`. Reply-To defaults to
 | staging     | `staging.un17hub.com`  | `loppemarked@staging.un17hub.com`      | `ammonl@hotmail.com`    |
 | prod        | `un17hub.com`          | `loppemarked@un17hub.com`              | `ammonl@hotmail.com`    |
 
-### DNS verification
+### DNS records (owned by the un17hub DNS repo)
 
-The `un17hub.com` Route 53 hosted zone is owned by the separate un17hub DNS
-repo. This module does **not** create the zone — it looks it up
-(`route53_zone_name`, defaulting to `ses_sender_domain`) and writes its SES
-verification/DKIM and API-domain records into it. Both environments share the
-one apex zone: `staging.un17hub.com` was rolled into the `un17hub.com` zone, so
-staging sets `route53_zone_name = "un17hub.com"` and its records land there as
-subdomains (no separate delegated staging zone). SES verifies the domain and
-enables DKIM signing automatically once the records propagate.
+This module owns **no** Route 53 records. The `un17hub.com` hosted zone and
+every record in it are managed by the separate un17hub DNS repo. This module
+exposes the values that repo needs, and it publishes the records:
+
+| Record | Output(s) to consume |
+|--------|----------------------|
+| `_amazonses.<domain>` TXT (SES verification) | `ses_verification_token` |
+| `<token>._domainkey.<domain>` CNAME ×3 (DKIM) | `ses_dkim_tokens` |
+| API cert DNS-validation CNAME | `api_acm_validation` (name/type/value) |
+| `api.<domain>` A/AAAA alias → CloudFront | `api_cloudfront_domain`, `api_cloudfront_hosted_zone_id` |
+
+SES verifies the domain and enables DKIM signing once those records exist. The
+API ACM certificate uses DNS validation, and CloudFront can only attach an
+**issued** cert — so the un17hub repo must publish `api_acm_validation` (and the
+cert must validate) before this stack's CloudFront distribution can be created.
+For a net-new environment that means: apply this stack (creates the pending
+cert; the CloudFront step fails until the cert is issued), publish the
+validation record in un17hub from the `api_acm_validation` output, then re-apply.
+
+The Amplify custom-domain records are the one exception: the
+`aws_amplify_domain_association` (`amplify.tf`) is a managed Amplify mechanism
+that provisions its own ACM certificate and Route 53 records automatically.
 
 ## API Lambda runtime configuration
 
@@ -105,6 +119,11 @@ on never changes — no web rebuild required. The distribution uses the managed
 it behaves as a transparent API proxy (no caching; forwards cookies, headers,
 and query strings; sends the origin's own Host).
 
+The `api.<domain>` alias and the certificate's DNS-validation record are **not**
+created here — the un17hub DNS repo publishes them from the `api_cloudfront_domain`
+/ `api_cloudfront_hosted_zone_id` and `api_acm_validation` outputs (see
+[DNS records](#dns-records-owned-by-the-un17hub-dns-repo)).
+
 Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 (and skip the CloudFront/ACM resources); `api_domain_prefix` overrides the
 `api` subdomain label.
@@ -122,7 +141,6 @@ Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 | `environment`                 | Deployment environment name (staging, prod)          |
 | `vpc_cidr`                    | CIDR block for the VPC                               |
 | `ses_sender_domain`           | Domain for the SES identity and the environment's DNS record names |
-| `route53_zone_name`           | Existing hosted zone to write records into. Defaults to `ses_sender_domain`; set to the apex (e.g. `un17hub.com`) when records live in a shared parent zone. |
 | `ses_reply_to_email`          | Default Reply-To (defaults to `ammonl@hotmail.com`)  |
 | `db_instance_class`           | RDS instance class                                   |
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |

@@ -262,6 +262,15 @@ through the module's `aws.us_east_1` provider alias. The distribution disables
 caching and forwards all viewer headers (except Host), cookies, and query
 strings, acting as a transparent API proxy.
 
+**DNS records live in the un17hub DNS repo, not here.** The `api.<domain>`
+alias and the certificate's DNS-validation record are published by that repo
+from the stack's `api_cloudfront_domain` / `api_cloudfront_hosted_zone_id` and
+`api_acm_validation` outputs. Because CloudFront can only attach an **issued**
+certificate, provisioning a net-new environment is two-phase: apply the stack
+(the cert is created but the CloudFront step fails until it is validated),
+publish the validation record in un17hub from `api_acm_validation`, then
+re-apply. An environment whose cert is already issued applies in one pass.
+
 > **First enable / disable note:** A `terraform apply` updates Amplify's
 > `API_URL` but does not trigger a build. After first enabling (or changing)
 > the domain, trigger an Amplify release (`aws amplify start-job --job-type

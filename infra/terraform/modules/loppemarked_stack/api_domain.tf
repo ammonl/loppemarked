@@ -17,6 +17,11 @@ locals {
 }
 
 # ---------- ACM Certificate (us-east-1, required by CloudFront) ----------
+# DNS validation records are created in the un17hub DNS repo, not here — this
+# stack owns no Route 53 records. The cert's validation name/value are exposed
+# via the api_acm_validation output for that repo to publish. CloudFront can
+# only attach an issued certificate, so the validation record must exist (cert
+# validated) before the distribution below is created.
 
 resource "aws_acm_certificate" "api" {
   count    = var.enable_api_custom_domain ? 1 : 0
@@ -32,31 +37,6 @@ resource "aws_acm_certificate" "api" {
   tags = {
     Name = "${local.naming_prefix}-api"
   }
-}
-
-resource "aws_route53_record" "api_cert_validation" {
-  for_each = var.enable_api_custom_domain ? {
-    for dvo in aws_acm_certificate.api[0].domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      record = dvo.resource_record_value
-    }
-  } : {}
-
-  zone_id         = data.aws_route53_zone.main.zone_id
-  name            = each.value.name
-  type            = each.value.type
-  ttl             = 60
-  records         = [each.value.record]
-  allow_overwrite = true
-}
-
-resource "aws_acm_certificate_validation" "api" {
-  count    = var.enable_api_custom_domain ? 1 : 0
-  provider = aws.us_east_1
-
-  certificate_arn         = aws_acm_certificate.api[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.api_cert_validation : record.fqdn]
 }
 
 # ---------- CloudFront Distribution ----------
@@ -113,7 +93,7 @@ resource "aws_cloudfront_distribution" "api" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate_validation.api[0].certificate_arn
+    acm_certificate_arn      = aws_acm_certificate.api[0].arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
@@ -123,32 +103,6 @@ resource "aws_cloudfront_distribution" "api" {
   }
 }
 
-# ---------- Route 53 Alias Records ----------
-
-resource "aws_route53_record" "api" {
-  count = var.enable_api_custom_domain ? 1 : 0
-
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = local.api_domain_name
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.api[0].domain_name
-    zone_id                = aws_cloudfront_distribution.api[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
-
-resource "aws_route53_record" "api_aaaa" {
-  count = var.enable_api_custom_domain ? 1 : 0
-
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = local.api_domain_name
-  type    = "AAAA"
-
-  alias {
-    name                   = aws_cloudfront_distribution.api[0].domain_name
-    zone_id                = aws_cloudfront_distribution.api[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
+# The api.<domain> alias records that point at this distribution are created in
+# the un17hub DNS repo. api_cloudfront_domain / api_cloudfront_hosted_zone_id
+# expose the alias target.
