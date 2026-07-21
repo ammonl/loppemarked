@@ -30,6 +30,21 @@ provider "aws" {
   }
 }
 
+# CloudFront ACM certificates (stable API domain) must live in us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      project     = "loppemarked"
+      season      = "2026"
+      environment = "staging"
+      managed_by  = "terraform"
+    }
+  }
+}
+
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
@@ -37,6 +52,11 @@ data "aws_iam_openid_connect_provider" "github" {
 module "loppemarked_stack" {
   source      = "../../modules/loppemarked_stack"
   environment = "staging"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
@@ -65,6 +85,11 @@ module "loppemarked_stack" {
   lambda_reserved_concurrency = -1
 
   ses_sender_domain = "staging.un17hub.com"
+
+  # staging.un17hub.com was rolled into the un17hub.com hosted zone (managed by
+  # the un17hub DNS repo), so records are written there as subdomains rather
+  # than into a separate delegated staging zone.
+  route53_zone_name = "un17hub.com"
 
   enable_observability_alerts = false
 
@@ -121,6 +146,14 @@ output "api_function_name" {
 
 output "api_base_url" {
   value = module.loppemarked_stack.api_base_url
+}
+
+output "api_domain" {
+  value = module.loppemarked_stack.api_domain
+}
+
+output "api_cloudfront_domain" {
+  value = module.loppemarked_stack.api_cloudfront_domain
 }
 
 output "ses_domain_identity_arn" {

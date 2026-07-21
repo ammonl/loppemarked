@@ -237,8 +237,37 @@ Amplify uses the build spec embedded in the Terraform configuration:
 - **Build**: `npm run build`
 - **Artifacts**: `.next/**/*`
 
-The `API_URL` environment variable is automatically set to the Lambda function
-URL from the same stack, so Next.js API rewrites point to the correct backend.
+The `API_URL` environment variable is automatically set to the stable API
+domain (`api.<domain>`, see [Stable API Domain](#stable-api-domain)), so
+Next.js API rewrites point to the correct backend. Next.js evaluates
+`rewrites()` at build time, so `API_URL` is baked into the deployed build.
+
+### Stable API Domain
+
+The API Lambda is exposed through a Function URL whose subdomain is
+regenerated whenever the function is replaced (for example a VPC re-IP). To
+keep the build-time-baked `API_URL` stable, a CloudFront distribution fronts
+the Function URL behind a fixed hostname:
+
+| Environment | API domain               |
+| ----------- | ------------------------ |
+| staging     | `api.staging.un17hub.com` |
+| production  | `api.un17hub.com`         |
+
+The CloudFront origin follows the current Function URL, so a Lambda
+replacement updates the origin on the next `terraform apply` without changing
+the hostname the web build depends on — no Amplify rebuild required. The ACM
+certificate lives in `us-east-1` (CloudFront requirement) and is provisioned
+through the module's `aws.us_east_1` provider alias. The distribution disables
+caching and forwards all viewer headers (except Host), cookies, and query
+strings, acting as a transparent API proxy.
+
+> **First enable / disable note:** A `terraform apply` updates Amplify's
+> `API_URL` but does not trigger a build. After first enabling (or changing)
+> the domain, trigger an Amplify release (`aws amplify start-job --job-type
+> RELEASE`) so the new value is baked in. Subsequent Lambda replacements no
+> longer require a rebuild. Set `enable_api_custom_domain = false` to fall
+> back to the raw Function URL.
 
 ### Deployment Modes
 

@@ -147,6 +147,21 @@ output "api_base_url" {
   value       = aws_lambda_function_url.api.function_url
 }
 
+output "api_domain" {
+  description = "Stable API hostname fronting the Function URL (api.<ses_sender_domain>), or null when the custom domain is disabled."
+  value       = local.api_domain_name
+}
+
+output "api_cloudfront_domain" {
+  description = "CloudFront distribution domain serving the stable API hostname, or null when disabled."
+  value       = try(aws_cloudfront_distribution.api[0].domain_name, null)
+}
+
+output "api_cloudfront_distribution_id" {
+  description = "CloudFront distribution id for the stable API hostname, or null when disabled."
+  value       = try(aws_cloudfront_distribution.api[0].id, null)
+}
+
 # ---------- Monitoring ----------
 
 output "api_log_group_name" {
