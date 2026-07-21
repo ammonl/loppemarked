@@ -86,11 +86,6 @@ module "loppemarked_stack" {
 
   ses_sender_domain = "staging.un17hub.com"
 
-  # staging.un17hub.com was rolled into the un17hub.com hosted zone (managed by
-  # the un17hub DNS repo), so records are written there as subdomains rather
-  # than into a separate delegated staging zone.
-  route53_zone_name = "un17hub.com"
-
   enable_observability_alerts = false
 
   amplify_branch_name             = "main"
@@ -156,6 +151,14 @@ output "api_cloudfront_domain" {
   value = module.loppemarked_stack.api_cloudfront_domain
 }
 
+output "api_cloudfront_hosted_zone_id" {
+  value = module.loppemarked_stack.api_cloudfront_hosted_zone_id
+}
+
+output "api_acm_validation" {
+  value = module.loppemarked_stack.api_acm_validation
+}
+
 output "ses_domain_identity_arn" {
   value = module.loppemarked_stack.ses_domain_identity_arn
 }
@@ -170,14 +173,6 @@ output "ses_sender_email" {
 
 output "ses_reply_to_email" {
   value = module.loppemarked_stack.ses_reply_to_email
-}
-
-output "route53_zone_id" {
-  value = module.loppemarked_stack.route53_zone_id
-}
-
-output "route53_nameservers" {
-  value = module.loppemarked_stack.route53_nameservers
 }
 
 output "amplify_app_id" {
