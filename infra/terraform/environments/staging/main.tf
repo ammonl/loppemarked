@@ -86,6 +86,11 @@ module "loppemarked_stack" {
 
   ses_sender_domain = "staging.un17hub.com"
 
+  # staging.un17hub.com was rolled into the un17hub.com hosted zone (managed by
+  # the un17hub DNS repo), so records are written there as subdomains rather
+  # than into a separate delegated staging zone.
+  route53_zone_name = "un17hub.com"
+
   enable_observability_alerts = false
 
   amplify_branch_name             = "main"

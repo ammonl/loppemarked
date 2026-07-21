@@ -11,7 +11,7 @@ the staging and production environment stacks.
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
-| `dns.tf`         | Route 53 hosted zone, SES verification/DKIM DNS records    |
+| `dns.tf`         | Route 53 zone lookup, SES verification/DKIM DNS records    |
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert, CloudFront distribution fronting the Function URL, Route 53 alias records |
@@ -48,16 +48,14 @@ and can be overridden via `ses_sender_email`. Reply-To defaults to
 
 ### DNS verification
 
-Route 53 hosted zones and DNS records for SES domain verification and DKIM
-are managed by Terraform. After the first `terraform apply`:
-
-1. **Point your registrar's nameservers** to the Route 53 zone nameservers
-   (output: `route53_nameservers`).
-2. **Delegate the staging subdomain** by adding an NS record in the prod
-   Route 53 zone for `staging.un17hub.com` pointing to the staging zone's
-   nameservers.
-3. SES will verify the domain and enable DKIM signing automatically once DNS
-   propagates.
+The `un17hub.com` Route 53 hosted zone is owned by the separate un17hub DNS
+repo. This module does **not** create the zone — it looks it up
+(`route53_zone_name`, defaulting to `ses_sender_domain`) and writes its SES
+verification/DKIM and API-domain records into it. Both environments share the
+one apex zone: `staging.un17hub.com` was rolled into the `un17hub.com` zone, so
+staging sets `route53_zone_name = "un17hub.com"` and its records land there as
+subdomains (no separate delegated staging zone). SES verifies the domain and
+enables DKIM signing automatically once the records propagate.
 
 ## API Lambda runtime configuration
 
@@ -123,7 +121,8 @@ Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 |-------------------------------|------------------------------------------------------|
 | `environment`                 | Deployment environment name (staging, prod)          |
 | `vpc_cidr`                    | CIDR block for the VPC                               |
-| `ses_sender_domain`           | Domain for SES identity and Route 53 zone            |
+| `ses_sender_domain`           | Domain for the SES identity and the environment's DNS record names |
+| `route53_zone_name`           | Existing hosted zone to write records into. Defaults to `ses_sender_domain`; set to the apex (e.g. `un17hub.com`) when records live in a shared parent zone. |
 | `ses_reply_to_email`          | Default Reply-To (defaults to `ammonl@hotmail.com`)  |
 | `db_instance_class`           | RDS instance class                                   |
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |

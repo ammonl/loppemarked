@@ -128,6 +128,19 @@ variable "ses_reply_to_email" {
   default     = "ammonl@hotmail.com"
 }
 
+# ---------- DNS ----------
+
+variable "route53_zone_name" {
+  description = "Name of the existing Route 53 hosted zone (managed by the un17hub DNS repo) that holds this environment's records. Defaults to ses_sender_domain. Set to the registrable apex when the environment's records live in a shared parent zone — e.g. staging.un17hub.com records now live in the un17hub.com zone rather than a separate delegated zone."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.route53_zone_name == null || can(regex("^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$", var.route53_zone_name))
+    error_message = "route53_zone_name must be a valid domain name (e.g. un17hub.com) or null."
+  }
+}
+
 # ---------- Amplify ----------
 
 variable "amplify_branch_name" {

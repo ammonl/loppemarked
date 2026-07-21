@@ -421,7 +421,7 @@ infra/terraform/
 │   └── variables.tf
 ├── environments/
 │   ├── staging/main.tf        Staging stack configuration
-│   └── prod/main.tf           Production stack + subdomain delegation
+│   └── prod/main.tf           Production stack configuration
 └── modules/
     └── loppemarked_stack/      Shared module for all AWS resources
         ├── main.tf            Naming prefix, provider config
