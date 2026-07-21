@@ -124,13 +124,18 @@ resource "aws_cloudfront_distribution" "api" {
 }
 
 # ---------- Route 53 Alias Records ----------
+# These records own the stable API hostname, so allow_overwrite lets Terraform
+# adopt a matching record that already exists in the shared zone (e.g. one left
+# by a prior partial apply) instead of failing the apply, matching the SES and
+# certificate-validation records above.
 
 resource "aws_route53_record" "api" {
   count = var.enable_api_custom_domain ? 1 : 0
 
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = local.api_domain_name
-  type    = "A"
+  zone_id         = data.aws_route53_zone.main.zone_id
+  name            = local.api_domain_name
+  type            = "A"
+  allow_overwrite = true
 
   alias {
     name                   = aws_cloudfront_distribution.api[0].domain_name
@@ -142,9 +147,10 @@ resource "aws_route53_record" "api" {
 resource "aws_route53_record" "api_aaaa" {
   count = var.enable_api_custom_domain ? 1 : 0
 
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = local.api_domain_name
-  type    = "AAAA"
+  zone_id         = data.aws_route53_zone.main.zone_id
+  name            = local.api_domain_name
+  type            = "AAAA"
+  allow_overwrite = true
 
   alias {
     name                   = aws_cloudfront_distribution.api[0].domain_name
