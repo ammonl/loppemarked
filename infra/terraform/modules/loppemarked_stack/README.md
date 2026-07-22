@@ -16,7 +16,7 @@ the staging and production environment stacks.
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
 | `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route |
-| `amplify.tf`     | Amplify app, branch, and custom domain association         |
+| `amplify.tf`     | Amplify app (repository + build service role), branch, and custom domain association |
 
 ## Provider configuration
 
@@ -70,6 +70,16 @@ validation record in un17hub from the `api_acm_validation` output, then re-apply
 The Amplify custom-domain records are the one exception: the
 `aws_amplify_domain_association` (`amplify.tf`) is a managed Amplify mechanism
 that provisions its own ACM certificate and Route 53 records automatically.
+
+## Amplify app configuration
+
+The Amplify app's `repository` (`amplify_repository`, default the
+`ammonl/loppemarked` GitHub URL) and its build service role (a module-managed
+`aws_iam_role` with `AdministratorAccess-Amplify`) are managed by Terraform, so
+prod and staging stay identical. Only the GitHub connection token stays out of
+Terraform — `access_token`/`oauth_token` are write-only (never returned by the
+API), so they remain in `ignore_changes` and the repo connection is authorized
+once out-of-band.
 
 ## API Lambda runtime configuration
 

@@ -323,7 +323,7 @@ All AWS infrastructure is managed via Terraform with isolated staging and produc
 ```mermaid
 graph TB
     subgraph "GitHub"
-        REPO[Repository<br/>ammonlarson/loppemarked]
+        REPO[Repository<br/>ammonl/loppemarked]
         CI[CI Workflow<br/>ci.yml]
         TF_WF[Terraform Workflow<br/>terraform.yml]
     end

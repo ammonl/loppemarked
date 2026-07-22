@@ -130,6 +130,17 @@ variable "ses_reply_to_email" {
 
 # ---------- Amplify ----------
 
+variable "amplify_repository" {
+  description = "GitHub repository URL the Amplify app builds from. The GitHub connection token is established out-of-band (kept out of Terraform); this only asserts the URL so prod and staging cannot drift onto different repos."
+  type        = string
+  default     = "https://github.com/ammonl/loppemarked"
+
+  validation {
+    condition     = can(regex("^https://github\\.com/[^/]+/[^/]+$", var.amplify_repository))
+    error_message = "amplify_repository must be a GitHub repository URL (https://github.com/<owner>/<repo>)."
+  }
+}
+
 variable "amplify_branch_name" {
   description = "Git branch name for Amplify to build and deploy."
   type        = string
