@@ -174,15 +174,15 @@ variable "amplify_enable_custom_domain" {
 # ---------- API Domain ----------
 
 variable "enable_api_custom_domain" {
-  description = "Whether to front the API Lambda Function URL with a stable CloudFront domain (api.<ses_sender_domain>). When true, Amplify's API_URL points at the stable host so a Lambda replacement (e.g. a VPC re-IP) no longer changes the URL baked into the web build. When false, API_URL falls back to the raw Function URL."
+  description = "Whether to front the API Lambda Function URL with a stable CloudFront domain (<api_domain_prefix>.<ses_sender_domain>). When true, Amplify's API_URL points at the stable host so a Lambda replacement (e.g. a VPC re-IP) no longer changes the URL baked into the web build. When false, API_URL falls back to the raw Function URL."
   type        = bool
   default     = true
 }
 
 variable "api_domain_prefix" {
-  description = "Subdomain prefix for the stable API domain (e.g. 'api' -> api.<ses_sender_domain>)."
+  description = "Subdomain prefix for the stable API domain (e.g. 'loppemarked-api' -> loppemarked-api.<ses_sender_domain>). Must not collide with hostnames the un17hub DNS repo already owns: api.<domain> there is un17hub's own API Gateway backend, so this stays distinct from 'api'."
   type        = string
-  default     = "api"
+  default     = "loppemarked-api"
 
   validation {
     condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", var.api_domain_prefix))

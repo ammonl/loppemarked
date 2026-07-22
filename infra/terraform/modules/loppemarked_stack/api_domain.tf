@@ -103,6 +103,6 @@ resource "aws_cloudfront_distribution" "api" {
   }
 }
 
-# The api.<domain> alias records that point at this distribution are created in
+# The loppemarked-api.<domain> alias records that point at this distribution are created in
 # the un17hub DNS repo. api_cloudfront_domain / api_cloudfront_hosted_zone_id
 # expose the alias target.

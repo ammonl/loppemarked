@@ -57,7 +57,7 @@ exposes the values that repo needs, and it publishes the records:
 | `_amazonses.<domain>` TXT (SES verification) | `ses_verification_token` |
 | `<token>._domainkey.<domain>` CNAME ×3 (DKIM) | `ses_dkim_tokens` |
 | API cert DNS-validation CNAME | `api_acm_validation` (name/type/value) |
-| `api.<domain>` A/AAAA alias → CloudFront | `api_cloudfront_domain`, `api_cloudfront_hosted_zone_id` |
+| `loppemarked-api.<domain>` A/AAAA alias → CloudFront | `api_cloudfront_domain`, `api_cloudfront_hosted_zone_id` |
 
 SES verifies the domain and enables DKIM signing once those records exist. The
 API ACM certificate uses DNS validation, and CloudFront can only attach an
@@ -110,8 +110,10 @@ proxying to the now-deleted URL and every API-proxied path returned
 app.
 
 `api_domain.tf` fronts the Function URL with a stable CloudFront domain
-(`api.<ses_sender_domain>`, e.g. `api.staging.un17hub.com` /
-`api.un17hub.com`) and sets Amplify's `API_URL` to that host. The CloudFront
+(`<api_domain_prefix>.<ses_sender_domain>`, e.g. `loppemarked-api.staging.un17hub.com` /
+`loppemarked-api.un17hub.com`) and sets Amplify's `API_URL` to that host. The
+prefix is deliberately not `api`, because `api.<domain>` is already owned by
+the un17hub DNS repo's own API Gateway backend. The CloudFront
 origin tracks the current Function URL, so a function replacement updates the
 origin on the next `terraform apply` while the hostname the web build depends
 on never changes — no web rebuild required. The distribution uses the managed
@@ -119,7 +121,7 @@ on never changes — no web rebuild required. The distribution uses the managed
 it behaves as a transparent API proxy (no caching; forwards cookies, headers,
 and query strings; sends the origin's own Host).
 
-The `api.<domain>` alias and the certificate's DNS-validation record are **not**
+The `loppemarked-api.<domain>` alias and the certificate's DNS-validation record are **not**
 created here — the un17hub DNS repo publishes them from the `api_cloudfront_domain`
 / `api_cloudfront_hosted_zone_id` and `api_acm_validation` outputs (see
 [DNS records](#dns-records-owned-by-the-un17hub-dns-repo)).
@@ -145,7 +147,7 @@ Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 | `db_instance_class`           | RDS instance class                                   |
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |
 | `enable_api_custom_domain`    | Front the Function URL with a stable CloudFront domain and point `API_URL` at it. Defaults to `true`. |
-| `api_domain_prefix`           | Subdomain label for the stable API domain (`api` → `api.<ses_sender_domain>`). |
+| `api_domain_prefix`           | Subdomain label for the stable API domain (`loppemarked-api` → `loppemarked-api.<ses_sender_domain>`; kept distinct from un17hub's `api.<domain>`). |
 | `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering. |
 | `shared_db_vpc_cidr`          | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
 | `db_secret_id`                | Shared-db credentials secret id/name. When set, the runtime reads its DB connection from this secret. Null keeps the dedicated DB active. |

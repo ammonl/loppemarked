@@ -136,7 +136,7 @@ output "api_base_url" {
 }
 
 output "api_domain" {
-  description = "Stable API hostname fronting the Function URL (api.<ses_sender_domain>), or null when the custom domain is disabled."
+  description = "Stable API hostname fronting the Function URL (<api_domain_prefix>.<ses_sender_domain>, e.g. loppemarked-api.un17hub.com), or null when the custom domain is disabled."
   value       = local.api_domain_name
 }
 
@@ -151,7 +151,7 @@ output "api_cloudfront_distribution_id" {
 }
 
 output "api_cloudfront_hosted_zone_id" {
-  description = "CloudFront hosted zone id for the stable API hostname, used as the alias target zone. The un17hub DNS repo publishes the api.<domain> A/AAAA alias to api_cloudfront_domain. Null when disabled."
+  description = "CloudFront hosted zone id for the stable API hostname, used as the alias target zone. The un17hub DNS repo publishes the loppemarked-api.<domain> A/AAAA alias to api_cloudfront_domain. Null when disabled."
   value       = try(aws_cloudfront_distribution.api[0].hosted_zone_id, null)
 }
 
