@@ -118,15 +118,22 @@ bootstrap. After applying bootstrap, populate the
 `TF_ROLE_ARN_BOOTSTRAP` GitHub repository variable from the
 `bootstrap_drift_detect_role_arn` output.
 
-### Importing an existing OIDC provider
+### GitHub OIDC provider (owned by un17hub)
 
-If the GitHub OIDC provider was previously created manually in the AWS
-Console, import it into bootstrap state before applying:
+There is exactly one GitHub OIDC provider
+(`token.actions.githubusercontent.com`) per AWS account, and the
+un17hub bootstrap owns and manages it. loppemarked consumes it via a
+`data "aws_iam_openid_connect_provider" "github"` lookup (in
+`bootstrap/main.tf`, matching the environment stacks), so no import is
+needed and `terraform plan` shows no changes to the provider.
+
+If a previous loppemarked bootstrap apply managed the provider as a
+resource, detach it from state once — do **not** destroy it, since
+un17hub still manages the shared provider:
 
 ```bash
 cd infra/terraform/bootstrap
-terraform import aws_iam_openid_connect_provider.github \
-  arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
+terraform state rm aws_iam_openid_connect_provider.github
 ```
 
 ### Adding a new environment

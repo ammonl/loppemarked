@@ -108,20 +108,13 @@ resource "aws_dynamodb_table" "tflock" {
 
 # ---------- GitHub Actions OIDC Provider ----------
 
-resource "aws_iam_openid_connect_provider" "github" {
-  url            = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
-
-  # AWS does not validate the thumbprint for GitHub's OIDC provider
-  # (see https://github.blog/changelog/2023-06-27-github-actions-update-on-oidc-integration-with-aws/).
-  # Terraform still requires the field, so a placeholder is used.
-  thumbprint_list = ["ffffffffffffffffffffffffffffffffffffffff"]
-
-  tags = {
-    purpose = "github-actions-oidc"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
+# The account-global GitHub OIDC provider
+# (token.actions.githubusercontent.com) is owned and managed by the
+# un17hub bootstrap. There is exactly one such provider per AWS account,
+# so loppemarked consumes it via a data source rather than managing it —
+# managing it here would perpetually fight un17hub over the shared
+# resource's tags and thumbprint. This mirrors the pattern the
+# environment stacks already use.
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
 }
