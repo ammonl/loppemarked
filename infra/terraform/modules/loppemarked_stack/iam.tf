@@ -56,8 +56,10 @@ data "aws_iam_policy_document" "api_secrets" {
     actions = [
       "kms:Decrypt",
     ]
+    # Whichever key encrypts this environment's own secrets: the data key while
+    # the dedicated stack exists, the logs key once the data key is retired.
     resources = [
-      aws_kms_key.data.arn,
+      local.app_secret_kms_key_arn,
     ]
   }
 }

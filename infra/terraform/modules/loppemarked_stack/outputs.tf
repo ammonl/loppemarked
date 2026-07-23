@@ -1,8 +1,8 @@
 # ---------- Networking ----------
 
 output "vpc_id" {
-  description = "ID of the VPC."
-  value       = aws_vpc.main.id
+  description = "ID of the dedicated VPC, or null once it is retired."
+  value       = one(aws_vpc.main[*].id)
 }
 
 output "public_subnet_ids" {
@@ -16,8 +16,8 @@ output "private_subnet_ids" {
 }
 
 output "api_security_group_id" {
-  description = "Security group ID for the dedicated-VPC API Lambda (unused while in shared-tenancy mode)."
-  value       = aws_security_group.api.id
+  description = "Security group ID for the dedicated-VPC API Lambda (unused while in shared-tenancy mode), or null once the dedicated VPC is retired."
+  value       = one(aws_security_group.api[*].id)
 }
 
 output "lambda_shared_security_group_id" {
@@ -27,12 +27,12 @@ output "lambda_shared_security_group_id" {
 
 output "api_lambda_security_group_id" {
   description = "Security group ID the API Lambda is actually attached to (shared-VPC group in shared-tenancy mode, dedicated group otherwise)."
-  value       = local.shared_tenancy ? one(aws_security_group.lambda_shared[*].id) : aws_security_group.api.id
+  value       = local.shared_tenancy ? one(aws_security_group.lambda_shared[*].id) : one(aws_security_group.api[*].id)
 }
 
 output "db_security_group_id" {
-  description = "Security group ID for the RDS database."
-  value       = aws_security_group.db.id
+  description = "Security group ID for the dedicated RDS database, or null once it is retired."
+  value       = one(aws_security_group.db[*].id)
 }
 
 # ---------- IAM ----------
@@ -55,18 +55,18 @@ output "ci_terraform_role_arn" {
 # ---------- Database ----------
 
 output "db_endpoint" {
-  description = "RDS instance endpoint address."
-  value       = aws_db_instance.main.address
+  description = "Dedicated RDS instance endpoint address, or null once it is retired (the runtime uses shared-db)."
+  value       = one(aws_db_instance.main[*].address)
 }
 
 output "db_port" {
-  description = "RDS instance port."
-  value       = aws_db_instance.main.port
+  description = "Dedicated RDS instance port, or null once it is retired."
+  value       = one(aws_db_instance.main[*].port)
 }
 
 output "db_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing DB credentials."
-  value       = aws_secretsmanager_secret.db_credentials.arn
+  description = "ARN of the Secrets Manager secret containing dedicated DB credentials, or null once the dedicated DB is retired."
+  value       = one(aws_secretsmanager_secret.db_credentials[*].arn)
 }
 
 output "app_secret_arn" {

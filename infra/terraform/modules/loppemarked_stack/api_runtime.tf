@@ -15,19 +15,24 @@ resource "aws_lambda_function" "api" {
   # this stack's dedicated private subnets and API security group.
   vpc_config {
     subnet_ids         = local.shared_tenancy ? var.shared_private_subnet_ids : aws_subnet.private[*].id
-    security_group_ids = local.shared_tenancy ? aws_security_group.lambda_shared[*].id : [aws_security_group.api.id]
+    security_group_ids = local.shared_tenancy ? aws_security_group.lambda_shared[*].id : aws_security_group.api[*].id
   }
 
   environment {
-    # DB_SECRET_ID is injected only when an environment opts into the shared-db
-    # secret. While absent, the runtime uses the dedicated DB env vars below.
+    # The dedicated DB env vars exist only while the dedicated RDS instance does;
+    # once retired the runtime is entirely on the shared-db secret. DB_SECRET_ID
+    # is injected whenever an environment opts into the shared-db secret and, when
+    # present, is the only DB source the runtime reads. DB_SSL applies to both
+    # paths, so it stays set regardless.
     variables = merge(
+      local.dedicated_active ? {
+        DB_HOST       = aws_db_instance.main[0].address
+        DB_PORT       = tostring(aws_db_instance.main[0].port)
+        DB_NAME       = var.db_name
+        DB_USER       = var.db_master_username
+        DB_SECRET_ARN = aws_secretsmanager_secret.db_credentials[0].arn
+      } : {},
       {
-        DB_HOST        = aws_db_instance.main.address
-        DB_PORT        = tostring(aws_db_instance.main.port)
-        DB_NAME        = var.db_name
-        DB_USER        = var.db_master_username
-        DB_SECRET_ARN  = aws_secretsmanager_secret.db_credentials.arn
         DB_SSL         = "true"
         ENVIRONMENT    = var.environment
         EMAIL_FROM     = coalesce(var.ses_sender_email, "loppemarked@${var.ses_sender_domain}")
@@ -49,15 +54,21 @@ resource "aws_lambda_function" "api" {
     ignore_changes = [filename, source_code_hash]
     # A dedicated-VPC re-IP replaces the private subnets this function attaches
     # to. Its hyperplane ENIs must leave the old subnets before they can be
-    # deleted, so recreate the function on a VPC id change rather than
-    # deadlocking the subnet delete on still-attached Lambda ENIs. In
-    # shared-tenancy mode the function attaches to the shared VPC instead, whose
-    # id is stable, so this never fires.
-    replace_triggered_by = [aws_vpc.main.id]
+    # deleted, so recreate the function on a VPC change rather than deadlocking
+    # the subnet delete on still-attached Lambda ENIs. Referencing the whole
+    # (count-gated) VPC resource keeps this valid once the dedicated VPC is
+    # retired: in shared-tenancy mode the function attaches to the shared VPC,
+    # whose id is stable, and with no dedicated VPC the trigger set is empty.
+    replace_triggered_by = [aws_vpc.main]
 
     precondition {
       condition     = !local.shared_tenancy || length(var.shared_private_subnet_ids) > 0
       error_message = "shared_private_subnet_ids must be non-empty when shared_vpc_id is set (shared-tenancy mode)."
+    }
+
+    precondition {
+      condition     = !var.retire_dedicated_db_and_vpc || (local.shared_tenancy && var.db_secret_id != null)
+      error_message = "retire_dedicated_db_and_vpc requires shared_vpc_id (Lambda in the shared VPC) and db_secret_id (runtime on shared-db) to be set first."
     }
   }
 

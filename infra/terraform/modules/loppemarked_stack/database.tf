@@ -1,6 +1,13 @@
 # ---------- KMS Key for data encryption (RDS + Secrets Manager) ----------
+#
+# Part of the dedicated stack: it encrypts the dedicated RDS instance and the
+# dedicated DB credentials secret (and, while the dedicated stack exists, the
+# app-secrets secret). Retired together with the dedicated DB — destroying the
+# key schedules it for deletion via KMS's pending-window.
 
 resource "aws_kms_key" "data" {
+  count = local.dedicated_count
+
   description         = "Encryption key for ${local.naming_prefix} data (RDS, Secrets Manager)"
   enable_key_rotation = true
 
@@ -10,13 +17,17 @@ resource "aws_kms_key" "data" {
 }
 
 resource "aws_kms_alias" "data" {
+  count = local.dedicated_count
+
   name          = "alias/${local.naming_prefix}-data"
-  target_key_id = aws_kms_key.data.key_id
+  target_key_id = aws_kms_key.data[0].key_id
 }
 
 # ---------- DB Subnet Group ----------
 
 resource "aws_db_subnet_group" "main" {
+  count = local.dedicated_count
+
   name       = "${local.naming_prefix}-db"
   subnet_ids = aws_subnet.private[*].id
 
@@ -30,13 +41,15 @@ resource "aws_db_subnet_group" "main" {
   # recreated in the new VPC instead. The RDS instance (which also replaces on
   # the VPC id) is torn down first, so the old group is free to be destroyed.
   lifecycle {
-    replace_triggered_by = [aws_vpc.main.id]
+    replace_triggered_by = [aws_vpc.main]
   }
 }
 
 # ---------- RDS Parameter Group ----------
 
 resource "aws_db_parameter_group" "postgres" {
+  count = local.dedicated_count
+
   name   = "${local.naming_prefix}-postgres"
   family = "postgres16"
 
@@ -62,14 +75,18 @@ resource "aws_db_parameter_group" "postgres" {
 # ---------- DB Credentials Secret ----------
 
 resource "random_password" "db_master" {
+  count = local.dedicated_count
+
   length  = 32
   special = false
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
+  count = local.dedicated_count
+
   name        = "${local.naming_prefix}-db-credentials"
   description = "RDS PostgreSQL master credentials for ${local.naming_prefix}"
-  kms_key_id  = aws_kms_key.data.arn
+  kms_key_id  = aws_kms_key.data[0].arn
 
   tags = {
     Name = "${local.naming_prefix}-db-credentials"
@@ -77,24 +94,30 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {
-  secret_id = aws_secretsmanager_secret.db_credentials.id
+  count = local.dedicated_count
+
+  secret_id = aws_secretsmanager_secret.db_credentials[0].id
 
   secret_string = jsonencode({
     username = var.db_master_username
-    password = random_password.db_master.result
+    password = random_password.db_master[0].result
     engine   = "postgres"
-    host     = aws_db_instance.main.address
-    port     = aws_db_instance.main.port
+    host     = aws_db_instance.main[0].address
+    port     = aws_db_instance.main[0].port
     dbname   = var.db_name
   })
 }
 
 # ---------- Application Secrets ----------
+#
+# Application-scoped (not DB-scoped), so it outlives the dedicated DB. Its
+# encryption key follows local.app_secret_kms_key_arn: the data KMS key while the
+# dedicated stack exists, the logs KMS key once the data key is retired.
 
 resource "aws_secretsmanager_secret" "app" {
   name        = "${local.naming_prefix}-app-secrets"
   description = "Application secrets for ${local.naming_prefix}"
-  kms_key_id  = aws_kms_key.data.arn
+  kms_key_id  = local.app_secret_kms_key_arn
 
   tags = {
     Name = "${local.naming_prefix}-app-secrets"
@@ -116,6 +139,8 @@ resource "aws_secretsmanager_secret_version" "app" {
 # ---------- RDS PostgreSQL Instance ----------
 
 resource "aws_db_instance" "main" {
+  count = local.dedicated_count
+
   identifier = "${local.naming_prefix}-postgres"
 
   engine         = "postgres"
@@ -125,16 +150,16 @@ resource "aws_db_instance" "main" {
   allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_max_allocated_storage
   storage_encrypted     = true
-  kms_key_id            = aws_kms_key.data.arn
+  kms_key_id            = aws_kms_key.data[0].arn
 
   db_name  = var.db_name
   username = var.db_master_username
-  password = random_password.db_master.result
+  password = random_password.db_master[0].result
 
   multi_az               = var.db_multi_az
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.db.id]
-  parameter_group_name   = aws_db_parameter_group.postgres.name
+  db_subnet_group_name   = aws_db_subnet_group.main[0].name
+  vpc_security_group_ids = [aws_security_group.db[0].id]
+  parameter_group_name   = aws_db_parameter_group.postgres[0].name
 
   backup_retention_period   = var.db_backup_retention_days
   backup_window             = "03:00-04:00"
@@ -146,9 +171,9 @@ resource "aws_db_instance" "main" {
   final_snapshot_identifier = var.environment == "prod" ? "${local.naming_prefix}-final" : null
 
   performance_insights_enabled    = true
-  performance_insights_kms_key_id = aws_kms_key.data.arn
+  performance_insights_kms_key_id = aws_kms_key.data[0].arn
   monitoring_interval             = 60
-  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
+  monitoring_role_arn             = aws_iam_role.rds_monitoring[0].arn
 
   apply_immediately = var.environment != "prod"
 
@@ -164,7 +189,7 @@ resource "aws_db_instance" "main" {
   # automatic final snapshot, so take a manual snapshot before a re-IP apply
   # (the static identifier path would otherwise collide on a re-run).
   lifecycle {
-    replace_triggered_by = [aws_vpc.main.id]
+    replace_triggered_by = [aws_vpc.main]
   }
 }
 
@@ -183,6 +208,8 @@ data "aws_iam_policy_document" "rds_monitoring_assume" {
 }
 
 resource "aws_iam_role" "rds_monitoring" {
+  count = local.dedicated_count
+
   name               = "${local.naming_prefix}-rds-monitoring"
   assume_role_policy = data.aws_iam_policy_document.rds_monitoring_assume.json
 
@@ -192,6 +219,8 @@ resource "aws_iam_role" "rds_monitoring" {
 }
 
 resource "aws_iam_role_policy_attachment" "rds_monitoring" {
-  role       = aws_iam_role.rds_monitoring.name
+  count = local.dedicated_count
+
+  role       = aws_iam_role.rds_monitoring[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }

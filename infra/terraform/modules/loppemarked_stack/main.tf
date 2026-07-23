@@ -29,7 +29,26 @@ locals {
 
   # Dedicated VPC interface endpoints (SES, Secrets Manager) exist only for the
   # dedicated-VPC Lambda; in shared-tenancy egress rides the shared NAT gateway.
-  create_vpc_endpoints = !local.shared_tenancy
+  create_vpc_endpoints = !local.shared_tenancy && local.dedicated_active
+
+  # Dedicated-infrastructure retirement. When true, this environment's dedicated
+  # VPC (subnets, gateways, interface endpoints, flow logs), dedicated RDS
+  # instance, dedicated DB credentials secret, and the data KMS key are no longer
+  # created — the environment relies entirely on the shared VPC and shared-db.
+  # Retirement is only valid once the Lambda is in the shared VPC and the runtime
+  # is on shared-db (enforced by a precondition on the API Lambda).
+  dedicated_active = !var.retire_dedicated_db_and_vpc
+  dedicated_count  = var.retire_dedicated_db_and_vpc ? 0 : 1
+
+  # The app-secrets secret is application-scoped, not DB-scoped, so it outlives the
+  # dedicated DB. While the dedicated stack exists it shares the data KMS key (with
+  # RDS and the DB credentials); once that key is retired the app secret rides the
+  # logs KMS key, which is not part of the dedicated stack.
+  app_secret_kms_key_arn = local.dedicated_active ? one(aws_kms_key.data[*].arn) : aws_kms_key.logs.arn
+
+  # Identifier of the dedicated RDS instance, or null once retired. Used by the
+  # RDS alarms (which are also gated on dedicated_active) and the dashboard.
+  db_instance_identifier = one(aws_db_instance.main[*].identifier)
 }
 
 output "naming_prefix" {

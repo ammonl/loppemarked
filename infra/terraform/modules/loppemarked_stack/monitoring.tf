@@ -71,8 +71,12 @@ resource "aws_cloudwatch_log_group" "api" {
 }
 
 # ---------- VPC Flow Logs ----------
+#
+# Flow logs exist only for the dedicated VPC; they are retired with it.
 
 resource "aws_cloudwatch_log_group" "vpc_flow" {
+  count = local.dedicated_count
+
   name              = "/${local.naming_prefix}/vpc-flow"
   retention_in_days = var.log_retention_days
   kms_key_id        = aws_kms_key.logs.arn
@@ -97,6 +101,8 @@ data "aws_iam_policy_document" "vpc_flow_assume" {
 }
 
 resource "aws_iam_role" "vpc_flow" {
+  count = local.dedicated_count
+
   name               = "${local.naming_prefix}-vpc-flow-logs"
   assume_role_policy = data.aws_iam_policy_document.vpc_flow_assume.json
 
@@ -106,6 +112,8 @@ resource "aws_iam_role" "vpc_flow" {
 }
 
 data "aws_iam_policy_document" "vpc_flow_permissions" {
+  count = local.dedicated_count
+
   statement {
     effect = "Allow"
     actions = [
@@ -114,21 +122,25 @@ data "aws_iam_policy_document" "vpc_flow_permissions" {
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
     ]
-    resources = ["${aws_cloudwatch_log_group.vpc_flow.arn}:*"]
+    resources = ["${aws_cloudwatch_log_group.vpc_flow[0].arn}:*"]
   }
 }
 
 resource "aws_iam_role_policy" "vpc_flow" {
+  count = local.dedicated_count
+
   name   = "flow-log-write"
-  role   = aws_iam_role.vpc_flow.id
-  policy = data.aws_iam_policy_document.vpc_flow_permissions.json
+  role   = aws_iam_role.vpc_flow[0].id
+  policy = data.aws_iam_policy_document.vpc_flow_permissions[0].json
 }
 
 resource "aws_flow_log" "vpc" {
-  vpc_id          = aws_vpc.main.id
+  count = local.dedicated_count
+
+  vpc_id          = aws_vpc.main[0].id
   traffic_type    = "ALL"
-  log_destination = aws_cloudwatch_log_group.vpc_flow.arn
-  iam_role_arn    = aws_iam_role.vpc_flow.arn
+  log_destination = aws_cloudwatch_log_group.vpc_flow[0].arn
+  iam_role_arn    = aws_iam_role.vpc_flow[0].arn
 
   tags = {
     Name = "${local.naming_prefix}-vpc-flow"
@@ -209,7 +221,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
 # ---------- CloudWatch Alarms: RDS ----------
 
 resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
-  count               = var.enable_observability_alerts ? 1 : 0
+  count               = var.enable_observability_alerts && local.dedicated_active ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-cpu"
   alarm_description   = "RDS CPU utilization above 80%"
   namespace           = "AWS/RDS"
@@ -222,7 +234,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
   treat_missing_data  = "missing"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.identifier
+    DBInstanceIdentifier = local.db_instance_identifier
   }
 
   alarm_actions = [aws_sns_topic.alarms[0].arn]
@@ -234,7 +246,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
-  count               = var.enable_observability_alerts ? 1 : 0
+  count               = var.enable_observability_alerts && local.dedicated_active ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-freeable-memory"
   alarm_description   = "RDS freeable memory below 128 MB"
   namespace           = "AWS/RDS"
@@ -247,7 +259,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
   treat_missing_data  = "missing"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.identifier
+    DBInstanceIdentifier = local.db_instance_identifier
   }
 
   alarm_actions = [aws_sns_topic.alarms[0].arn]
@@ -259,7 +271,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_connections" {
-  count               = var.enable_observability_alerts ? 1 : 0
+  count               = var.enable_observability_alerts && local.dedicated_active ? 1 : 0
   alarm_name          = "${local.naming_prefix}-rds-connections"
   alarm_description   = "RDS database connections above threshold"
   namespace           = "AWS/RDS"
@@ -272,7 +284,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.identifier
+    DBInstanceIdentifier = local.db_instance_identifier
   }
 
   alarm_actions = [aws_sns_topic.alarms[0].arn]
@@ -406,7 +418,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "RDS CPU Utilization"
           region = data.aws_region.current.id
           metrics = [
-            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average", label = "CPU %" }],
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", local.db_instance_identifier, { stat = "Average", label = "CPU %" }],
           ]
           period = 300
           view   = "timeSeries"
@@ -425,8 +437,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "RDS Freeable Memory & Connections"
           region = data.aws_region.current.id
           metrics = [
-            ["AWS/RDS", "FreeableMemory", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average", label = "Freeable Memory (bytes)" }],
-            ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average", label = "Connections", yAxis = "right" }],
+            ["AWS/RDS", "FreeableMemory", "DBInstanceIdentifier", local.db_instance_identifier, { stat = "Average", label = "Freeable Memory (bytes)" }],
+            ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", local.db_instance_identifier, { stat = "Average", label = "Connections", yAxis = "right" }],
           ]
           period = 300
           view   = "timeSeries"
@@ -442,8 +454,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "RDS Read/Write IOPS"
           region = data.aws_region.current.id
           metrics = [
-            ["AWS/RDS", "ReadIOPS", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average", label = "Read IOPS" }],
-            ["AWS/RDS", "WriteIOPS", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average", label = "Write IOPS" }],
+            ["AWS/RDS", "ReadIOPS", "DBInstanceIdentifier", local.db_instance_identifier, { stat = "Average", label = "Read IOPS" }],
+            ["AWS/RDS", "WriteIOPS", "DBInstanceIdentifier", local.db_instance_identifier, { stat = "Average", label = "Write IOPS" }],
           ]
           period = 300
           view   = "timeSeries"
