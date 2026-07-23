@@ -35,3 +35,20 @@
 - IAM policies validated by `modules/loppemarked_stack/iam.tftest.hcl`
   (`terraform test`) — asserts no wildcard resources. New provider aliases must
   be declared in the test file too (`aws.us_east_1`).
+
+## Shared-DB migration (#221 cutover, #223 umbrella, #267 VPC centralization)
+
+- `scripts/db-migrate-parity.sh` gates the prod cutover: compares SOURCE vs TARGET
+  conninfo on (1) public table-name set, (2) per-table row counts via a UNION ALL
+  count query, (3) `kysely_migration` rows, (4) sample reads
+  (`system_settings.opening_datetime`, `admins.email`). Exits 1 on mismatch, 2 on
+  usage. Runbook: `docs/runbooks/shared-db-migration.md`.
+- App auto-migrates on first boot (`migrateToLatestInline`,
+  `apps/api/src/db/migration-registry.ts`); `kysely_migration` +
+  `kysely_migration_lock` are carried by `pg_dump -Fc`, so the check exists to
+  prove first-boot migration is a no-op. `kysely_migration_lock` is a single fixed
+  row — safe to count, never diffs.
+- Reviewer gotcha for this script family: source (dedicated prod RDS) and target
+  (shared-db RDS) are different instances with **different passwords** — a single
+  `PGPASSWORD` cannot auth both from one process; `~/.pgpass` (two entries by port)
+  is the only viable path. Watch runbook examples that imply a single PGPASSWORD.
