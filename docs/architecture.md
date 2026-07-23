@@ -328,10 +328,11 @@ All AWS infrastructure is managed via Terraform with isolated staging and produc
 > dedicated VPC interface endpoints and the shared-db peering are no longer
 > created. **Staging** runs in shared-tenancy mode and its dedicated
 > infrastructure has been **retired** (`retire_dedicated_db_and_vpc = true`): no
-> dedicated VPC, RDS instance, DB credentials secret, or data KMS key. **Prod**
-> still runs its dedicated VPC and RDS and flips in its scheduled cutover window;
-> its dedicated stack stays in place until retired separately, keeping the
-> cutover reversible.
+> dedicated VPC, RDS instance, or DB credentials secret. Its data KMS key is
+> retained for now (it still encrypts the app-secrets secret); per-stack KMS-key
+> deletion is the deferred cross-environment cleanup. **Prod** still runs its
+> dedicated VPC and RDS and flips in its scheduled cutover window; its dedicated
+> stack stays in place until retired separately, keeping the cutover reversible.
 
 ```mermaid
 graph TB

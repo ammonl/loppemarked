@@ -55,11 +55,13 @@ resource "aws_lambda_function" "api" {
     # A dedicated-VPC re-IP replaces the private subnets this function attaches
     # to. Its hyperplane ENIs must leave the old subnets before they can be
     # deleted, so recreate the function on a VPC change rather than deadlocking
-    # the subnet delete on still-attached Lambda ENIs. Referencing the whole
-    # (count-gated) VPC resource keeps this valid once the dedicated VPC is
-    # retired: in shared-tenancy mode the function attaches to the shared VPC,
-    # whose id is stable, and with no dedicated VPC the trigger set is empty.
-    replace_triggered_by = [aws_vpc.main]
+    # the subnet delete on still-attached Lambda ENIs. This function is always
+    # created, so it cannot reference the count-gated aws_vpc.main directly (once
+    # the VPC is retired every later plan would error "no change found for
+    # aws_vpc.main"). terraform_data.vpc_identity is the always-present indirection:
+    # it carries the VPC id (null when retired), so this still fires on a re-IP and
+    # resolves cleanly with no dedicated VPC.
+    replace_triggered_by = [terraform_data.vpc_identity]
 
     precondition {
       condition     = !local.shared_tenancy || length(var.shared_private_subnet_ids) > 0

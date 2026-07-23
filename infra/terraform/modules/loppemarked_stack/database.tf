@@ -1,13 +1,12 @@
 # ---------- KMS Key for data encryption (RDS + Secrets Manager) ----------
 #
-# Part of the dedicated stack: it encrypts the dedicated RDS instance and the
-# dedicated DB credentials secret (and, while the dedicated stack exists, the
-# app-secrets secret). Retired together with the dedicated DB — destroying the
-# key schedules it for deletion via KMS's pending-window.
+# Encrypts the dedicated RDS instance and the dedicated DB credentials secret,
+# and the app-secrets secret. It is intentionally NOT retired with the dedicated
+# DB: the app-secrets secret outlives the DB and stays on this key. Retiring the
+# per-stack KMS keys is the deferred cross-environment cleanup, done once both
+# environments are off their dedicated DBs.
 
 resource "aws_kms_key" "data" {
-  count = local.dedicated_count
-
   description         = "Encryption key for ${local.naming_prefix} data (RDS, Secrets Manager)"
   enable_key_rotation = true
 
@@ -17,10 +16,8 @@ resource "aws_kms_key" "data" {
 }
 
 resource "aws_kms_alias" "data" {
-  count = local.dedicated_count
-
   name          = "alias/${local.naming_prefix}-data"
-  target_key_id = aws_kms_key.data[0].key_id
+  target_key_id = aws_kms_key.data.key_id
 }
 
 # ---------- DB Subnet Group ----------
@@ -37,11 +34,12 @@ resource "aws_db_subnet_group" "main" {
 
   # A DB subnet group's VPC is immutable: when a re-IP moves the private subnets
   # into a new VPC, AWS rejects an in-place ModifyDBSubnetGroup ("new Subnets are
-  # not in the same Vpc"). Force a replace on a VPC id change so the group is
-  # recreated in the new VPC instead. The RDS instance (which also replaces on
-  # the VPC id) is torn down first, so the old group is free to be destroyed.
+  # not in the same Vpc"). Force a replace on a VPC id change (tracked by
+  # terraform_data.vpc_identity) so the group is recreated in the new VPC instead.
+  # The RDS instance (which also replaces on the VPC id) is torn down first, so
+  # the old group is free to be destroyed.
   lifecycle {
-    replace_triggered_by = [aws_vpc.main]
+    replace_triggered_by = [terraform_data.vpc_identity]
   }
 }
 
@@ -86,7 +84,7 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 
   name        = "${local.naming_prefix}-db-credentials"
   description = "RDS PostgreSQL master credentials for ${local.naming_prefix}"
-  kms_key_id  = aws_kms_key.data[0].arn
+  kms_key_id  = aws_kms_key.data.arn
 
   tags = {
     Name = "${local.naming_prefix}-db-credentials"
@@ -110,14 +108,13 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 
 # ---------- Application Secrets ----------
 #
-# Application-scoped (not DB-scoped), so it outlives the dedicated DB. Its
-# encryption key follows local.app_secret_kms_key_arn: the data KMS key while the
-# dedicated stack exists, the logs KMS key once the data key is retired.
+# Application-scoped (not DB-scoped), so it outlives the dedicated DB and keeps
+# using the data KMS key, which is retained past DB retirement for this reason.
 
 resource "aws_secretsmanager_secret" "app" {
   name        = "${local.naming_prefix}-app-secrets"
   description = "Application secrets for ${local.naming_prefix}"
-  kms_key_id  = local.app_secret_kms_key_arn
+  kms_key_id  = aws_kms_key.data.arn
 
   tags = {
     Name = "${local.naming_prefix}-app-secrets"
@@ -150,7 +147,7 @@ resource "aws_db_instance" "main" {
   allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_max_allocated_storage
   storage_encrypted     = true
-  kms_key_id            = aws_kms_key.data[0].arn
+  kms_key_id            = aws_kms_key.data.arn
 
   db_name  = var.db_name
   username = var.db_master_username
@@ -171,7 +168,7 @@ resource "aws_db_instance" "main" {
   final_snapshot_identifier = var.environment == "prod" ? "${local.naming_prefix}-final" : null
 
   performance_insights_enabled    = true
-  performance_insights_kms_key_id = aws_kms_key.data[0].arn
+  performance_insights_kms_key_id = aws_kms_key.data.arn
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.rds_monitoring[0].arn
 
@@ -183,13 +180,14 @@ resource "aws_db_instance" "main" {
 
   # A VPC re-IP replaces the VPC and its private subnets. The instance cannot
   # stay in subnets that are being destroyed, so it is torn down and recreated
-  # (empty) in the new subnets. Tying replacement to the VPC id makes Terraform
-  # destroy the instance before the old subnets, instead of deadlocking on the
-  # subnet delete while the RDS ENI is still attached. staging skips the
-  # automatic final snapshot, so take a manual snapshot before a re-IP apply
-  # (the static identifier path would otherwise collide on a re-run).
+  # (empty) in the new subnets. Tying replacement to the VPC id (tracked by
+  # terraform_data.vpc_identity) makes Terraform destroy the instance before the
+  # old subnets, instead of deadlocking on the subnet delete while the RDS ENI is
+  # still attached. staging skips the automatic final snapshot, so take a manual
+  # snapshot before a re-IP apply (the static identifier path would otherwise
+  # collide on a re-run).
   lifecycle {
-    replace_triggered_by = [aws_vpc.main]
+    replace_triggered_by = [terraform_data.vpc_identity]
   }
 }
 

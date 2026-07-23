@@ -16,6 +16,17 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Always-present indirection for VPC-replacement triggers. `replace_triggered_by`
+# on an un-gated resource (the API Lambda) cannot point at the count-gated
+# aws_vpc.main: once the VPC is retired (count 0, gone from state) every later plan
+# errors "no change found for aws_vpc.main". This resource carries the VPC id (null
+# when retired) and is what the dedicated RDS instance, DB subnet group, and API
+# Lambda trigger their replacement on — so a dedicated-VPC re-IP still forces those
+# replacements, and retirement resolves cleanly.
+resource "terraform_data" "vpc_identity" {
+  triggers_replace = one(aws_vpc.main[*].id)
+}
+
 # ---------- Internet Gateway ----------
 
 resource "aws_internet_gateway" "main" {
