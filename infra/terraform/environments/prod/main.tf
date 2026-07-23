@@ -49,16 +49,15 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
-# Shared default-VPC network identifiers published by infra-shared-db. Enable
-# these together with the shared_vpc_id / shared_private_subnet_ids arguments in
-# the module block during the #221 prod cutover window.
-# data "aws_ssm_parameter" "shared_vpc_id" {
-#   name = "/shared/network/vpc-id"
-# }
-#
-# data "aws_ssm_parameter" "shared_private_subnet_ids" {
-#   name = "/shared/network/private-subnet-ids"
-# }
+# Shared default-VPC network identifiers published by infra-shared-db. Resolved
+# at plan time so the IDs are never hardcoded here.
+data "aws_ssm_parameter" "shared_vpc_id" {
+  name = "/shared/network/vpc-id"
+}
+
+data "aws_ssm_parameter" "shared_private_subnet_ids" {
+  name = "/shared/network/private-subnet-ids"
+}
 
 module "loppemarked_stack" {
   source             = "../../modules/loppemarked_stack"
@@ -83,20 +82,16 @@ module "loppemarked_stack" {
   private_subnet_cidrs = ["10.1.10.0/24", "10.1.11.0/24"]
   log_retention_days   = 90
 
-  # Requester-side peering into the shared-db VPC (Phase B). db_secret_id is
-  # intentionally left unset here: the dedicated DB stays active until the
-  # Phase D cutover wires DB_SECRET_ID = "rds/shared/loppemarked_prod".
-  shared_db_vpc_id   = "vpc-908203f9"
-  shared_db_vpc_cidr = "172.31.0.0/16"
-
-  # Shared-tenancy flip (prepared, not enabled). Prod moves the Lambda into the
-  # shared default VPC in the #221 cutover window, in the same apply that sets
-  # db_secret_id. To flip, uncomment the two SSM data sources at the bottom of
-  # this file and the two arguments below (the peering vars above then become
-  # inert and can be removed):
-  #   shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
-  #   shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
-  #   db_secret_id              = "rds/shared/loppemarked_prod"
+  # Shared-tenancy mode: the API Lambda runs in the shared default VPC's private
+  # egress subnets (published via SSM) and reaches shared-db, Secrets Manager,
+  # and SES over the shared NAT gateway. This retires the requester-side peering
+  # and the dedicated VPC interface endpoints for prod. db_secret_id points the
+  # runtime at the shared-db credentials secret (Phase D prod cutover, #221).
+  # The dedicated VPC/subnets/RDS remain (dormant) until retired separately (#222),
+  # so the cutover is reversible by a config revert.
+  shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
+  shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
+  db_secret_id              = "rds/shared/loppemarked_prod"
 
   db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20
