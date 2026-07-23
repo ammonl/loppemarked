@@ -14,11 +14,11 @@ Complete all checks in the staging environment before proceeding to production.
 ### 1.1 Infrastructure
 
 - [x] Terraform apply is clean (no pending changes)
-  - Verified: [Terraform run #22752467724](https://github.com/ammonlarson/loppemarked/actions/runs/22752467724) — staging detect found no changes (2026-03-06)
+  - Verified: [Terraform run #22752467724](https://github.com/ammonl/loppemarked/actions/runs/22752467724) — staging detect found no changes (2026-03-06)
 - [x] Drift detection workflow has run with no drift issues
-  - Verified: [Drift detection run #22752397791](https://github.com/ammonlarson/loppemarked/actions/runs/22752397791) — no staging drift (2026-03-06)
+  - Verified: [Drift detection run #22752397791](https://github.com/ammonl/loppemarked/actions/runs/22752397791) — no staging drift (2026-03-06)
 - [x] Lambda function is deployed and healthy (`/health` returns 200)
-  - Verified: [Deploy run #22753594618](https://github.com/ammonlarson/loppemarked/actions/runs/22753594618) — staging health check passed (2026-03-06)
+  - Verified: [Deploy run #22753594618](https://github.com/ammonl/loppemarked/actions/runs/22753594618) — staging health check passed (2026-03-06)
 - [x] RDS instance is running, migrations applied, seed data present
 - [x] VPC networking: Lambda can reach RDS via private subnet
   - Verified: Lambda successfully queries RDS (confirmed by successful `/health` and `/public/status` responses)
@@ -109,7 +109,7 @@ FROM system_settings;
 - [x] No open P1/P2 issues in the repository
 - [x] All CI checks pass on `main` branch
 - [x] Terraform plan for production shows no unexpected changes
-  - [Terraform run #22752467724](https://github.com/ammonlarson/loppemarked/actions/runs/22752467724) — prod plan clean (2026-03-06). This is the same multi-environment workflow run that also verified staging (section 1.1).
+  - [Terraform run #22752467724](https://github.com/ammonl/loppemarked/actions/runs/22752467724) — prod plan clean (2026-03-06). This is the same multi-environment workflow run that also verified staging (section 1.1).
 
 ### 2.2 Infrastructure Deploy
 
@@ -120,7 +120,7 @@ Production infrastructure is deployed via the Terraform workflow on merge to `ma
 3. Approve the production Terraform apply
 4. Wait for apply to complete successfully
 
-**Completed:** [Terraform run #22752401895](https://github.com/ammonlarson/loppemarked/actions/runs/22752401895) — all resources applied to prod including EventBridge session cleanup (2026-03-06)
+**Completed:** [Terraform run #22752401895](https://github.com/ammonl/loppemarked/actions/runs/22752401895) — all resources applied to prod including EventBridge session cleanup (2026-03-06)
 
 **Post-infra verification:**
 
@@ -146,7 +146,7 @@ Application code is deployed via the Deploy API workflow on merge to `main`.
 3. Approve the `Deploy (prod)` job when staging is green
 4. Monitor the production health check
 
-**Completed:** [Deploy run #22753594618](https://github.com/ammonlarson/loppemarked/actions/runs/22753594618) — staging deployed (health check passed), prod deployed (health check passed) (2026-03-06)
+**Completed:** [Deploy run #22753594618](https://github.com/ammonl/loppemarked/actions/runs/22753594618) — staging deployed (health check passed), prod deployed (health check passed) (2026-03-06)
 
 ### 2.4 Database Setup
 
