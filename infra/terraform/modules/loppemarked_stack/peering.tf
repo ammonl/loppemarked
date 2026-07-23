@@ -5,8 +5,11 @@
 # peering connection per environment so staging and prod fail independently and
 # each carries a distinct Name tag.
 #
-# Gated on `var.shared_db_vpc_id`: when null (the default) no peering resources
-# are created. The accepter-side route, RDS SG ingress, and
+# Gated on `local.create_peering` (`var.shared_db_vpc_id` set AND not in
+# shared-tenancy mode): when the Lambda moves into the shared VPC, shared-db is
+# VPC-local and this requester-side peering is torn down. When `shared_db_vpc_id`
+# is null (the default) no peering resources are created. The accepter-side route,
+# RDS SG ingress, and
 # `accepter.allow_remote_vpc_dns_resolution` are owned by the shared-db repo,
 # whose `data.aws_vpc_peering_connection` lookup cannot resolve until this
 # requester apply exists. `auto_accept = true` works because both VPCs live in
@@ -14,7 +17,7 @@
 # until DB_SECRET_ID is wired in Phase D; the connection is preparatory.
 
 resource "aws_vpc_peering_connection" "shared_db" {
-  count = var.shared_db_vpc_id == null ? 0 : 1
+  count = local.create_peering ? 1 : 0
 
   vpc_id      = aws_vpc.main.id
   peer_vpc_id = var.shared_db_vpc_id
@@ -36,7 +39,7 @@ resource "aws_vpc_peering_connection" "shared_db" {
 }
 
 resource "aws_vpc_peering_connection_options" "shared_db" {
-  count = var.shared_db_vpc_id == null ? 0 : 1
+  count = local.create_peering ? 1 : 0
 
   vpc_peering_connection_id = aws_vpc_peering_connection.shared_db[0].id
 
@@ -46,7 +49,7 @@ resource "aws_vpc_peering_connection_options" "shared_db" {
 }
 
 resource "aws_route" "private_to_shared_db" {
-  count = var.shared_db_vpc_id == null ? 0 : 1
+  count = local.create_peering ? 1 : 0
 
   route_table_id            = aws_route_table.private.id
   destination_cidr_block    = var.shared_db_vpc_cidr

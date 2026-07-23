@@ -10,9 +10,12 @@ resource "aws_lambda_function" "api" {
   memory_size = var.lambda_memory_size
   timeout     = var.lambda_timeout
 
+  # In shared-tenancy mode the function attaches to the shared default VPC's
+  # published private subnets with its own egress-only group; otherwise it uses
+  # this stack's dedicated private subnets and API security group.
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
-    security_group_ids = [aws_security_group.api.id]
+    subnet_ids         = local.shared_tenancy ? var.shared_private_subnet_ids : aws_subnet.private[*].id
+    security_group_ids = local.shared_tenancy ? aws_security_group.lambda_shared[*].id : [aws_security_group.api.id]
   }
 
   environment {
@@ -44,11 +47,18 @@ resource "aws_lambda_function" "api" {
 
   lifecycle {
     ignore_changes = [filename, source_code_hash]
-    # A VPC re-IP replaces the private subnets this function attaches to. Its
-    # hyperplane ENIs must leave the old subnets before they can be deleted, so
-    # recreate the function on a VPC id change rather than deadlocking the
-    # subnet delete on still-attached Lambda ENIs.
+    # A dedicated-VPC re-IP replaces the private subnets this function attaches
+    # to. Its hyperplane ENIs must leave the old subnets before they can be
+    # deleted, so recreate the function on a VPC id change rather than
+    # deadlocking the subnet delete on still-attached Lambda ENIs. In
+    # shared-tenancy mode the function attaches to the shared VPC instead, whose
+    # id is stable, so this never fires.
     replace_triggered_by = [aws_vpc.main.id]
+
+    precondition {
+      condition     = !local.shared_tenancy || length(var.shared_private_subnet_ids) > 0
+      error_message = "shared_private_subnet_ids must be non-empty when shared_vpc_id is set (shared-tenancy mode)."
+    }
   }
 
   depends_on = [

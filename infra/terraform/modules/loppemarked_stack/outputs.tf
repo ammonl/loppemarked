@@ -16,8 +16,18 @@ output "private_subnet_ids" {
 }
 
 output "api_security_group_id" {
-  description = "Security group ID for API Lambda functions."
+  description = "Security group ID for the dedicated-VPC API Lambda (unused while in shared-tenancy mode)."
   value       = aws_security_group.api.id
+}
+
+output "lambda_shared_security_group_id" {
+  description = "Security group ID for the API Lambda in the shared VPC, or null when not in shared-tenancy mode."
+  value       = one(aws_security_group.lambda_shared[*].id)
+}
+
+output "api_lambda_security_group_id" {
+  description = "Security group ID the API Lambda is actually attached to (shared-VPC group in shared-tenancy mode, dedicated group otherwise)."
+  value       = local.shared_tenancy ? one(aws_security_group.lambda_shared[*].id) : aws_security_group.api.id
 }
 
 output "db_security_group_id" {

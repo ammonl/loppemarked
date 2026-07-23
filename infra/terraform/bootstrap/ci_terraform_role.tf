@@ -616,6 +616,22 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    # The environment stacks read the shared default-VPC network identifiers
+    # (/shared/network/vpc-id, /shared/network/private-subnet-ids) published by
+    # infra-shared-db to attach the API Lambda to the shared subnets. Read-only,
+    # scoped to the shared-network parameter prefix.
+    sid    = "SharedNetworkParameters"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+    ]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter/shared/network/*",
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "ci_terraform_resources" {

@@ -47,12 +47,49 @@ variable "private_subnet_cidrs" {
   type        = list(string)
 }
 
+# ---------- Shared-VPC tenancy ----------
+#
+# When set, the API Lambda runs inside the shared default VPC (owned by
+# infra-shared-db) instead of this stack's dedicated VPC. It attaches to the
+# published private egress subnets and reaches shared-db, Secrets Manager, and
+# SES over the shared NAT gateway — so the dedicated VPC interface endpoints and
+# the shared-db peering are no longer created. Setting shared_vpc_id (non-null)
+# turns the mode on for an environment. The dedicated VPC, subnets, and RDS
+# remain until they are retired separately; leaving them in place keeps the
+# cutover reversible by a config revert.
+
+variable "shared_vpc_id" {
+  description = "VPC id of the shared default VPC to run the API Lambda in (published as /shared/network/vpc-id). Null (the default) keeps the Lambda in this stack's dedicated VPC."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.shared_vpc_id == null || can(regex("^vpc-[0-9a-f]+$", var.shared_vpc_id))
+    error_message = "shared_vpc_id must be a valid VPC id (vpc-...) or null."
+  }
+}
+
+variable "shared_private_subnet_ids" {
+  description = "Private egress subnet ids in the shared VPC for the API Lambda (published as /shared/network/private-subnet-ids). Required when shared_vpc_id is set."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.shared_private_subnet_ids : can(regex("^subnet-[0-9a-f]+$", id))])
+    error_message = "shared_private_subnet_ids must all be valid subnet ids (subnet-...)."
+  }
+}
+
 # ---------- Shared DB (cross-VPC) ----------
 #
 # Phase B of the shared-db migration. The shared-db VPC and per-environment
 # credential secrets are owned by infra-shared-db (Phase A). These inputs wire
 # requester-side peering and the runtime secret switch. They default to null so
 # the module stays self-contained until an environment opts in.
+#
+# Peering only exists while the Lambda is in the dedicated VPC: once
+# shared_vpc_id moves it into the shared VPC, shared-db is VPC-local and the
+# peering is dropped.
 
 variable "shared_db_vpc_id" {
   description = "VPC id of the shared-db VPC to peer with (Phase A output from infra-shared-db). Null disables requester-side peering."
