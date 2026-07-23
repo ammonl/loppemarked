@@ -4,6 +4,17 @@ resource "aws_amplify_app" "web" {
   name     = "${local.naming_prefix}-web"
   platform = "WEB_COMPUTE"
 
+  # Managed here so prod and staging cannot silently drift onto different repos
+  # (both previously sat in ignore_changes, and prod diverged to a stale repo
+  # owner). The GitHub connection token stays out of Terraform (see
+  # access_token/oauth_token in ignore_changes below); this only asserts the URL.
+  #
+  # iam_service_role_arn is intentionally left in ignore_changes: the pinned AWS
+  # provider (6.34.0) treats a change to it as force-new, so managing it here
+  # would destroy and recreate the whole app (new app id + domain association).
+  # The build role is kept consistent out-of-band instead.
+  repository = var.amplify_repository
+
   build_spec = <<-YAML
 version: 1
 applications:
@@ -57,10 +68,12 @@ applications:
   }
 
   lifecycle {
+    # access_token / oauth_token are write-only (never returned), so the GitHub
+    # connection stays established out-of-band. iam_service_role_arn is a
+    # force-new change under the pinned provider, so it stays unmanaged too.
     ignore_changes = [
       access_token,
       oauth_token,
-      repository,
       iam_service_role_arn,
     ]
   }

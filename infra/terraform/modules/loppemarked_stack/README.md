@@ -16,7 +16,7 @@ the staging and production environment stacks.
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
 | `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route |
-| `amplify.tf`     | Amplify app, branch, and custom domain association         |
+| `amplify.tf`     | Amplify app (managed repository URL), branch, and custom domain association |
 
 ## Provider configuration
 
@@ -70,6 +70,20 @@ validation record in un17hub from the `api_acm_validation` output, then re-apply
 The Amplify custom-domain records are the one exception: the
 `aws_amplify_domain_association` (`amplify.tf`) is a managed Amplify mechanism
 that provisions its own ACM certificate and Route 53 records automatically.
+
+## Amplify app configuration
+
+The Amplify app's `repository` (`amplify_repository`, default the
+`ammonl/loppemarked` GitHub URL) is managed by Terraform, so prod and staging
+can't silently drift onto different repos. The GitHub connection token stays
+out of Terraform — `access_token`/`oauth_token` are write-only (never returned
+by the API), so they remain in `ignore_changes` and the repo connection is
+authorized once out-of-band.
+
+`iam_service_role_arn` also stays in `ignore_changes`: the pinned AWS provider
+(6.34.0) treats a change to it as force-new, so managing it in Terraform would
+destroy and recreate the entire app (new app id + domain association). The
+build service role is kept consistent out-of-band instead.
 
 ## API Lambda runtime configuration
 
