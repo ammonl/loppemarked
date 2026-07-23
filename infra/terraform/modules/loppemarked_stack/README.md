@@ -7,7 +7,7 @@ the staging and production environment stacks.
 
 | File             | Resources                                                  |
 |------------------|------------------------------------------------------------|
-| `networking.tf`  | VPC, public/private subnets, internet gateway, SES + Secrets Manager VPC interface endpoints |
+| `networking.tf`  | VPC, public/private subnets, internet gateway, SES + Secrets Manager VPC interface endpoints (dedicated mode), shared-VPC Lambda security group (shared-tenancy mode) |
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
 | `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
@@ -15,7 +15,7 @@ the staging and production environment stacks.
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
-| `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route |
+| `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route (dedicated mode only) |
 | `amplify.tf`     | Amplify app (managed repository URL), branch, and custom domain association |
 
 ## Provider configuration
@@ -111,6 +111,44 @@ self-cancellation magic link. With the current variable defaults this resolves
 to `https://loppemarked.staging.un17hub.com` for staging and
 `https://loppemarked.un17hub.com` for production.
 
+## Shared-VPC tenancy
+
+The API Lambda runs in one of two network modes:
+
+- **Dedicated (default):** the Lambda attaches to this stack's own VPC private
+  subnets with the `api` security group. Its only egress dependencies (SES,
+  Secrets Manager) are served by VPC interface endpoints, and a requester-side
+  peering (`peering.tf`) provides the path to the shared-db VPC.
+- **Shared-tenancy:** set `shared_vpc_id` (and `shared_private_subnet_ids`) to
+  move the Lambda into the shared default VPC owned by infra-shared-db. It
+  attaches to the published private egress subnets with its own egress-only
+  `lambda_shared` security group and reaches shared-db (now VPC-local),
+  Secrets Manager, and SES over the shared NAT gateway. In this mode the module
+  stops creating the VPC interface endpoints and the shared-db peering.
+
+Consume the shared network identifiers from SSM at plan time rather than
+hardcoding them (`/shared/network/vpc-id`, `/shared/network/private-subnet-ids`):
+
+```hcl
+data "aws_ssm_parameter" "shared_vpc_id" {
+  name = "/shared/network/vpc-id"
+}
+
+data "aws_ssm_parameter" "shared_private_subnet_ids" {
+  name = "/shared/network/private-subnet-ids"
+}
+
+module "loppemarked_stack" {
+  # ...
+  shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
+  shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
+}
+```
+
+The dedicated VPC, subnets, and RDS instance are **not** destroyed by enabling
+shared-tenancy — they remain (dormant) so the cutover is reversible by reverting
+the config, and are retired in a separate step.
+
 ## Stable API domain
 
 The web frontend reaches the API through Next.js `rewrites()`, whose
@@ -162,7 +200,9 @@ Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |
 | `enable_api_custom_domain`    | Front the Function URL with a stable CloudFront domain and point `API_URL` at it. Defaults to `true`. |
 | `api_domain_prefix`           | Subdomain label for the stable API domain (`loppemarked-api` → `loppemarked-api.<ses_sender_domain>`; kept distinct from un17hub's `api.<domain>`). |
-| `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering. |
+| `shared_vpc_id`               | Shared default VPC id to run the API Lambda in (from `/shared/network/vpc-id`). Non-null enables shared-tenancy mode. Null keeps the Lambda in the dedicated VPC. |
+| `shared_private_subnet_ids`   | Shared-VPC private egress subnet ids for the Lambda (from `/shared/network/private-subnet-ids`). Required when `shared_vpc_id` is set. |
+| `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering; peering is also dropped in shared-tenancy mode. |
 | `shared_db_vpc_cidr`          | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
 | `db_secret_id`                | Shared-db credentials secret id/name. When set, the runtime reads its DB connection from this secret. Null keeps the dedicated DB active. |
 

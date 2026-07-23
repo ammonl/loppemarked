@@ -49,6 +49,16 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+# Shared default-VPC network identifiers published by infra-shared-db. Resolved
+# at plan time so the IDs are never hardcoded here.
+data "aws_ssm_parameter" "shared_vpc_id" {
+  name = "/shared/network/vpc-id"
+}
+
+data "aws_ssm_parameter" "shared_private_subnet_ids" {
+  name = "/shared/network/private-subnet-ids"
+}
+
 module "loppemarked_stack" {
   source      = "../../modules/loppemarked_stack"
   environment = "staging"
@@ -66,15 +76,15 @@ module "loppemarked_stack" {
   private_subnet_cidrs = ["10.2.10.0/24", "10.2.11.0/24"]
   log_retention_days   = 14
 
-  # Requester-side peering into the shared-db VPC (Phase B), now activated for
-  # the Phase D cutover: db_secret_id points the API runtime at the shared-db
-  # credentials secret, so the Lambda builds its connection from that secret
-  # (over the peering link) instead of the dedicated DB env vars. Staging is
-  # cut over first; prod stays on its dedicated DB until staging is proven
-  # healthy end to end.
-  shared_db_vpc_id   = "vpc-908203f9"
-  shared_db_vpc_cidr = "172.31.0.0/16"
-  db_secret_id       = "rds/shared/loppemarked_staging"
+  # Shared-tenancy mode: the API Lambda runs in the shared default VPC's private
+  # egress subnets (published via SSM) and reaches shared-db, Secrets Manager,
+  # and SES over the shared NAT gateway. This retires the requester-side peering
+  # and the dedicated VPC interface endpoints for staging. db_secret_id keeps the
+  # runtime pointed at the shared-db credentials secret (cut over since Jun 2026).
+  # The dedicated VPC/subnets/RDS remain (dormant) until retired separately.
+  shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
+  shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
+  db_secret_id              = "rds/shared/loppemarked_staging"
 
   db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20
@@ -109,6 +119,10 @@ output "naming_prefix" {
 
 output "vpc_id" {
   value = module.loppemarked_stack.vpc_id
+}
+
+output "api_lambda_security_group_id" {
+  value = module.loppemarked_stack.api_lambda_security_group_id
 }
 
 output "api_runtime_role_arn" {

@@ -320,6 +320,16 @@ erDiagram
 
 All AWS infrastructure is managed via Terraform with isolated staging and production environments.
 
+> **Networking migration (in progress).** The API Lambdas are moving out of the
+> dedicated per-environment VPCs and into the **shared default VPC**
+> (`172.31.0.0/16`, owned by infra-shared-db), using its private egress subnets
+> and shared NAT gateway. In this shared-tenancy mode the Lambda reaches
+> shared-db (VPC-local), Secrets Manager, and SES over the shared NAT, so the
+> dedicated VPC interface endpoints and the shared-db peering are no longer
+> created. **Staging** runs in shared-tenancy mode; **prod** flips in its
+> scheduled cutover window. The dedicated VPC, subnets, and RDS instance remain
+> (dormant) until retired separately, keeping the cutover reversible.
+
 ```mermaid
 graph TB
     subgraph "GitHub"
@@ -329,12 +339,18 @@ graph TB
     end
 
     subgraph "AWS (eu-north-1)"
-        subgraph "Networking"
+        subgraph "Shared default VPC (infra-shared-db)"
+            SHARED_SUB[Private Egress Subnets<br/>172.31.10x.x]
+            NAT[Shared NAT Gateway]
+            SHARED_RDS[(shared-db<br/>RDS PostgreSQL)]
+        end
+
+        subgraph "Dedicated VPC (per env, being retired)"
             VPC[VPC]
             PUB_SUB[Public Subnets]
             PRIV_SUB[Private Subnets]
             IGW[Internet Gateway]
-            VPCE[VPC Interface Endpoints<br/>SES, Secrets Manager]
+            RDS[(RDS PostgreSQL<br/>dedicated, dormant)]
         end
 
         subgraph "Compute"
@@ -342,7 +358,6 @@ graph TB
             LAMBDA_URL[Function URL]
             CF[CloudFront<br/>Stable API Domain]
             EB[EventBridge<br/>Session Cleanup]
-            RDS[(RDS PostgreSQL)]
         end
 
         subgraph "Frontend Hosting"
@@ -393,23 +408,29 @@ graph TB
     R53 -->|loppemarked-api.&lt;domain&gt; alias| CF
     AMPLIFY -->|API_URL rewrites| CF
     EB -->|hourly| LAMBDA
-    LAMBDA --> RDS
-    LAMBDA --> SES_ID
-    LAMBDA --> SECRETS
+    LAMBDA -->|attached to| SHARED_SUB
+    LAMBDA -->|VPC-local| SHARED_RDS
+    SHARED_SUB --> NAT
+    LAMBDA -->|via NAT| SES_ID
+    LAMBDA -->|via NAT| SECRETS
     VPC --> PUB_SUB
     VPC --> PRIV_SUB
     PUB_SUB --> IGW
-    PRIV_SUB --> VPCE
+    PRIV_SUB --> RDS
     R53 --> SES_ID
     SES_ID --> SES_DKIM
 ```
 
 ### Environments
 
-| Environment | Domain                | VPC CIDR       | RDS Instance    |
-|-------------|----------------------|----------------|-----------------|
-| staging     | `staging.un17hub.com`| `10.2.0.0/16`  | `db.t4g.micro`  |
-| prod        | `un17hub.com`        | `10.1.0.0/16`  | `db.t4g.small`  |
+| Environment | Domain                | Lambda network                    | Database                          |
+|-------------|-----------------------|-----------------------------------|-----------------------------------|
+| staging     | `staging.un17hub.com` | Shared default VPC (`172.31.0.0/16`) | shared-db (`rds/shared/loppemarked_staging`) |
+| prod        | `un17hub.com`         | Dedicated VPC (`10.1.0.0/16`), shared-VPC flip pending | dedicated RDS (shared-db in the cutover window) |
+
+The dedicated per-environment VPCs (`10.2.0.0/16` staging, `10.1.0.0/16` prod)
+and their RDS instances still exist but are being retired; staging's Lambda no
+longer uses its dedicated VPC.
 
 ### Terraform Module Structure
 

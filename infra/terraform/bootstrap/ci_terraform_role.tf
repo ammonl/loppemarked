@@ -625,3 +625,45 @@ resource "aws_iam_role_policy" "ci_terraform_resources" {
   role   = aws_iam_role.ci_terraform[each.key].id
   policy = data.aws_iam_policy_document.ci_terraform_resources[each.key].json
 }
+
+# ---------- Shared-network SSM read (attached managed policy) ----------
+#
+# The environment stacks read the shared default-VPC network identifiers
+# (/shared/network/vpc-id, /shared/network/private-subnet-ids) published by
+# infra-shared-db to attach the API Lambda to the shared subnets. This lives in
+# its own attached managed policy rather than the terraform-resources inline
+# policy: that inline policy is already at IAM's 10,240-byte aggregate limit for
+# a role's inline policies, and managed policies do not count against it.
+
+data "aws_iam_policy_document" "ci_terraform_shared_network" {
+  statement {
+    sid    = "SharedNetworkParameters"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+    ]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter/shared/network/*",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ci_terraform_shared_network" {
+  for_each = var.ci_terraform_environments
+
+  name        = "${each.value.naming_prefix}-ci-terraform-shared-network"
+  description = "Read the shared default-VPC network identifiers from SSM for Terraform plan/apply."
+  policy      = data.aws_iam_policy_document.ci_terraform_shared_network.json
+
+  tags = {
+    Name = "${each.value.naming_prefix}-ci-terraform-shared-network"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ci_terraform_shared_network" {
+  for_each = var.ci_terraform_environments
+
+  role       = aws_iam_role.ci_terraform[each.key].name
+  policy_arn = aws_iam_policy.ci_terraform_shared_network[each.key].arn
+}
