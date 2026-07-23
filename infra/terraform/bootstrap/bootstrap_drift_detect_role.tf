@@ -3,9 +3,9 @@
 # Read-only OIDC role assumed by the daily drift-detection workflow to
 # refresh state for the bootstrap stack and surface unmanaged changes
 # to bootstrap-owned resources (state bucket, lock table, ci_terraform
-# roles). The OIDC provider is read (the data source lookup calls
-# iam:GetOpenIDConnectProvider during plan) but managed by un17hub, not
-# this stack. Plan/apply for bootstrap remains an operator action with
+# roles). The OIDC provider is read (the data source lookup calls the
+# IAM OIDC read APIs during plan) but managed by un17hub, not this
+# stack. Plan/apply for bootstrap remains an operator action with
 # admin credentials; this role intentionally cannot mutate anything.
 
 data "aws_iam_policy_document" "bootstrap_drift_detect_assume" {

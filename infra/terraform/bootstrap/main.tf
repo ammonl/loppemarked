@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.7.0"
 
   required_providers {
     aws = {
@@ -117,4 +117,20 @@ resource "aws_dynamodb_table" "tflock" {
 # environment stacks already use.
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
+}
+
+# This bootstrap previously managed the provider as a resource, so the
+# object still lives in loppemarked's bootstrap state. Dropping the
+# resource block alone would make the next apply plan a DESTROY of the
+# shared, account-global provider. This `removed` block detaches it from
+# state without destroying it — the declarative equivalent of
+# `terraform state rm` — so the shared provider un17hub owns is left
+# intact. Safe to delete once every bootstrap state has been applied
+# past this change.
+removed {
+  from = aws_iam_openid_connect_provider.github
+
+  lifecycle {
+    destroy = false
+  }
 }
