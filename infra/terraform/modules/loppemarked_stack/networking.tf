@@ -239,3 +239,29 @@ resource "aws_vpc_endpoint" "secretsmanager" {
     Name = "${local.naming_prefix}-secretsmanager-endpoint"
   }
 }
+
+# These four resources previously had no count. Gating them moves their state
+# address to the [0] index; the moved blocks make an environment that keeps the
+# endpoints (dedicated mode, e.g. prod today) a clean no-op instead of a
+# destroy-and-recreate. When create_vpc_endpoints is false (shared-tenancy) the
+# renamed [0] instances are then destroyed, which is the intended teardown.
+
+moved {
+  from = aws_security_group.vpc_endpoints
+  to   = aws_security_group.vpc_endpoints[0]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.vpc_endpoints_from_api
+  to   = aws_vpc_security_group_ingress_rule.vpc_endpoints_from_api[0]
+}
+
+moved {
+  from = aws_vpc_endpoint.ses
+  to   = aws_vpc_endpoint.ses[0]
+}
+
+moved {
+  from = aws_vpc_endpoint.secretsmanager
+  to   = aws_vpc_endpoint.secretsmanager[0]
+}
