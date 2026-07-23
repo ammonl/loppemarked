@@ -111,12 +111,14 @@ loading. Port-forward to the shared-db bastion:
 >   --secret-id rds/shared/loppemarked_prod --query SecretString --output text | jq .
 > ```
 
-Restore. `--exit-on-error` fails loudly on the first problem instead of leaving a
-half-loaded target; `--no-owner --no-privileges` matches the dump flags:
+Restore. `--single-transaction` wraps the load in one transaction so a failure
+leaves the target empty (nothing to clean up) rather than half-loaded;
+`--exit-on-error` fails loudly on the first problem; `--no-owner --no-privileges`
+matches the dump flags:
 
 ```bash
 PGPASSWORD='<shared-db-password>' \
-  pg_restore --no-owner --no-privileges --exit-on-error \
+  pg_restore --no-owner --no-privileges --exit-on-error --single-transaction \
     -d "host=127.0.0.1 port=15433 dbname=loppemarked_prod user=<shared-db-user> sslmode=require" \
     loppemarked_prod.dump
 ```
@@ -128,13 +130,26 @@ Record the restore elapsed time.
 Run the scripted parity check with **both** tunnels open. It compares the public
 table set, per-table row counts, the `kysely_migration` history, and sample app
 reads (`system_settings.opening_datetime`, admin emails), and exits non-zero on any
-mismatch:
+mismatch.
+
+The source and target are **different** RDS instances with different passwords, so a
+single `PGPASSWORD` cannot authenticate both. Supply them per side — either with the
+`PGPASSWORD_SOURCE` / `PGPASSWORD_TARGET` env vars:
 
 ```bash
-PGPASSWORD='<passwords-via-pgpass-or-per-call>' \
+PGPASSWORD_SOURCE='<dedicated-prod-password>' \
+PGPASSWORD_TARGET='<shared-db-password>' \
   ./scripts/db-migrate-parity.sh \
     "host=127.0.0.1 port=15432 dbname=<dedicated-dbname> user=<dedicated-user> sslmode=require" \
     "host=127.0.0.1 port=15433 dbname=loppemarked_prod user=<shared-db-user> sslmode=require"
+```
+
+or with a `~/.pgpass` (mode `600`) keyed by the two forwarded ports, leaving both env
+vars unset:
+
+```
+127.0.0.1:15432:*:<dedicated-user>:<dedicated-prod-password>
+127.0.0.1:15433:*:<shared-db-user>:<shared-db-password>
 ```
 
 `PARITY OK` (exit 0) is the green light. **Only then** proceed to the single
