@@ -81,10 +81,23 @@ module "loppemarked_stack" {
   # and SES over the shared NAT gateway. This retires the requester-side peering
   # and the dedicated VPC interface endpoints for staging. db_secret_id keeps the
   # runtime pointed at the shared-db credentials secret (cut over since Jun 2026).
-  # The dedicated VPC/subnets/RDS remain (dormant) until retired separately.
   shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
   shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
   db_secret_id              = "rds/shared/loppemarked_staging"
+
+  # Retire staging's dedicated infrastructure. Staging cut over to shared-db on
+  # 2026-06-01 and its Lambda has run in the shared VPC since #267, so the
+  # dedicated VPC (subnets, gateways, interface endpoints, flow logs) and the
+  # dedicated RDS instance (with its subnet/parameter groups, monitoring role, and
+  # DB credentials secret) are no longer needed. Applying this destroys the
+  # dedicated staging RDS instance. The data KMS key is retained (it still
+  # encrypts the app-secrets secret); per-stack KMS-key deletion is the deferred
+  # cross-environment cleanup.
+  #
+  # Retention decision: explicit skip. The dedicated staging DB has been dormant
+  # since the 2026-06-01 cutover (~7 weeks), holds only non-prod data, and staging
+  # RDS already skips final snapshots — no snapshot or pg_dump is retained.
+  retire_dedicated_db_and_vpc = true
 
   db_instance_class        = "db.t4g.micro"
   db_allocated_storage     = 20

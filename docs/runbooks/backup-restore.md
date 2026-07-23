@@ -4,17 +4,24 @@
 
 This runbook covers RDS automated backup management and point-in-time restore procedures for the UN17 Village Loppemarked PostgreSQL database.
 
+> **Scope: prod dedicated RDS only.** Staging's dedicated RDS instance has been
+> retired (#222); staging now runs on **shared-db** (`rds/shared/loppemarked_staging`),
+> whose backups and restores are owned by the `infra-shared-db` repo — use its
+> runbooks for staging. The procedures below apply to the **prod** dedicated RDS
+> instance until it too is retired, after which prod also moves to shared-db.
+
 ## Backup Configuration
 
-| Setting | Staging | Production |
-|---------|---------|------------|
-| Backup retention | 7 days | 35 days |
-| Backup window | 03:00–04:00 UTC | 03:00–04:00 UTC |
-| Multi-AZ | No | Yes |
-| Final snapshot on delete | No | Yes |
-| Encryption | KMS (data key) | KMS (data key) |
+| Setting | Production (dedicated RDS) |
+|---------|----------------------------|
+| Backup retention | 35 days |
+| Backup window | 03:00–04:00 UTC |
+| Multi-AZ | Yes |
+| Final snapshot on delete | Yes |
+| Encryption | KMS (data key) |
 
-Backups are configured via Terraform in `infra/terraform/modules/loppemarked_stack/database.tf`.
+Staging backups are managed by `infra-shared-db` (shared-db). Prod backups are
+configured via Terraform in `infra/terraform/modules/loppemarked_stack/database.tf`.
 
 ## Listing Available Backups
 
@@ -113,10 +120,12 @@ aws rds restore-db-instance-from-db-snapshot \
 
 Run a restore drill quarterly to verify backup integrity:
 
-1. Restore to a new instance (staging environment).
+1. Restore the prod dedicated RDS to a new, throwaway instance (never in-place).
 2. Verify data integrity (row counts, recent records).
 3. Document results in a GitHub issue.
 4. Delete the test instance.
+
+Staging is on shared-db; its restore drills are covered by the `infra-shared-db` runbooks.
 
 ## References
 

@@ -29,7 +29,22 @@ locals {
 
   # Dedicated VPC interface endpoints (SES, Secrets Manager) exist only for the
   # dedicated-VPC Lambda; in shared-tenancy egress rides the shared NAT gateway.
-  create_vpc_endpoints = !local.shared_tenancy
+  create_vpc_endpoints = !local.shared_tenancy && local.dedicated_active
+
+  # Dedicated-infrastructure retirement. When true, this environment's dedicated
+  # VPC (subnets, gateways, interface endpoints, flow logs), dedicated RDS
+  # instance, and dedicated DB credentials secret are no longer created — the
+  # environment relies entirely on the shared VPC and shared-db. The data KMS key
+  # is intentionally retained (it still encrypts the app-secrets secret); per-stack
+  # KMS-key deletion is the deferred cross-environment cleanup. Retirement is only
+  # valid once the Lambda is in the shared VPC and the runtime is on shared-db
+  # (enforced by a precondition on the API Lambda).
+  dedicated_active = !var.retire_dedicated_db_and_vpc
+  dedicated_count  = var.retire_dedicated_db_and_vpc ? 0 : 1
+
+  # Identifier of the dedicated RDS instance, or null once retired. Used by the
+  # RDS alarms (which are also gated on dedicated_active) and the dashboard.
+  db_instance_identifier = one(aws_db_instance.main[*].identifier)
 }
 
 output "naming_prefix" {

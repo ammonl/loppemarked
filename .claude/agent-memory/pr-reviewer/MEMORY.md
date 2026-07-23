@@ -22,6 +22,32 @@
   `iam:GetOpenIDConnectProvider` + `iam:ListOpenIDConnectProviderTags` (present
   as the `OIDCProviderRead` statement).
 
+### count-gating an existing single resource (retirement PRs, e.g. #222)
+- **`replace_triggered_by = [aws_resource.x]` (whole resource) to a count-gated
+  resource is a TRAP when x can reach count=0.** Verified empirically (tf
+  v1.15.8): once x has zero instances AND is absent from state, every subsequent
+  `terraform plan` errors `no change found for aws_resource.x in the root module`.
+  `[aws_resource.x[0]]` fails the same way at count=0. The transition apply
+  (present→count=0) succeeds; it's steady-state plans (daily drift detection,
+  next PR) that wedge. Only bites when the resource CARRYING the lifecycle block
+  is itself un-gated (always present). If the carrier is also count-gated to 0,
+  its lifecycle isn't evaluated so no error. Fix: route the trigger through a
+  `terraform_data`/null_resource whose input is `one(aws_resource.x[*].id)`
+  (null-safe at count 0), or drop the trigger for retired envs.
+- **Adding `count` to a previously count-less resource does NOT need a `moved`
+  block for the no-key→[0] no-op** — tf auto-detects the move (`has moved to
+  ...[0]`, 0 changed). So missing `moved` blocks are not a prod-destroy bug; the
+  ones authors add are belt-and-suspenders. `terraform validate` passes
+  regardless (it never reads state), so neither issue above shows up in validate.
+- `one(resource[*].attr)` returns null at count 0 (safe); a `cond ? one(x[*]) : y`
+  local is safe because `one([])`=null doesn't error even on the dead branch.
+- Secrets Manager KMS re-key (data key → logs key on a not-gated secret while the
+  data key is destroyed): the existing AWSCURRENT version was written under the
+  old key. Terraform has NO dependency edge from the key-destroy to the secret
+  update once the secret stops referencing the key, so re-encryption ordering vs.
+  ScheduleKeyDeletion (PendingDeletion disables the key) is not guaranteed — flag
+  as an ordering risk to verify / pre-rotate.
+
 ### Recurring risk to watch for
 - **Converting a managed `resource` to a `data` source** for a resource that is
   currently in state: removing the resource block makes the next `terraform

@@ -326,9 +326,13 @@ All AWS infrastructure is managed via Terraform with isolated staging and produc
 > and shared NAT gateway. In this shared-tenancy mode the Lambda reaches
 > shared-db (VPC-local), Secrets Manager, and SES over the shared NAT, so the
 > dedicated VPC interface endpoints and the shared-db peering are no longer
-> created. **Staging** runs in shared-tenancy mode; **prod** flips in its
-> scheduled cutover window. The dedicated VPC, subnets, and RDS instance remain
-> (dormant) until retired separately, keeping the cutover reversible.
+> created. **Staging** runs in shared-tenancy mode and its dedicated
+> infrastructure has been **retired** (`retire_dedicated_db_and_vpc = true`): no
+> dedicated VPC, RDS instance, or DB credentials secret. Its data KMS key is
+> retained for now (it still encrypts the app-secrets secret); per-stack KMS-key
+> deletion is the deferred cross-environment cleanup. **Prod** still runs its
+> dedicated VPC and RDS and flips in its scheduled cutover window; its dedicated
+> stack stays in place until retired separately, keeping the cutover reversible.
 
 ```mermaid
 graph TB
@@ -345,12 +349,12 @@ graph TB
             SHARED_RDS[(shared-db<br/>RDS PostgreSQL)]
         end
 
-        subgraph "Dedicated VPC (per env, being retired)"
+        subgraph "Dedicated VPC (prod only; staging retired)"
             VPC[VPC]
             PUB_SUB[Public Subnets]
             PRIV_SUB[Private Subnets]
             IGW[Internet Gateway]
-            RDS[(RDS PostgreSQL<br/>dedicated, dormant)]
+            RDS[(RDS PostgreSQL<br/>dedicated, prod only)]
         end
 
         subgraph "Compute"
@@ -428,9 +432,10 @@ graph TB
 | staging     | `staging.un17hub.com` | Shared default VPC (`172.31.0.0/16`) | shared-db (`rds/shared/loppemarked_staging`) |
 | prod        | `un17hub.com`         | Dedicated VPC (`10.1.0.0/16`), shared-VPC flip pending | dedicated RDS (shared-db in the cutover window) |
 
-The dedicated per-environment VPCs (`10.2.0.0/16` staging, `10.1.0.0/16` prod)
-and their RDS instances still exist but are being retired; staging's Lambda no
-longer uses its dedicated VPC.
+Staging's dedicated VPC (`10.2.0.0/16`) and RDS instance have been retired; it
+runs entirely on the shared VPC and shared-db. Prod's dedicated VPC
+(`10.1.0.0/16`) and RDS instance still exist and are retired separately after its
+shared-VPC/shared-db cutover.
 
 ### Terraform Module Structure
 

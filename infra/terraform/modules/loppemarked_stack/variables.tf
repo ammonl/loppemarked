@@ -119,6 +119,24 @@ variable "db_secret_id" {
   default     = null
 }
 
+# ---------- Dedicated-infrastructure retirement ----------
+#
+# Final teardown of a fully migrated environment. When true, the dedicated VPC
+# (subnets, gateways, interface endpoints, flow logs), the dedicated RDS instance
+# (and its subnet/parameter groups, monitoring role, and DB credentials secret),
+# and the per-stack data KMS key are no longer created — the environment runs
+# entirely on the shared VPC and shared-db. Only flip once the Lambda is already
+# in the shared VPC (shared_vpc_id) and the runtime is already on shared-db
+# (db_secret_id): a precondition on the API Lambda enforces this. Record a
+# retention decision for the dedicated DB before applying, because the RDS
+# instance is destroyed by the apply.
+
+variable "retire_dedicated_db_and_vpc" {
+  description = "Retire this environment's dedicated VPC, dedicated RDS instance, dedicated DB credentials secret, and data KMS key. Requires shared_vpc_id and db_secret_id to be set. Leave false until the shared-tenancy cutover has soaked and a retention decision for the dedicated DB is recorded."
+  type        = bool
+  default     = false
+}
+
 # ---------- IAM / CI ----------
 
 variable "github_oidc_provider_arn" {

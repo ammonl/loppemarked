@@ -59,7 +59,17 @@ for cmd in aws jq session-manager-plugin; do
   fi
 done
 
-SECRET_NAME="loppemarked-${ENV}-2026-db-credentials"
+# Staging is on shared-db (its dedicated RDS was retired in #222): the credentials
+# live in the shared-db secret, whose connection JSON uses the `database` key.
+# Prod still runs on its dedicated RDS, whose secret uses the `dbname` key. Prod
+# folds into the shared-db branch once its dedicated DB is retired too.
+if [[ "$ENV" == "staging" ]]; then
+  SECRET_NAME="rds/shared/loppemarked_staging"
+  DBNAME_KEY=".database"
+else
+  SECRET_NAME="loppemarked-${ENV}-2026-db-credentials"
+  DBNAME_KEY=".dbname"
+fi
 
 echo "[info] resolving secret arn for ${SECRET_NAME} in ${REGION}…"
 SECRET_ARN=$(
@@ -83,11 +93,11 @@ SECRET_JSON=$(
     --output text
 )
 
-DB_HOST=$(jq -r '.host'     <<<"$SECRET_JSON")
-DB_PORT=$(jq -r '.port'     <<<"$SECRET_JSON")
-DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
-DB_NAME=$(jq -r '.dbname'   <<<"$SECRET_JSON")
-DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
+DB_HOST=$(jq -r '.host'        <<<"$SECRET_JSON")
+DB_PORT=$(jq -r '.port'        <<<"$SECRET_JSON")
+DB_USER=$(jq -r '.username'    <<<"$SECRET_JSON")
+DB_NAME=$(jq -r "$DBNAME_KEY"  <<<"$SECRET_JSON")
+DB_PASS=$(jq -r '.password'    <<<"$SECRET_JSON")
 
 cat <<EOF
 
