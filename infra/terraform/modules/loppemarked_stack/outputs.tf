@@ -108,11 +108,6 @@ output "amplify_app_arn" {
   value       = aws_amplify_app.web.arn
 }
 
-output "amplify_service_role_arn" {
-  description = "ARN of the Amplify build service role."
-  value       = aws_iam_role.amplify.arn
-}
-
 output "amplify_default_domain" {
   description = "Default domain for the Amplify app (*.amplifyapp.com)."
   value       = aws_amplify_app.web.default_domain
