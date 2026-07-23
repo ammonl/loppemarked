@@ -14,8 +14,8 @@ output "lock_table_name" {
 }
 
 output "github_oidc_provider_arn" {
-  description = "ARN of the GitHub Actions OIDC identity provider."
-  value       = aws_iam_openid_connect_provider.github.arn
+  description = "ARN of the GitHub Actions OIDC identity provider (owned by un17hub; consumed here via data source)."
+  value       = data.aws_iam_openid_connect_provider.github.arn
 }
 
 output "ci_terraform_role_arns" {

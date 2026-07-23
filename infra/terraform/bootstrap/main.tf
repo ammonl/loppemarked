@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.7.0"
 
   required_providers {
     aws = {
@@ -108,20 +108,29 @@ resource "aws_dynamodb_table" "tflock" {
 
 # ---------- GitHub Actions OIDC Provider ----------
 
-resource "aws_iam_openid_connect_provider" "github" {
-  url            = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
+# The account-global GitHub OIDC provider
+# (token.actions.githubusercontent.com) is owned and managed by the
+# un17hub bootstrap. There is exactly one such provider per AWS account,
+# so loppemarked consumes it via a data source rather than managing it —
+# managing it here would perpetually fight un17hub over the shared
+# resource's tags and thumbprint. This mirrors the pattern the
+# environment stacks already use.
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+}
 
-  # AWS does not validate the thumbprint for GitHub's OIDC provider
-  # (see https://github.blog/changelog/2023-06-27-github-actions-update-on-oidc-integration-with-aws/).
-  # Terraform still requires the field, so a placeholder is used.
-  thumbprint_list = ["ffffffffffffffffffffffffffffffffffffffff"]
-
-  tags = {
-    purpose = "github-actions-oidc"
-  }
+# This bootstrap previously managed the provider as a resource, so the
+# object still lives in loppemarked's bootstrap state. Dropping the
+# resource block alone would make the next apply plan a DESTROY of the
+# shared, account-global provider. This `removed` block detaches it from
+# state without destroying it — the declarative equivalent of
+# `terraform state rm` — so the shared provider un17hub owns is left
+# intact. Safe to delete once every bootstrap state has been applied
+# past this change.
+removed {
+  from = aws_iam_openid_connect_provider.github
 
   lifecycle {
-    prevent_destroy = true
+    destroy = false
   }
 }
