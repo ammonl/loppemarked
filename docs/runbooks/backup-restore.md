@@ -49,23 +49,35 @@ Recorded here for audit; no ongoing action.
       --no-deletion-protection --apply-immediately \
       --region eu-north-1
     ```
-  - **Prerequisite — app-secrets KMS re-key.** The per-stack data KMS key is
-    scheduled for deletion in the same change; the `loppemarked-prod-2026-app-secrets`
-    secret moves to the AWS-managed `aws/secretsmanager` key. Changing a
-    secret's KMS key does **not** re-encrypt existing versions, so re-put the
-    live value first so the current version is encrypted under the new key
-    before the data key is scheduled for deletion:
+  - **Prerequisite — app-secrets KMS re-key.** The retirement apply both moves
+    the `loppemarked-prod-2026-app-secrets` secret to the AWS-managed
+    `aws/secretsmanager` key **and** schedules the per-stack data KMS key for
+    deletion (which disables the key immediately, before its recovery window).
+    Changing a secret's KMS key does **not** re-encrypt existing versions, and
+    the apply gives no safe in-flight window for a manual step — so complete the
+    re-key **out-of-band before applying**, in this order, so the live version is
+    already under the AWS-managed key by the time the data key is deleted:
     ```bash
-    # Re-put the current value so it re-encrypts under the new (AWS-managed) key.
+    SECRET=loppemarked-prod-2026-app-secrets
+    # 1. Point the secret at the AWS-managed key (matches what this apply sets).
+    aws secretsmanager update-secret \
+      --secret-id "$SECRET" --kms-key-id alias/aws/secretsmanager \
+      --region eu-north-1
+    # 2. Re-put the current value so the LIVE version re-encrypts under that key
+    #    (step 1 alone does not re-encrypt existing versions).
     CURRENT=$(aws secretsmanager get-secret-value \
-      --secret-id loppemarked-prod-2026-app-secrets \
-      --query SecretString --output text --region eu-north-1)
+      --secret-id "$SECRET" --query SecretString --output text --region eu-north-1)
     aws secretsmanager put-secret-value \
-      --secret-id loppemarked-prod-2026-app-secrets \
-      --secret-string "$CURRENT" --region eu-north-1
+      --secret-id "$SECRET" --secret-string "$CURRENT" --region eu-north-1
+    # 3. Verify the value still decrypts, then apply #222.
+    aws secretsmanager get-secret-value --secret-id "$SECRET" --region eu-north-1 >/dev/null && echo OK
     ```
-    KMS key deletion uses a recoverable window (default 30 days); use
-    `aws kms cancel-key-deletion` if a rollback is needed within it.
+    After steps 1–3 the apply sees the secret already on the AWS-managed key (no
+    change) and only schedules the now-unused data key for deletion. KMS deletion
+    uses a recoverable window (default 30 days); `aws kms cancel-key-deletion`
+    reverses it within that window. Note the secret currently holds only a
+    placeholder and has no deployed runtime consumer, so the blast radius of a
+    mis-ordered re-key is contained — but follow the order regardless.
 
 ## References
 

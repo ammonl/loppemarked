@@ -115,6 +115,10 @@ output "naming_prefix" {
   value = module.loppemarked_stack.naming_prefix
 }
 
+output "api_lambda_security_group_id" {
+  value = module.loppemarked_stack.api_lambda_security_group_id
+}
+
 output "api_runtime_role_arn" {
   value = module.loppemarked_stack.api_runtime_role_arn
 }
