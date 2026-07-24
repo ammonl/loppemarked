@@ -202,7 +202,7 @@ function SiteHeader({ mode, t, onHome, onAdmin }: SiteHeaderProps) {
         }}
         aria-label={t("common.appName")}
       >
-        <Un17Logo variant="header" aria-hidden />
+        <Un17Logo variant="header" aria-hidden="true" />
       </button>
 
       <div
