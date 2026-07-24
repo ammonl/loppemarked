@@ -14,7 +14,6 @@ import {
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { renderWithContact } from "@/i18n/contactLink";
 import { colors, alertError } from "@/styles/theme";
-import { emitBookingSuccess } from "@/utils/brandEvents";
 import { SwitchConfirmationDialog, type SwitchDetails } from "./SwitchConfirmationDialog";
 import "@/styles/table-map.css";
 
@@ -117,7 +116,6 @@ export function RegistrationForm({ tableId, onCancel, onTableUnavailable, onSucc
       }
 
       setSuccess(true);
-      emitBookingSuccess();
     } catch {
       setErrors([t("common.error")]);
     } finally {
@@ -144,7 +142,6 @@ export function RegistrationForm({ tableId, onCancel, onTableUnavailable, onSucc
       }
 
       setSuccess(true);
-      emitBookingSuccess();
       setSwitchDetails(null);
     } catch {
       setSwitchDetails(null);
