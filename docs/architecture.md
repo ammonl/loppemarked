@@ -320,19 +320,15 @@ erDiagram
 
 All AWS infrastructure is managed via Terraform with isolated staging and production environments.
 
-> **Networking migration (in progress).** The API Lambdas are moving out of the
-> dedicated per-environment VPCs and into the **shared default VPC**
-> (`172.31.0.0/16`, owned by infra-shared-db), using its private egress subnets
-> and shared NAT gateway. In this shared-tenancy mode the Lambda reaches
-> shared-db (VPC-local), Secrets Manager, and SES over the shared NAT, so the
-> dedicated VPC interface endpoints and the shared-db peering are no longer
-> created. **Staging** runs in shared-tenancy mode and its dedicated
-> infrastructure has been **retired** (`retire_dedicated_db_and_vpc = true`): no
-> dedicated VPC, RDS instance, or DB credentials secret. Its data KMS key is
-> retained for now (it still encrypts the app-secrets secret); per-stack KMS-key
-> deletion is the deferred cross-environment cleanup. **Prod** still runs its
-> dedicated VPC and RDS and flips in its scheduled cutover window; its dedicated
-> stack stays in place until retired separately, keeping the cutover reversible.
+> **Networking migration (complete).** Both API Lambdas run in the **shared
+> default VPC** (`172.31.0.0/16`, owned by infra-shared-db), using its private
+> egress subnets and shared NAT gateway. The Lambda reaches shared-db
+> (VPC-local), Secrets Manager, and SES over the shared NAT. The dedicated
+> per-environment VPCs (subnets, gateways, interface endpoints, flow logs), the
+> dedicated RDS instances (subnet/parameter groups, DB credentials secret,
+> monitoring role), the shared-db peering, and the per-stack data KMS keys were
+> **retired** in #222 (staging in #282, prod after the #221 cutover). Both
+> environments now run entirely on the shared VPC and shared-db.
 
 ```mermaid
 graph TB
@@ -347,14 +343,6 @@ graph TB
             SHARED_SUB[Private Egress Subnets<br/>172.31.10x.x]
             NAT[Shared NAT Gateway]
             SHARED_RDS[(shared-db<br/>RDS PostgreSQL)]
-        end
-
-        subgraph "Dedicated VPC (prod only; staging retired)"
-            VPC[VPC]
-            PUB_SUB[Public Subnets]
-            PRIV_SUB[Private Subnets]
-            IGW[Internet Gateway]
-            RDS[(RDS PostgreSQL<br/>dedicated, prod only)]
         end
 
         subgraph "Compute"
@@ -402,9 +390,7 @@ graph TB
     REPO --> CI
     REPO --> TF_WF
     TF_WF -->|OIDC| IAM_TF
-    IAM_TF --> VPC
     IAM_TF --> LAMBDA
-    IAM_TF --> RDS
     IAM_TF --> SES_ID
     IAM_TF --> AMPLIFY
     LAMBDA_URL --> LAMBDA
@@ -417,10 +403,6 @@ graph TB
     SHARED_SUB --> NAT
     LAMBDA -->|via NAT| SES_ID
     LAMBDA -->|via NAT| SECRETS
-    VPC --> PUB_SUB
-    VPC --> PRIV_SUB
-    PUB_SUB --> IGW
-    PRIV_SUB --> RDS
     R53 --> SES_ID
     SES_ID --> SES_DKIM
 ```
@@ -430,12 +412,11 @@ graph TB
 | Environment | Domain                | Lambda network                    | Database                          |
 |-------------|-----------------------|-----------------------------------|-----------------------------------|
 | staging     | `staging.un17hub.com` | Shared default VPC (`172.31.0.0/16`) | shared-db (`rds/shared/loppemarked_staging`) |
-| prod        | `un17hub.com`         | Dedicated VPC (`10.1.0.0/16`), shared-VPC flip pending | dedicated RDS (shared-db in the cutover window) |
+| prod        | `un17hub.com`         | Shared default VPC (`172.31.0.0/16`) | shared-db (`rds/shared/loppemarked_prod`) |
 
-Staging's dedicated VPC (`10.2.0.0/16`) and RDS instance have been retired; it
-runs entirely on the shared VPC and shared-db. Prod's dedicated VPC
-(`10.1.0.0/16`) and RDS instance still exist and are retired separately after its
-shared-VPC/shared-db cutover.
+Both environments run entirely on the shared default VPC and shared-db. The
+dedicated per-environment VPCs (`10.2.0.0/16` staging, `10.1.0.0/16` prod) and
+RDS instances were retired in #222.
 
 ### Terraform Module Structure
 
@@ -453,11 +434,11 @@ infra/terraform/
         ├── amplify.tf         Amplify app, branch, and domain association
         ├── api_runtime.tf     Lambda function, Function URL, EventBridge schedule
         ├── api_domain.tf      Stable API domain: ACM cert, CloudFront (DNS records in un17hub)
-        ├── database.tf        RDS, Secrets Manager
+        ├── secrets.tf         Application secrets (Secrets Manager)
         ├── dns.tf             DNS ownership notes (records live in the un17hub repo)
         ├── iam.tf             IAM roles and policies
         ├── monitoring.tf      CloudWatch, KMS, Alarms, Dashboard, SNS
-        ├── networking.tf      VPC, subnets, gateways
+        ├── networking.tf      Shared-VPC Lambda security group
         ├── outputs.tf         Module outputs
         ├── ses.tf             SES identity, DKIM, config set
         ├── variables.tf       Input variables

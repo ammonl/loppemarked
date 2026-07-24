@@ -2,133 +2,73 @@
 
 ## Overview
 
-This runbook covers RDS automated backup management and point-in-time restore procedures for the UN17 Village Loppemarked PostgreSQL database.
+Both environments now run on **shared-db** — a shared RDS PostgreSQL instance
+owned by the `infra-shared-db` repo:
 
-> **Scope: prod dedicated RDS only.** Staging's dedicated RDS instance has been
-> retired (#222); staging now runs on **shared-db** (`rds/shared/loppemarked_staging`),
-> whose backups and restores are owned by the `infra-shared-db` repo — use its
-> runbooks for staging. The procedures below apply to the **prod** dedicated RDS
-> instance until it too is retired, after which prod also moves to shared-db.
+| Environment | Shared-db credentials secret        |
+|-------------|-------------------------------------|
+| staging     | `rds/shared/loppemarked_staging`    |
+| prod        | `rds/shared/loppemarked_prod`       |
 
-## Backup Configuration
+Backups, automated-backup retention, and point-in-time restore for shared-db
+are owned by `infra-shared-db` — **use its runbooks** for any backup or restore
+operation. This repo no longer provisions a dedicated RDS instance for either
+environment.
 
-| Setting | Production (dedicated RDS) |
-|---------|----------------------------|
-| Backup retention | 35 days |
-| Backup window | 03:00–04:00 UTC |
-| Multi-AZ | Yes |
-| Final snapshot on delete | Yes |
-| Encryption | KMS (data key) |
+> The per-environment dedicated RDS instances were retired in #222 (staging in
+> #282, prod after the #221 cutover). The point-in-time / snapshot restore
+> procedures that lived here operated on those dedicated instances and no longer
+> apply.
 
-Staging backups are managed by `infra-shared-db` (shared-db). Prod backups are
-configured via Terraform in `infra/terraform/modules/loppemarked_stack/database.tf`.
+## Connecting to shared-db
 
-## Listing Available Backups
-
-```bash
-aws rds describe-db-snapshots \
-  --db-instance-identifier loppemarked-<environment>-2026-postgres \
-  --query "DBSnapshots[*].{ID:DBSnapshotIdentifier,Created:SnapshotCreateTime,Status:Status}" \
-  --output table \
-  --region eu-north-1
-```
-
-## Point-in-Time Restore
-
-RDS supports restoring to any point within the backup retention window.
-
-### 1. Identify the target restore time
-
-Determine the exact UTC timestamp to restore to. This is typically just before the data loss or corruption event.
-
-### 2. Restore to a new instance
+Use `scripts/db-port-forward.sh` with the environment's shared-db secret (it
+resolves `rds/shared/loppemarked_<env>` automatically):
 
 ```bash
-aws rds restore-db-instance-to-point-in-time \
-  --source-db-instance-identifier loppemarked-<environment>-2026-postgres \
-  --target-db-instance-identifier loppemarked-<environment>-2026-postgres-restored \
-  --restore-time "2026-03-01T12:00:00Z" \
-  --db-instance-class db.t4g.small \
-  --db-subnet-group-name loppemarked-<environment>-2026-db \
-  --vpc-security-group-ids <db-security-group-id> \
-  --no-multi-az \
-  --region eu-north-1
+./scripts/db-port-forward.sh -i <bastion-instance-id> -e prod
 ```
 
-**Important:** Always restore to a **new** instance. Never restore in-place on the production instance.
+## Dedicated RDS retirement (#222) — reference
 
-**Note:** The example uses `--no-multi-az` for faster initial restore. For production promotion, add `--multi-az` to match the production configuration.
+Recorded here for audit; no ongoing action.
 
-### 3. Wait for the restored instance to become available
-
-```bash
-aws rds wait db-instance-available \
-  --db-instance-identifier loppemarked-<environment>-2026-postgres-restored \
-  --region eu-north-1
-```
-
-### 4. Verify restored data
-
-Connect to the restored instance and verify:
-
-```bash
-psql -h <restored-endpoint> -U loppemarked -d loppemarked -c "
-  SELECT COUNT(*) FROM registrations;
-  SELECT COUNT(*) FROM emails;
-  SELECT MAX(created_at) FROM audit_events;
-"
-```
-
-Compare row counts and latest timestamps against expected values.
-
-### 5. Promote restored instance (if applicable)
-
-If the restored data is correct and you need to replace the primary:
-
-1. Update the application to point to the restored instance endpoint.
-2. Update Terraform state to adopt the restored instance (or rename it).
-3. Delete the original (corrupted) instance once the restored one is confirmed working.
-
-**For production restores, always get explicit approval before proceeding.**
-
-### 6. Clean up
-
-If the restore was a drill or the restored instance is no longer needed:
-
-```bash
-aws rds delete-db-instance \
-  --db-instance-identifier loppemarked-<environment>-2026-postgres-restored \
-  --skip-final-snapshot \
-  --region eu-north-1
-```
-
-## Snapshot Restore
-
-To restore from a specific snapshot instead of point-in-time:
-
-```bash
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier loppemarked-<environment>-2026-postgres-restored \
-  --db-snapshot-identifier <snapshot-identifier> \
-  --db-instance-class db.t4g.small \
-  --db-subnet-group-name loppemarked-<environment>-2026-db \
-  --vpc-security-group-ids <db-security-group-id> \
-  --region eu-north-1
-```
-
-## Restore Drill Schedule
-
-Run a restore drill quarterly to verify backup integrity:
-
-1. Restore the prod dedicated RDS to a new, throwaway instance (never in-place).
-2. Verify data integrity (row counts, recent records).
-3. Document results in a GitHub issue.
-4. Delete the test instance.
-
-Staging is on shared-db; its restore drills are covered by the `infra-shared-db` runbooks.
+- **Staging** (#282): retention was an explicit skip — the dedicated staging DB
+  had been dormant since the 2026-06-01 shared-db cutover, held only non-prod
+  data, and staging RDS skipped final snapshots. No snapshot or dump retained.
+- **Prod** (#222): retention is satisfied by the #236 pre-cutover `pg_dump`. The
+  retirement apply also takes the automatic final snapshot
+  `loppemarked-prod-2026-final`.
+  - **Prerequisite — deletion protection.** Prod RDS had
+    `deletion_protection` enabled. Terraform cannot destroy a protected
+    instance, so protection must be disabled on the instance before the
+    retirement apply:
+    ```bash
+    aws rds modify-db-instance \
+      --db-instance-identifier loppemarked-prod-2026-postgres \
+      --no-deletion-protection --apply-immediately \
+      --region eu-north-1
+    ```
+  - **Prerequisite — app-secrets KMS re-key.** The per-stack data KMS key is
+    scheduled for deletion in the same change; the `loppemarked-prod-2026-app-secrets`
+    secret moves to the AWS-managed `aws/secretsmanager` key. Changing a
+    secret's KMS key does **not** re-encrypt existing versions, so re-put the
+    live value first so the current version is encrypted under the new key
+    before the data key is scheduled for deletion:
+    ```bash
+    # Re-put the current value so it re-encrypts under the new (AWS-managed) key.
+    CURRENT=$(aws secretsmanager get-secret-value \
+      --secret-id loppemarked-prod-2026-app-secrets \
+      --query SecretString --output text --region eu-north-1)
+    aws secretsmanager put-secret-value \
+      --secret-id loppemarked-prod-2026-app-secrets \
+      --secret-string "$CURRENT" --region eu-north-1
+    ```
+    KMS key deletion uses a recoverable window (default 30 days); use
+    `aws kms cancel-key-deletion` if a rollback is needed within it.
 
 ## References
 
-- [RDS Point-in-Time Recovery](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html)
-- Database Terraform config: `infra/terraform/modules/loppemarked_stack/database.tf`
+- Shared-db backup/restore: `infra-shared-db` repo runbooks
+- Port-forward helper: `scripts/db-port-forward.sh`
 - Incident triage: `docs/runbooks/incident-triage.md`

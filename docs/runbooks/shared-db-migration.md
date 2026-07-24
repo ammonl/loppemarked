@@ -164,11 +164,16 @@ the write-freeze is lifted so the source is still quiescent.
 ## Rollback
 
 The load itself has no rollback because it is non-destructive to the source — a bad
-load is retried, not reverted. The overall cutover rollback lives in
+load is retried, not reverted. The overall cutover rollback lived in
 [#221](https://github.com/ammonl/loppemarked/issues/221): revert the Terraform apply
-(`db_secret_id` back to null, Lambda back to the dedicated VPC). The dedicated prod
-DB stays authoritative until a later phase, so rollback is a config revert, not a
-restore.
+(`db_secret_id` back to null, Lambda back to the dedicated VPC), with the dedicated
+prod DB staying authoritative until a later phase, so rollback was a config revert,
+not a restore.
+
+> **No longer available.** #222 retired the dedicated prod VPC and RDS instance,
+> so the config-revert rollback above no longer applies — there is no dedicated
+> DB to fall back to. Recovery is now via shared-db (owned by `infra-shared-db`);
+> see `docs/runbooks/backup-restore.md`.
 
 ## Rehearsal & timing
 

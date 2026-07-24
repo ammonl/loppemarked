@@ -98,7 +98,7 @@ The Next.js dev server starts on `http://localhost:3000` and proxies API routes 
 | `DB_USER`             | `loppemarked`  | Database user                   |
 | `DB_PASSWORD`         | (empty)       | Database password               |
 | `DB_SSL`              | `false`       | Enable SSL for DB connection    |
-| `DB_SECRET_ID`        | (unset)       | Deployed runtime only: when set, the connection is built entirely from this Secrets Manager secret (`host`, `port`, `database`, `username`, `password`) instead of the dedicated `DB_*` vars |
+| `DB_SECRET_ID`        | (unset)       | Deployed runtime only: the connection is built entirely from this shared-db Secrets Manager secret (`host`, `port`, `database`, `username`, `password`). The dedicated `DB_*` vars above are for local development; the deployed API runs on shared-db (the dedicated RDS instances were retired in #222) |
 | `API_PORT`            | `3001`        | Local dev server port           |
 | `SEED_ADMIN_PASSWORD` | `changeme123` | Initial admin password for seed |
 
@@ -162,7 +162,7 @@ Each environment defines a `ci-terraform` IAM role assumed via GitHub OIDC (`aws
 | `TF_ROLE_ARN_STAGING` | OIDC role ARN for staging plan/apply    |
 | `TF_ROLE_ARN_PROD`    | OIDC role ARN for production plan/apply |
 
-The roles grant least-privilege access to the S3 state backend, DynamoDB lock table, and the specific AWS resources managed by Terraform (VPC, IAM, KMS, CloudWatch Logs, Lambda, RDS, Secrets Manager).
+The roles grant least-privilege access to the S3 state backend, DynamoDB lock table, and the specific AWS resources managed by Terraform (IAM, KMS, CloudWatch Logs, Lambda, Secrets Manager, SES, Amplify, CloudFront/ACM). The API now runs in the shared default VPC on shared-db; the dedicated per-environment VPCs and RDS instances were retired in #222.
 
 ### Required PR status checks
 
@@ -196,15 +196,12 @@ In production, CloudWatch alarms cover the major failure modes:
 |-------|--------|-----------|
 | Lambda errors | Errors > 0 | 2 consecutive 5-min periods |
 | Lambda throttles | Throttles > 0 | 1 period |
-| RDS CPU | CPUUtilization > 80% | 3 consecutive 5-min periods |
-| RDS memory | FreeableMemory < 128 MB | 2 consecutive periods |
-| RDS connections | DatabaseConnections > 80 | 2 consecutive periods |
 | SES bounces | Bounce > 5/hr | 1 period |
 | SES complaints | Complaint > 1/hr | 1 period |
 
 Alarm notifications are delivered via SNS email subscription (configured per environment via `alarm_email`).
 
-A CloudWatch dashboard aggregates Lambda, RDS, and SES metrics.
+A CloudWatch dashboard aggregates Lambda and SES metrics. RDS alarms and widgets were removed when the dedicated RDS instances were retired (#222); shared-db metrics and alarms are owned by the `infra-shared-db` repo.
 
 **Drift detection** runs daily via `.github/workflows/drift-detection.yml`. If Terraform detects infrastructure drift, a GitHub issue is created automatically.
 

@@ -15,126 +15,49 @@ variable "environment" {
   type        = string
 }
 
-# ---------- Networking ----------
-
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC."
-  type        = string
-
-  validation {
-    condition     = can(cidrhost(var.vpc_cidr, 0))
-    error_message = "vpc_cidr must be a valid CIDR block."
-  }
-}
-
-variable "availability_zones" {
-  description = "List of availability zones for subnet placement."
-  type        = list(string)
-
-  validation {
-    condition     = length(var.availability_zones) >= 2
-    error_message = "At least 2 availability zones required for HA."
-  }
-}
-
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets (one per AZ)."
-  type        = list(string)
-}
-
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets (one per AZ)."
-  type        = list(string)
-}
-
 # ---------- Shared-VPC tenancy ----------
 #
-# When set, the API Lambda runs inside the shared default VPC (owned by
-# infra-shared-db) instead of this stack's dedicated VPC. It attaches to the
-# published private egress subnets and reaches shared-db, Secrets Manager, and
-# SES over the shared NAT gateway — so the dedicated VPC interface endpoints and
-# the shared-db peering are no longer created. Setting shared_vpc_id (non-null)
-# turns the mode on for an environment. The dedicated VPC, subnets, and RDS
-# remain until they are retired separately; leaving them in place keeps the
-# cutover reversible by a config revert.
+# The API Lambda runs inside the shared default VPC (owned by infra-shared-db).
+# It attaches to the published private egress subnets and reaches shared-db,
+# Secrets Manager, and SES over the shared NAT gateway. The dedicated
+# per-environment VPCs and RDS instances were retired in #222; the shared VPC is
+# now the only network the Lambda runs in, so both inputs are required.
 
 variable "shared_vpc_id" {
-  description = "VPC id of the shared default VPC to run the API Lambda in (published as /shared/network/vpc-id). Null (the default) keeps the Lambda in this stack's dedicated VPC."
+  description = "VPC id of the shared default VPC to run the API Lambda in (published as /shared/network/vpc-id)."
   type        = string
-  default     = null
 
   validation {
-    condition     = var.shared_vpc_id == null || can(regex("^vpc-[0-9a-f]+$", var.shared_vpc_id))
-    error_message = "shared_vpc_id must be a valid VPC id (vpc-...) or null."
+    condition     = can(regex("^vpc-[0-9a-f]+$", var.shared_vpc_id))
+    error_message = "shared_vpc_id must be a valid VPC id (vpc-...)."
   }
 }
 
 variable "shared_private_subnet_ids" {
-  description = "Private egress subnet ids in the shared VPC for the API Lambda (published as /shared/network/private-subnet-ids). Required when shared_vpc_id is set."
+  description = "Private egress subnet ids in the shared VPC for the API Lambda (published as /shared/network/private-subnet-ids)."
   type        = list(string)
-  default     = []
 
   validation {
-    condition     = alltrue([for id in var.shared_private_subnet_ids : can(regex("^subnet-[0-9a-f]+$", id))])
-    error_message = "shared_private_subnet_ids must all be valid subnet ids (subnet-...)."
+    condition     = length(var.shared_private_subnet_ids) > 0 && alltrue([for id in var.shared_private_subnet_ids : can(regex("^subnet-[0-9a-f]+$", id))])
+    error_message = "shared_private_subnet_ids must be non-empty and all valid subnet ids (subnet-...)."
   }
 }
 
-# ---------- Shared DB (cross-VPC) ----------
+# ---------- Shared DB ----------
 #
-# Phase B of the shared-db migration. The shared-db VPC and per-environment
-# credential secrets are owned by infra-shared-db (Phase A). These inputs wire
-# requester-side peering and the runtime secret switch. They default to null so
-# the module stays self-contained until an environment opts in.
-#
-# Peering only exists while the Lambda is in the dedicated VPC: once
-# shared_vpc_id moves it into the shared VPC, shared-db is VPC-local and the
-# peering is dropped.
-
-variable "shared_db_vpc_id" {
-  description = "VPC id of the shared-db VPC to peer with (Phase A output from infra-shared-db). Null disables requester-side peering."
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.shared_db_vpc_id == null || can(regex("^vpc-[0-9a-f]+$", var.shared_db_vpc_id))
-    error_message = "shared_db_vpc_id must be a valid VPC id (vpc-...) or null."
-  }
-}
-
-variable "shared_db_vpc_cidr" {
-  description = "CIDR block of the shared-db VPC, used for the requester-side peering route. Required when shared_db_vpc_id is set."
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.shared_db_vpc_cidr == null || can(cidrhost(var.shared_db_vpc_cidr, 0))
-    error_message = "shared_db_vpc_cidr must be a valid CIDR block or null."
-  }
-}
+# The API runtime builds its DB connection entirely from this shared-db
+# credentials secret (host, port, database, username, password), owned by
+# infra-shared-db. It is the only DB source now that the dedicated RDS instances
+# are retired.
 
 variable "db_secret_id" {
-  description = "Secrets Manager id/name of the shared-db credentials secret (e.g. rds/shared/loppemarked_staging). When set, the API runtime builds its DB connection from this secret instead of the dedicated DB env vars. Null keeps the dedicated DB active (no cutover)."
+  description = "Secrets Manager id/name of the shared-db credentials secret (e.g. rds/shared/loppemarked_staging). The API runtime builds its DB connection from this secret."
   type        = string
-  default     = null
-}
 
-# ---------- Dedicated-infrastructure retirement ----------
-#
-# Final teardown of a fully migrated environment. When true, the dedicated VPC
-# (subnets, gateways, interface endpoints, flow logs), the dedicated RDS instance
-# (and its subnet/parameter groups, monitoring role, and DB credentials secret),
-# and the per-stack data KMS key are no longer created — the environment runs
-# entirely on the shared VPC and shared-db. Only flip once the Lambda is already
-# in the shared VPC (shared_vpc_id) and the runtime is already on shared-db
-# (db_secret_id): a precondition on the API Lambda enforces this. Record a
-# retention decision for the dedicated DB before applying, because the RDS
-# instance is destroyed by the apply.
-
-variable "retire_dedicated_db_and_vpc" {
-  description = "Retire this environment's dedicated VPC, dedicated RDS instance, dedicated DB credentials secret, and data KMS key. Requires shared_vpc_id and db_secret_id to be set. Leave false until the shared-tenancy cutover has soaked and a retention decision for the dedicated DB is recorded."
-  type        = bool
-  default     = false
+  validation {
+    condition     = length(var.db_secret_id) > 0
+    error_message = "db_secret_id must be a non-empty Secrets Manager id/name."
+  }
 }
 
 # ---------- IAM / CI ----------
@@ -291,61 +214,6 @@ variable "lambda_reserved_concurrency" {
   }
 }
 
-# ---------- Database ----------
-
-variable "db_instance_class" {
-  description = "RDS instance class."
-  type        = string
-  default     = "db.t4g.micro"
-}
-
-variable "db_allocated_storage" {
-  description = "Initial allocated storage in GB."
-  type        = number
-  default     = 20
-}
-
-variable "db_max_allocated_storage" {
-  description = "Maximum storage autoscaling limit in GB."
-  type        = number
-  default     = 50
-}
-
-variable "db_backup_retention_days" {
-  description = "Number of days to retain automated backups."
-  type        = number
-  default     = 7
-
-  validation {
-    condition     = var.db_backup_retention_days >= 1 && var.db_backup_retention_days <= 35
-    error_message = "db_backup_retention_days must be between 1 and 35."
-  }
-}
-
-variable "db_multi_az" {
-  description = "Enable Multi-AZ deployment for RDS."
-  type        = bool
-  default     = false
-}
-
-variable "db_name" {
-  description = "Name of the default database to create."
-  type        = string
-  default     = "loppemarked"
-}
-
-variable "db_master_username" {
-  description = "Master username for the RDS instance."
-  type        = string
-  default     = "loppemarked"
-}
-
-variable "db_deletion_protection" {
-  description = "Override for RDS deletion protection. When null (the default), protection is enabled for prod and disabled for non-prod. Set to false on prod only for a planned destructive maintenance window (e.g. a VPC re-IP that replaces the instance), then restore it afterward. Disabling protection must be applied before the apply that triggers the replacement."
-  type        = bool
-  default     = null
-}
-
 # ---------- Monitoring ----------
 
 variable "log_retention_days" {
@@ -369,10 +237,4 @@ variable "alarm_email" {
   description = "Email address for CloudWatch alarm notifications. Set to null to skip subscription. Ignored when enable_observability_alerts is false."
   type        = string
   default     = null
-}
-
-variable "alarm_rds_connections_threshold" {
-  description = "Threshold for the RDS database connections alarm. Adjust per instance class (e.g. ~85 for db.t4g.micro, ~170 for db.t4g.small)."
-  type        = number
-  default     = 80
 }

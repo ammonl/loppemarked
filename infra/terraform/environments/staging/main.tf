@@ -70,40 +70,17 @@ module "loppemarked_stack" {
 
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
-  vpc_cidr             = "10.2.0.0/16"
-  availability_zones   = ["eu-north-1a", "eu-north-1b"]
-  public_subnet_cidrs  = ["10.2.1.0/24", "10.2.2.0/24"]
-  private_subnet_cidrs = ["10.2.10.0/24", "10.2.11.0/24"]
-  log_retention_days   = 14
+  log_retention_days = 14
 
-  # Shared-tenancy mode: the API Lambda runs in the shared default VPC's private
-  # egress subnets (published via SSM) and reaches shared-db, Secrets Manager,
-  # and SES over the shared NAT gateway. This retires the requester-side peering
-  # and the dedicated VPC interface endpoints for staging. db_secret_id keeps the
-  # runtime pointed at the shared-db credentials secret (cut over since Jun 2026).
+  # The API Lambda runs in the shared default VPC's private egress subnets
+  # (published via SSM) and reaches shared-db, Secrets Manager, and SES over the
+  # shared NAT gateway. db_secret_id points the runtime at the shared-db
+  # credentials secret (cut over since Jun 2026). Staging's dedicated VPC and RDS
+  # instance were retired in #282; the shared VPC and shared-db are now the only
+  # network and database.
   shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
   shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
   db_secret_id              = "rds/shared/loppemarked_staging"
-
-  # Retire staging's dedicated infrastructure. Staging cut over to shared-db on
-  # 2026-06-01 and its Lambda has run in the shared VPC since #267, so the
-  # dedicated VPC (subnets, gateways, interface endpoints, flow logs) and the
-  # dedicated RDS instance (with its subnet/parameter groups, monitoring role, and
-  # DB credentials secret) are no longer needed. Applying this destroys the
-  # dedicated staging RDS instance. The data KMS key is retained (it still
-  # encrypts the app-secrets secret); per-stack KMS-key deletion is the deferred
-  # cross-environment cleanup.
-  #
-  # Retention decision: explicit skip. The dedicated staging DB has been dormant
-  # since the 2026-06-01 cutover (~7 weeks), holds only non-prod data, and staging
-  # RDS already skips final snapshots — no snapshot or pg_dump is retained.
-  retire_dedicated_db_and_vpc = true
-
-  db_instance_class        = "db.t4g.micro"
-  db_allocated_storage     = 20
-  db_max_allocated_storage = 50
-  db_backup_retention_days = 7
-  db_multi_az              = false
 
   lambda_reserved_concurrency = -1
 
@@ -130,10 +107,6 @@ output "naming_prefix" {
   value = module.loppemarked_stack.naming_prefix
 }
 
-output "vpc_id" {
-  value = module.loppemarked_stack.vpc_id
-}
-
 output "api_lambda_security_group_id" {
   value = module.loppemarked_stack.api_lambda_security_group_id
 }
@@ -148,14 +121,6 @@ output "ci_deploy_role_arn" {
 
 output "ci_terraform_role_arn" {
   value = module.loppemarked_stack.ci_terraform_role_arn
-}
-
-output "db_endpoint" {
-  value = module.loppemarked_stack.db_endpoint
-}
-
-output "db_secret_arn" {
-  value = module.loppemarked_stack.db_secret_arn
 }
 
 output "app_secret_arn" {

@@ -59,17 +59,12 @@ for cmd in aws jq session-manager-plugin; do
   fi
 done
 
-# Staging is on shared-db (its dedicated RDS was retired in #222): the credentials
-# live in the shared-db secret, whose connection JSON uses the `database` key.
-# Prod still runs on its dedicated RDS, whose secret uses the `dbname` key. Prod
-# folds into the shared-db branch once its dedicated DB is retired too.
-if [[ "$ENV" == "staging" ]]; then
-  SECRET_NAME="rds/shared/loppemarked_staging"
-  DBNAME_KEY=".database"
-else
-  SECRET_NAME="loppemarked-${ENV}-2026-db-credentials"
-  DBNAME_KEY=".dbname"
-fi
+# Both environments are on shared-db (their dedicated RDS instances were retired
+# in #222): the credentials live in the per-environment shared-db secret, whose
+# connection JSON uses the `database` key. The secrets are owned by the
+# infra-shared-db repo.
+SECRET_NAME="rds/shared/loppemarked_${ENV}"
+DBNAME_KEY=".database"
 
 echo "[info] resolving secret arn for ${SECRET_NAME} in ${REGION}…"
 SECRET_ARN=$(

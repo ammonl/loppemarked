@@ -7,16 +7,21 @@ the staging and production environment stacks.
 
 | File             | Resources                                                  |
 |------------------|------------------------------------------------------------|
-| `networking.tf`  | VPC, public/private subnets, internet gateway, SES + Secrets Manager VPC interface endpoints (dedicated mode), shared-VPC Lambda security group (shared-tenancy mode) |
+| `networking.tf`  | Egress-only Lambda security group in the shared default VPC |
 | `iam.tf`         | API runtime role, CI deploy role, CI Terraform role        |
-| `database.tf`    | RDS PostgreSQL instance, subnet group, Secrets Manager     |
+| `secrets.tf`     | Application secrets (Secrets Manager, AWS-managed key)      |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
 | `dns.tf`         | None — documents that all Route 53 records are owned by the un17hub DNS repo (see outputs) |
 | `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
-| `peering.tf`     | Requester-side VPC peering into the shared-db VPC + private route (dedicated mode only) |
 | `amplify.tf`     | Amplify app (managed repository URL), branch, and custom domain association |
+
+> The dedicated per-environment VPC (subnets, gateways, SES + Secrets Manager
+> interface endpoints, flow logs), the dedicated RDS PostgreSQL instance (subnet
+> group, parameter group, DB credentials secret, monitoring role), the
+> shared-db VPC peering, and the per-stack data KMS key were retired in #222.
+> Both environments now run entirely on the shared default VPC and shared-db.
 
 ## Provider configuration
 
@@ -96,15 +101,14 @@ its `environment.variables` block:
 | `EMAIL_FROM`     | `var.ses_sender_email` or `loppemarked@<ses_sender_domain>`            |
 | `EMAIL_REPLY_TO` | `var.ses_reply_to_email`                                               |
 | `PUBLIC_WEB_URL` | `https://<amplify_domain_prefix>.<ses_sender_domain>`                  |
-| `DB_SECRET_ID`   | `var.db_secret_id` (injected only when set)                            |
+| `DB_SECRET_ID`   | `var.db_secret_id`                                                     |
+| `DB_SSL`         | `"true"`                                                               |
 
-Database connection wiring has two modes. By default the runtime uses the
-dedicated RDS instance via `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` and
-fetches only the password from `DB_SECRET_ARN`. When `var.db_secret_id` is set,
-`DB_SECRET_ID` is injected and the runtime instead builds the entire connection
-from that shared-db secret payload (`host`, `port`, `database`, `username`,
-`password`). The shared-db path stays dormant until an environment opts in, so
-this module ships peering and IAM wiring without cutting traffic over.
+The runtime builds its entire database connection from the shared-db secret
+named by `var.db_secret_id` (`host`, `port`, `database`, `username`,
+`password`). The dedicated-RDS wiring (`DB_HOST` / `DB_PORT` / `DB_NAME` /
+`DB_USER` / `DB_SECRET_ARN`) was removed when the dedicated instances were
+retired (#222).
 
 `PUBLIC_WEB_URL` anchors outbound email links such as the resident
 self-cancellation magic link. With the current variable defaults this resolves
@@ -113,18 +117,12 @@ to `https://loppemarked.staging.un17hub.com` for staging and
 
 ## Shared-VPC tenancy
 
-The API Lambda runs in one of two network modes:
-
-- **Dedicated (default):** the Lambda attaches to this stack's own VPC private
-  subnets with the `api` security group. Its only egress dependencies (SES,
-  Secrets Manager) are served by VPC interface endpoints, and a requester-side
-  peering (`peering.tf`) provides the path to the shared-db VPC.
-- **Shared-tenancy:** set `shared_vpc_id` (and `shared_private_subnet_ids`) to
-  move the Lambda into the shared default VPC owned by infra-shared-db. It
-  attaches to the published private egress subnets with its own egress-only
-  `lambda_shared` security group and reaches shared-db (now VPC-local),
-  Secrets Manager, and SES over the shared NAT gateway. In this mode the module
-  stops creating the VPC interface endpoints and the shared-db peering.
+The API Lambda runs in the shared default VPC owned by infra-shared-db. Set
+`shared_vpc_id` (and `shared_private_subnet_ids`) to attach it to the published
+private egress subnets with its own egress-only `lambda_shared` security group;
+it reaches shared-db (VPC-local), Secrets Manager, and SES over the shared NAT
+gateway. Both inputs are required — the dedicated per-environment VPC and RDS
+instance were retired in #222, so this is the only network the Lambda runs in.
 
 Consume the shared network identifiers from SSM at plan time rather than
 hardcoding them (`/shared/network/vpc-id`, `/shared/network/private-subnet-ids`):
@@ -145,18 +143,13 @@ module "loppemarked_stack" {
 }
 ```
 
-The dedicated VPC, subnets, and RDS instance are **not** destroyed by enabling
-shared-tenancy — they remain (dormant) so the cutover is reversible by reverting
-the config, and are retired in a separate step.
-
 ## Stable API domain
 
 The web frontend reaches the API through Next.js `rewrites()`, whose
 destination is baked into the Amplify build **at build time** from the
 `API_URL` environment variable. Pointing `API_URL` at the raw Lambda Function
 URL was fragile: the Function URL subdomain is regenerated whenever the
-function is replaced (for example a VPC re-IP, via the `replace_triggered_by`
-in `api_runtime.tf`). After such a replacement the deployed build kept
+function is replaced. After such a replacement the deployed build kept
 proxying to the now-deleted URL and every API-proxied path returned
 `HTTP 403 AccessDeniedException` until someone manually rebuilt the Amplify
 app.
@@ -193,18 +186,14 @@ Set `enable_api_custom_domain = false` to fall back to the raw Function URL
 | Variable                      | Description                                          |
 |-------------------------------|------------------------------------------------------|
 | `environment`                 | Deployment environment name (staging, prod)          |
-| `vpc_cidr`                    | CIDR block for the VPC                               |
 | `ses_sender_domain`           | Domain for the SES identity and the environment's DNS record names |
 | `ses_reply_to_email`          | Default Reply-To (defaults to `ammonl@hotmail.com`)  |
-| `db_instance_class`           | RDS instance class                                   |
 | `enable_observability_alerts` | Provision the dashboard, metric alarms, and alerting SNS topic. Defaults to `true`; staging sets it to `false`. |
 | `enable_api_custom_domain`    | Front the Function URL with a stable CloudFront domain and point `API_URL` at it. Defaults to `true`. |
 | `api_domain_prefix`           | Subdomain label for the stable API domain (`loppemarked-api` → `loppemarked-api.<ses_sender_domain>`; kept distinct from un17hub's `api.<domain>`). |
-| `shared_vpc_id`               | Shared default VPC id to run the API Lambda in (from `/shared/network/vpc-id`). Non-null enables shared-tenancy mode. Null keeps the Lambda in the dedicated VPC. |
-| `shared_private_subnet_ids`   | Shared-VPC private egress subnet ids for the Lambda (from `/shared/network/private-subnet-ids`). Required when `shared_vpc_id` is set. |
-| `shared_db_vpc_id`            | Shared-db VPC id to peer with (Phase A output). Null disables peering; peering is also dropped in shared-tenancy mode. |
-| `shared_db_vpc_cidr`          | Shared-db VPC CIDR for the peering route. Required when `shared_db_vpc_id` is set. |
-| `db_secret_id`                | Shared-db credentials secret id/name. When set, the runtime reads its DB connection from this secret. Null keeps the dedicated DB active. |
+| `shared_vpc_id`               | Shared default VPC id to run the API Lambda in (from `/shared/network/vpc-id`). Required. |
+| `shared_private_subnet_ids`   | Shared-VPC private egress subnet ids for the Lambda (from `/shared/network/private-subnet-ids`). Required. |
+| `db_secret_id`                | Shared-db credentials secret id/name. The runtime reads its DB connection from this secret. Required. |
 
 See `variables.tf` for the full list with descriptions and defaults.
 
