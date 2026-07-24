@@ -14,11 +14,11 @@ provider "aws" {
 }
 
 variables {
-  environment          = "test"
-  vpc_cidr             = "10.99.0.0/16"
-  availability_zones   = ["eu-north-1a", "eu-north-1b"]
-  public_subnet_cidrs  = ["10.99.1.0/24", "10.99.2.0/24"]
-  private_subnet_cidrs = ["10.99.10.0/24", "10.99.11.0/24"]
+  environment = "test"
+
+  shared_vpc_id             = "vpc-0123456789abcdef0"
+  shared_private_subnet_ids = ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
+  db_secret_id              = "rds/shared/loppemarked_test"
 
   github_oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
 

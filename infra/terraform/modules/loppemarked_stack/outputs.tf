@@ -1,38 +1,8 @@
 # ---------- Networking ----------
 
-output "vpc_id" {
-  description = "ID of the dedicated VPC, or null once it is retired."
-  value       = one(aws_vpc.main[*].id)
-}
-
-output "public_subnet_ids" {
-  description = "IDs of the public subnets."
-  value       = aws_subnet.public[*].id
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets."
-  value       = aws_subnet.private[*].id
-}
-
-output "api_security_group_id" {
-  description = "Security group ID for the dedicated-VPC API Lambda (unused while in shared-tenancy mode), or null once the dedicated VPC is retired."
-  value       = one(aws_security_group.api[*].id)
-}
-
-output "lambda_shared_security_group_id" {
-  description = "Security group ID for the API Lambda in the shared VPC, or null when not in shared-tenancy mode."
-  value       = one(aws_security_group.lambda_shared[*].id)
-}
-
 output "api_lambda_security_group_id" {
-  description = "Security group ID the API Lambda is actually attached to (shared-VPC group in shared-tenancy mode, dedicated group otherwise)."
-  value       = local.shared_tenancy ? one(aws_security_group.lambda_shared[*].id) : one(aws_security_group.api[*].id)
-}
-
-output "db_security_group_id" {
-  description = "Security group ID for the dedicated RDS database, or null once it is retired."
-  value       = one(aws_security_group.db[*].id)
+  description = "Security group ID the API Lambda is attached to (its egress-only group in the shared VPC)."
+  value       = aws_security_group.lambda_shared.id
 }
 
 # ---------- IAM ----------
@@ -52,22 +22,7 @@ output "ci_terraform_role_arn" {
   value       = data.aws_iam_role.ci_terraform.arn
 }
 
-# ---------- Database ----------
-
-output "db_endpoint" {
-  description = "Dedicated RDS instance endpoint address, or null once it is retired (the runtime uses shared-db)."
-  value       = one(aws_db_instance.main[*].address)
-}
-
-output "db_port" {
-  description = "Dedicated RDS instance port, or null once it is retired."
-  value       = one(aws_db_instance.main[*].port)
-}
-
-output "db_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing dedicated DB credentials, or null once the dedicated DB is retired."
-  value       = one(aws_secretsmanager_secret.db_credentials[*].arn)
-}
+# ---------- Secrets ----------
 
 output "app_secret_arn" {
   description = "ARN of the Secrets Manager secret for application secrets."

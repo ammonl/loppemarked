@@ -71,33 +71,23 @@ module "loppemarked_stack" {
 
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
-  # Prod re-IP is deferred to a scheduled maintenance window. Prod RDS has
-  # deletion_protection enabled, so a CIDR change (which forces a VPC/subnet
-  # and therefore RDS replacement) would fail mid-destroy and leave prod in a
-  # half-torn-down state. Re-IP prod only after disabling deletion protection
-  # and confirming a snapshot, off-hours. Staging re-IPs to 10.2.0.0/16 now.
-  vpc_cidr             = "10.1.0.0/16"
-  availability_zones   = ["eu-north-1a", "eu-north-1b"]
-  public_subnet_cidrs  = ["10.1.1.0/24", "10.1.2.0/24"]
-  private_subnet_cidrs = ["10.1.10.0/24", "10.1.11.0/24"]
-  log_retention_days   = 90
+  log_retention_days = 90
 
-  # Shared-tenancy mode: the API Lambda runs in the shared default VPC's private
-  # egress subnets (published via SSM) and reaches shared-db, Secrets Manager,
-  # and SES over the shared NAT gateway. This retires the requester-side peering
-  # and the dedicated VPC interface endpoints for prod. db_secret_id points the
-  # runtime at the shared-db credentials secret (Phase D prod cutover, #221).
-  # The dedicated VPC/subnets/RDS remain (dormant) until retired separately (#222),
-  # so the cutover is reversible by a config revert.
+  # The API Lambda runs in the shared default VPC's private egress subnets
+  # (published via SSM) and reaches shared-db, Secrets Manager, and SES over the
+  # shared NAT gateway. db_secret_id points the runtime at the shared-db
+  # credentials secret (prod cutover, #221). Prod's dedicated VPC and RDS
+  # instance were retired in #222; the shared VPC and shared-db are now the only
+  # network and database.
+  #
+  # Retention decision (dedicated prod RDS): satisfied by the #236 pre-cutover
+  # pg_dump. The destroy also takes the automatic final snapshot
+  # loppemarked-prod-2026-final. NOTE: prod RDS had deletion_protection enabled;
+  # it must be disabled on the instance (aws rds modify-db-instance
+  # --no-deletion-protection) before the retirement apply, or the destroy fails.
   shared_vpc_id             = data.aws_ssm_parameter.shared_vpc_id.value
   shared_private_subnet_ids = split(",", data.aws_ssm_parameter.shared_private_subnet_ids.value)
   db_secret_id              = "rds/shared/loppemarked_prod"
-
-  db_instance_class        = "db.t4g.micro"
-  db_allocated_storage     = 20
-  db_max_allocated_storage = 100
-  db_backup_retention_days = 35
-  db_multi_az              = false
 
   lambda_reserved_concurrency = -1
 
@@ -125,8 +115,8 @@ output "naming_prefix" {
   value = module.loppemarked_stack.naming_prefix
 }
 
-output "vpc_id" {
-  value = module.loppemarked_stack.vpc_id
+output "api_lambda_security_group_id" {
+  value = module.loppemarked_stack.api_lambda_security_group_id
 }
 
 output "api_runtime_role_arn" {
@@ -139,14 +129,6 @@ output "ci_deploy_role_arn" {
 
 output "ci_terraform_role_arn" {
   value = module.loppemarked_stack.ci_terraform_role_arn
-}
-
-output "db_endpoint" {
-  value = module.loppemarked_stack.db_endpoint
-}
-
-output "db_secret_arn" {
-  value = module.loppemarked_stack.db_secret_arn
 }
 
 output "app_secret_arn" {
