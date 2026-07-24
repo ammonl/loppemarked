@@ -45,7 +45,6 @@ src/
 │   ├── AdminTables.tsx                   Admin table management panel
 │   ├── AdminWaitlist.tsx                 Admin waitlist management
 │   ├── AuditTimeline.tsx                 Audit event timeline display
-│   ├── BrandLogo.tsx                     UN17 brand logo component
 │   ├── DawaAddressInput.tsx              DAWA address autocomplete input
 │   ├── HeroScene.tsx                     Layered raster hero composition primitive
 │   ├── LandingPage.tsx                   Public landing page (hero + CTA)
@@ -60,6 +59,7 @@ src/
 │   ├── TableControls.tsx                 Floor plan zoom/pan controls
 │   ├── TableMap.tsx                      Fælledhuset SVG floor plan
 │   ├── TableMapPage.tsx                  Full table map view + booking flow
+│   ├── Un17Logo.tsx                      Shared @un17/logo web-component wrapper
 │   ├── WaitlistBanner.tsx                Waitlist status banner
 │   ├── WaitlistForm.tsx                  Public waitlist signup form
 │   ├── landing/sceneConfig.ts            Landing-page hero asset slot config
@@ -72,14 +72,12 @@ src/
 │   ├── contactLink.tsx             Contact-link helper for translations
 │   └── translations.ts             Danish and English translation strings
 ├── styles/
-│   ├── brandLogo.css               Brand logo styles
 │   ├── landing.css                 Landing-page styles
 │   ├── table-map.css               Floor-plan styles
 │   ├── theme.ts                    TypeScript design tokens (colors, shadows)
 │   ├── tokens.css                  CSS custom-property design tokens
 │   └── tokens.test.ts              TS↔CSS token parity test
 └── utils/
-    ├── brandEvents.ts              Brand timeline event helpers
     ├── formatDate.ts               Date formatting with Europe/Copenhagen timezone
     └── opening.ts                  Opening datetime comparison helper
 ```

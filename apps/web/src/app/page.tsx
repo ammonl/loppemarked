@@ -6,7 +6,7 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import type { TranslationKey } from "@/i18n/translations";
 import { useHistoryState } from "@/hooks/useHistoryState";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Un17Logo } from "@/components/Un17Logo";
 import { PreOpenPage } from "@/components/PreOpenPage";
 import { LandingPage } from "@/components/LandingPage";
 import { TableMapPage } from "@/components/TableMapPage";
@@ -202,7 +202,7 @@ function SiteHeader({ mode, t, onHome, onAdmin }: SiteHeaderProps) {
         }}
         aria-label={t("common.appName")}
       >
-        <BrandLogo variant="header" reactToBookingSuccess decorative />
+        <Un17Logo variant="header" aria-hidden />
       </button>
 
       <div

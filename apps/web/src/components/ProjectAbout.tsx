@@ -1,6 +1,6 @@
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { EventContactLink } from "@/i18n/contactLink";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Un17Logo } from "@/components/Un17Logo";
 import { colors, fonts } from "@/styles/theme";
 
 export function ProjectAbout() {
@@ -79,7 +79,7 @@ export function ProjectAbout() {
           transform: "rotate(-2.5deg)",
         }}
       >
-        <BrandLogo variant="footer" />
+        <Un17Logo variant="footer" />
       </div>
     </footer>
   );
