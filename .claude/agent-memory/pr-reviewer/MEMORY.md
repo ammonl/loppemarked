@@ -78,3 +78,29 @@
   (shared-db RDS) are different instances with **different passwords** — a single
   `PGPASSWORD` cannot auth both from one process; `~/.pgpass` (two entries by port)
   is the only viable path. Watch runbook examples that imply a single PGPASSWORD.
+
+### Shared-tenancy cutover mechanics (env `main.tf`: shared_vpc_id/db_secret_id)
+- The env-level cutover is minimal and safe: uncomment the two
+  `/shared/network/*` SSM data sources, set `shared_vpc_id` +
+  `shared_private_subnet_ids` + `db_secret_id`, and DROP `shared_db_vpc_id` /
+  `shared_db_vpc_cidr`. Dropping the peering vars is safe because
+  `create_peering = shared_db_vpc_id != null && !shared_tenancy` — setting
+  `shared_vpc_id` forces peering off regardless. Peering vars default null, so
+  omitting them is not a missing-required-var error.
+- Expected plan footprint (matches staging PR #277): in-place Lambda
+  `vpc_config` update (NOT a replacement — `replace_triggered_by` is the
+  dedicated `aws_vpc.main.id`, unchanged); destroy peering conn/options/route;
+  destroy the `[0]` VPC interface endpoints (SES, Secrets Manager) + their SG;
+  create `lambda_shared` egress-only SG in the shared VPC. `database.tf`
+  untouched — dedicated RDS stays dormant (retired in #222).
+- **Monitoring blind spot (prod-relevant):** the RDS alarms
+  (`rds_cpu`/`rds_freeable_memory`/`rds_connections`) and dashboard RDS widgets
+  in `monitoring.tf` are dimensioned on `aws_db_instance.main.identifier` — the
+  DEDICATED instance. After cutover, real DB load is on shared-db (not in this
+  stack), so these alarms watch an idle instance and go silently green. Staging
+  masked this (`enable_observability_alerts=false`); PROD has alerts ON, so the
+  cutover silently drops DB-tier alerting. Confirm infra-shared-db owns
+  equivalent alarms or file a follow-up.
+- Parity nit: the staging cutover added an `api_lambda_security_group_id`
+  output; the prod cutover omitted it. Cosmetic (operator convenience), not
+  functional.
