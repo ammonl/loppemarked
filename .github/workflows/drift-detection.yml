@@ -28,19 +28,12 @@ jobs:
           - scope: staging
             working_directory: infra/terraform/environments/staging
             role_var: TF_ROLE_ARN_STAGING
-            extra_plan_args: ""
           - scope: prod
             working_directory: infra/terraform/environments/prod
             role_var: TF_ROLE_ARN_PROD
-            extra_plan_args: ""
-          # Bootstrap is applied manually with operator credentials. The
-          # CI role here is read-only, so the plan runs in refresh-only
-          # mode and skips state locking to avoid blocking a concurrent
-          # operator apply.
-          - scope: bootstrap
-            working_directory: infra/terraform/bootstrap
-            role_var: TF_ROLE_ARN_BOOTSTRAP
-            extra_plan_args: "-refresh-only -lock=false"
+        # Bootstrap is applied manually with operator credentials and is
+        # intentionally excluded from this matrix — the CI role has no
+        # permissions to plan the bootstrap stack.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,13 +58,9 @@ jobs:
         id: plan
         working-directory: ${{ matrix.working_directory }}
         shell: bash
-        # ${{ matrix.extra_plan_args }} is intentionally unquoted so the
-        # space-separated flags (e.g. `-refresh-only -lock=false`)
-        # word-split into separate terraform arguments. The matrix
-        # values are repo-controlled, not user input.
         run: |
           set +e
-          terraform plan -input=false -no-color -detailed-exitcode ${{ matrix.extra_plan_args }} -out=tfplan 2>&1 | tee plan-output.txt
+          terraform plan -input=false -no-color -detailed-exitcode -out=tfplan 2>&1 | tee plan-output.txt
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
           if [ "$EXIT_CODE" -eq 0 ]; then

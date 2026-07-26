@@ -1,12 +1,13 @@
 # ---------- Bootstrap Drift Detection Role ----------
 #
-# Read-only OIDC role assumed by the daily drift-detection workflow to
-# refresh state for the bootstrap stack and surface unmanaged changes
-# to bootstrap-owned resources (state bucket, lock table, ci_terraform
-# roles). The OIDC provider is read (the data source lookup calls the
-# IAM OIDC read APIs during plan) but managed by un17hub, not this
-# stack. Plan/apply for bootstrap remains an operator action with
-# admin credentials; this role intentionally cannot mutate anything.
+# Read-only OIDC role for refreshing state on the bootstrap stack and
+# surfacing unmanaged changes to bootstrap-owned resources (state bucket,
+# lock table, ci_terraform roles). Not currently assumed by any automated
+# workflow — the scheduled `Drift Detection` workflow
+# (.github/workflows/drift-detection.yml) covers only the staging and prod
+# stacks; the CI role there has no permissions to plan bootstrap. Plan/apply
+# for bootstrap remains an operator action with admin credentials; this role
+# intentionally cannot mutate anything.
 
 data "aws_iam_policy_document" "bootstrap_drift_detect_assume" {
   statement {

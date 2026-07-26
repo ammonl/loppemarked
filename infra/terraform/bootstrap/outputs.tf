@@ -24,6 +24,6 @@ output "ci_terraform_role_arns" {
 }
 
 output "bootstrap_drift_detect_role_arn" {
-  description = "ARN of the read-only role assumed by the daily drift-detection workflow against the bootstrap stack. Populate the GitHub repository variable TF_ROLE_ARN_BOOTSTRAP from this value."
+  description = "ARN of the read-only role for manually checking bootstrap for drift. Not currently assumed by any automated workflow."
   value       = aws_iam_role.bootstrap_drift_detect.arn
 }

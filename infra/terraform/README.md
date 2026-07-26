@@ -59,7 +59,7 @@ other stacks depend on. Run this once before initializing environments.
 | DynamoDB table                 | State locking                                 |
 | IAM OIDC identity provider     | GitHub Actions OIDC trust (keyless CI auth)   |
 | `ci_terraform` IAM role + inline policies | Per-environment plan/apply role assumed by the Terraform workflow |
-| `bootstrap-drift-detect` IAM role | Read-only role assumed by the daily drift-detection workflow against the bootstrap stack |
+| `bootstrap-drift-detect` IAM role | Read-only role for manually checking bootstrap for drift (not assumed by any automated workflow) |
 
 The `ci_terraform` role is intentionally owned by bootstrap (not by the
 per-environment stack it governs). When a permission is added to the
@@ -105,18 +105,14 @@ After the bootstrap resources exist (and state is in S3), environment
 stacks can be initialized with their remote backend. No manual AWS
 Console steps are required.
 
-### Daily drift detection
+### Drift detection
 
-The `Drift Detection` workflow (`.github/workflows/drift-detection.yml`)
-runs `terraform plan -detailed-exitcode` against the bootstrap stack on
-the same daily schedule as the per-environment stacks. Bootstrap is
-planned with `-refresh-only -lock=false` so the read-only drift run
-cannot block a concurrent operator apply.
-
-The workflow assumes the `bootstrap-drift-detect` IAM role created by
-bootstrap. After applying bootstrap, populate the
-`TF_ROLE_ARN_BOOTSTRAP` GitHub repository variable from the
-`bootstrap_drift_detect_role_arn` output.
+Bootstrap does not participate in the automated `Drift Detection` workflow
+(`.github/workflows/drift-detection.yml`) — that workflow's CI role is
+scoped to the `staging` and `prod` stacks only. Bootstrap has no plan/apply
+automation of its own, so an operator should periodically run
+`terraform plan` from `infra/terraform/bootstrap/` with admin credentials to
+check for drift manually.
 
 ### GitHub OIDC provider (owned by un17hub)
 
@@ -209,11 +205,10 @@ prevent parallel applies to the same environment.
 Each environment has a `ci-terraform` IAM role assumed via OIDC. Role ARNs
 are stored in GitHub repository variables:
 
-| Variable                | Purpose                              |
-| ----------------------- | ------------------------------------ |
-| `TF_ROLE_ARN_STAGING`   | OIDC role ARN for staging plan/apply |
-| `TF_ROLE_ARN_PROD`      | OIDC role ARN for prod plan/apply    |
-| `TF_ROLE_ARN_BOOTSTRAP` | OIDC role ARN for bootstrap drift detection (read-only) |
+| Variable              | Purpose                              |
+| --------------------- | ------------------------------------ |
+| `TF_ROLE_ARN_STAGING` | OIDC role ARN for staging plan/apply |
+| `TF_ROLE_ARN_PROD`    | OIDC role ARN for prod plan/apply    |
 
 ## Amplify Hosting
 
