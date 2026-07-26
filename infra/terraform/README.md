@@ -59,7 +59,6 @@ other stacks depend on. Run this once before initializing environments.
 | DynamoDB table                 | State locking                                 |
 | IAM OIDC identity provider     | GitHub Actions OIDC trust (keyless CI auth)   |
 | `ci_terraform` IAM role + inline policies | Per-environment plan/apply role assumed by the Terraform workflow |
-| `bootstrap-drift-detect` IAM role | Read-only role for manually checking bootstrap for drift (not assumed by any automated workflow) |
 
 The `ci_terraform` role is intentionally owned by bootstrap (not by the
 per-environment stack it governs). When a permission is added to the

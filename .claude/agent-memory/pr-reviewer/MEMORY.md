@@ -53,6 +53,24 @@
   OIDC data-source lookup by URL needs `iam:ListOpenIDConnectProviders` +
   `iam:GetOpenIDConnectProvider` + `iam:ListOpenIDConnectProviderTags` (present
   as the `OIDCProviderRead` statement).
+- **Trust policy is OIDC-only**: `sts:AssumeRoleWithWebIdentity` from the GitHub
+  federated provider with `sub` StringEquals `repo:<repo>:ref:refs/heads/main`.
+  No operator/admin principal → a human at a terminal CANNOT assume it. Flag any
+  doc/comment that calls it a role "for manual drift checks" (#288/PR #289 did).
+- Since #288 the role is assumed by NO workflow — drift-detection.yml's matrix is
+  staging + prod only. Kept in config deliberately; see prevent_destroy note below.
+
+### `prevent_destroy` does NOT survive removal from configuration
+- Verified empirically (tf 1.15.8, `terraform_data` + `prevent_destroy = true`,
+  applied then deleted the block): plan is `0 to add, 0 to change, 1 to destroy`
+  with **no error**. The orphan destroy node has no config attached, so the
+  prevent_destroy check is skipped entirely. Matches upstream docs.
+- So "we kept the dead resource because removing the block would error out on
+  prevent_destroy" is a WRONG rationale — removing the block silently destroys.
+  Correct mechanism, already used in this repo: a `removed { from = ...
+  lifecycle { destroy = false } }` block (`bootstrap/main.tf`).
+- `infra/terraform/bootstrap/main.tf` has `required_version = ">= 1.7.0"`, so
+  `removed` blocks are available there (env stacks may still be lower — check).
 
 ### count-gating an existing single resource (retirement PRs, e.g. #222)
 - **`replace_triggered_by = [aws_resource.x]` (whole resource) to a count-gated

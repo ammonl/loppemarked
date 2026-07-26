@@ -22,8 +22,3 @@ output "ci_terraform_role_arns" {
   description = "Map of environment name → CI Terraform role ARN. Populate the GitHub repository variables (TF_ROLE_ARN_STAGING / TF_ROLE_ARN_PROD) from these values."
   value       = { for env, role in aws_iam_role.ci_terraform : env => role.arn }
 }
-
-output "bootstrap_drift_detect_role_arn" {
-  description = "ARN of the read-only role for manually checking bootstrap for drift. Not currently assumed by any automated workflow."
-  value       = aws_iam_role.bootstrap_drift_detect.arn
-}
