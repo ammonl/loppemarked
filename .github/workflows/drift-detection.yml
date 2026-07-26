@@ -24,6 +24,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Bootstrap is applied manually with operator credentials and is
+        # intentionally excluded from this matrix — the CI role has no
+        # permissions to plan the bootstrap stack.
         include:
           - scope: staging
             working_directory: infra/terraform/environments/staging
@@ -31,9 +34,6 @@ jobs:
           - scope: prod
             working_directory: infra/terraform/environments/prod
             role_var: TF_ROLE_ARN_PROD
-        # Bootstrap is applied manually with operator credentials and is
-        # intentionally excluded from this matrix — the CI role has no
-        # permissions to plan the bootstrap stack.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
