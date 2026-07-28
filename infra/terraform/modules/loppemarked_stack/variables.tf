@@ -17,7 +17,7 @@ variable "environment" {
 
 # ---------- Shared-VPC tenancy ----------
 #
-# The API Lambda runs inside the shared default VPC (owned by infra-shared-db).
+# The API Lambda runs inside the shared default VPC (owned by un17-infra-shared).
 # It attaches to the published private egress subnets and reaches shared-db,
 # Secrets Manager, and SES over the shared NAT gateway. The dedicated
 # per-environment VPCs and RDS instances were retired in #222; the shared VPC is
@@ -47,7 +47,7 @@ variable "shared_private_subnet_ids" {
 #
 # The API runtime builds its DB connection entirely from this shared-db
 # credentials secret (host, port, database, username, password), owned by
-# infra-shared-db. It is the only DB source now that the dedicated RDS instances
+# un17-infra-shared. It is the only DB source now that the dedicated RDS instances
 # are retired.
 
 variable "db_secret_id" {

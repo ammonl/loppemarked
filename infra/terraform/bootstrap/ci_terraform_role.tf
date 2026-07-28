@@ -630,7 +630,7 @@ resource "aws_iam_role_policy" "ci_terraform_resources" {
 #
 # The environment stacks read the shared default-VPC network identifiers
 # (/shared/network/vpc-id, /shared/network/private-subnet-ids) published by
-# infra-shared-db to attach the API Lambda to the shared subnets. This lives in
+# un17-infra-shared to attach the API Lambda to the shared subnets. This lives in
 # its own attached managed policy rather than the terraform-resources inline
 # policy: that inline policy is already at IAM's 10,240-byte aggregate limit for
 # a role's inline policies, and managed policies do not count against it.

@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "api_secrets" {
     # another project's. No explicit kms:Decrypt is needed: app-secrets uses the
     # AWS-managed aws/secretsmanager key (which grants decrypt to the account via
     # Secrets Manager), and the shared-db secret's key access is granted by
-    # infra-shared-db.
+    # un17-infra-shared.
     resources = [
       "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:${local.naming_prefix}-*",
       "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:${var.db_secret_id}-*",

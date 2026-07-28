@@ -201,7 +201,7 @@ In production, CloudWatch alarms cover the major failure modes:
 
 Alarm notifications are delivered via SNS email subscription (configured per environment via `alarm_email`).
 
-A CloudWatch dashboard aggregates Lambda and SES metrics. RDS alarms and widgets were removed when the dedicated RDS instances were retired (#222); shared-db metrics and alarms are owned by the `infra-shared-db` repo.
+A CloudWatch dashboard aggregates Lambda and SES metrics. RDS alarms and widgets were removed when the dedicated RDS instances were retired (#222); shared-db metrics and alarms are owned by the `un17-infra-shared` repo.
 
 **Drift detection** runs daily via `.github/workflows/drift-detection.yml`. If Terraform detects infrastructure drift, a GitHub issue is created automatically.
 

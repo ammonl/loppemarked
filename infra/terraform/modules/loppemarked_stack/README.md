@@ -117,7 +117,7 @@ to `https://loppemarked.staging.un17hub.com` for staging and
 
 ## Shared-VPC tenancy
 
-The API Lambda runs in the shared default VPC owned by infra-shared-db. Set
+The API Lambda runs in the shared default VPC owned by un17-infra-shared. Set
 `shared_vpc_id` (and `shared_private_subnet_ids`) to attach it to the published
 private egress subnets with its own egress-only `lambda_shared` security group;
 it reaches shared-db (VPC-local), Secrets Manager, and SES over the shared NAT

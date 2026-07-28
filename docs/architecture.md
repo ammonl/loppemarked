@@ -321,7 +321,7 @@ erDiagram
 All AWS infrastructure is managed via Terraform with isolated staging and production environments.
 
 > **Networking migration (complete).** Both API Lambdas run in the **shared
-> default VPC** (`172.31.0.0/16`, owned by infra-shared-db), using its private
+> default VPC** (`172.31.0.0/16`, owned by un17-infra-shared), using its private
 > egress subnets and shared NAT gateway. The Lambda reaches shared-db
 > (VPC-local), Secrets Manager, and SES over the shared NAT. The dedicated
 > per-environment VPCs (subnets, gateways, interface endpoints, flow logs), the
@@ -339,7 +339,7 @@ graph TB
     end
 
     subgraph "AWS (eu-north-1)"
-        subgraph "Shared default VPC (infra-shared-db)"
+        subgraph "Shared default VPC (un17-infra-shared)"
             SHARED_SUB[Private Egress Subnets<br/>172.31.10x.x]
             NAT[Shared NAT Gateway]
             SHARED_RDS[(shared-db<br/>RDS PostgreSQL)]

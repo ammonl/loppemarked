@@ -62,7 +62,7 @@ done
 # Both environments are on shared-db (their dedicated RDS instances were retired
 # in #222): the credentials live in the per-environment shared-db secret, whose
 # connection JSON uses the `database` key. The secrets are owned by the
-# infra-shared-db repo.
+# un17-infra-shared repo.
 SECRET_NAME="rds/shared/loppemarked_${ENV}"
 DBNAME_KEY=".database"
 
