@@ -49,7 +49,7 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
-# Shared default-VPC network identifiers published by infra-shared-db. Resolved
+# Shared default-VPC network identifiers published by un17-infra-shared. Resolved
 # at plan time so the IDs are never hardcoded here.
 data "aws_ssm_parameter" "shared_vpc_id" {
   name = "/shared/network/vpc-id"

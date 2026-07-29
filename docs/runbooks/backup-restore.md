@@ -3,7 +3,7 @@
 ## Overview
 
 Both environments now run on **shared-db** — a shared RDS PostgreSQL instance
-owned by the `infra-shared-db` repo:
+owned by the `un17-infra-shared` repo:
 
 | Environment | Shared-db credentials secret        |
 |-------------|-------------------------------------|
@@ -11,7 +11,7 @@ owned by the `infra-shared-db` repo:
 | prod        | `rds/shared/loppemarked_prod`       |
 
 Backups, automated-backup retention, and point-in-time restore for shared-db
-are owned by `infra-shared-db` — **use its runbooks** for any backup or restore
+are owned by `un17-infra-shared` — **use its runbooks** for any backup or restore
 operation. This repo no longer provisions a dedicated RDS instance for either
 environment.
 
@@ -81,6 +81,6 @@ Recorded here for audit; no ongoing action.
 
 ## References
 
-- Shared-db backup/restore: `infra-shared-db` repo runbooks
+- Shared-db backup/restore: `un17-infra-shared` repo runbooks
 - Port-forward helper: `scripts/db-port-forward.sh`
 - Incident triage: `docs/runbooks/incident-triage.md`

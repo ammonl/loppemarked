@@ -149,7 +149,7 @@
   DEDICATED instance. After cutover, real DB load is on shared-db (not in this
   stack), so these alarms watch an idle instance and go silently green. Staging
   masked this (`enable_observability_alerts=false`); PROD has alerts ON, so the
-  cutover silently drops DB-tier alerting. Confirm infra-shared-db owns
+  cutover silently drops DB-tier alerting. Confirm un17-infra-shared owns
   equivalent alarms or file a follow-up.
 - Parity nit: the staging cutover added an `api_lambda_security_group_id`
   output; the prod cutover omitted it. Cosmetic (operator convenience), not

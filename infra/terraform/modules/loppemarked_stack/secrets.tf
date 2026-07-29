@@ -3,7 +3,7 @@
 # Application-scoped runtime secrets. This outlived the dedicated RDS instance
 # (retired in #222) and is the only per-stack secret this module still owns; the
 # DB connection now comes entirely from the shared-db credentials secret owned by
-# infra-shared-db (var.db_secret_id).
+# un17-infra-shared (var.db_secret_id).
 #
 # Encrypted with the AWS-managed `aws/secretsmanager` key. The per-stack data CMK
 # that previously encrypted this secret (and the retired dedicated RDS + DB

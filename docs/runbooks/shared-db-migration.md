@@ -32,7 +32,7 @@ positions and the artifact is carried across.
 - AWS credentials with access to the dedicated-prod SSM bastion + Secrets Manager,
   and (separately) to the shared-db SSM bastion.
 - The shared-db credentials secret `rds/shared/loppemarked_prod` already provisioned
-  by infra-shared-db, and the shared-db bastion instance id.
+  by un17-infra-shared, and the shared-db bastion instance id.
 
 ## Migration-tracking note
 
@@ -172,7 +172,7 @@ not a restore.
 
 > **No longer available.** #222 retired the dedicated prod VPC and RDS instance,
 > so the config-revert rollback above no longer applies — there is no dedicated
-> DB to fall back to. Recovery is now via shared-db (owned by `infra-shared-db`);
+> DB to fall back to. Recovery is now via shared-db (owned by `un17-infra-shared`);
 > see `docs/runbooks/backup-restore.md`.
 
 ## Rehearsal & timing

@@ -1,9 +1,9 @@
 # ---------- Shared-VPC Lambda Security Group ----------
 #
-# The API Lambda attaches to the shared default VPC (owned by infra-shared-db).
+# The API Lambda attaches to the shared default VPC (owned by un17-infra-shared).
 # Security groups are VPC-scoped, so this environment gets its own egress-only
 # group in the shared VPC. Ingress to shared-db is authorized on the shared RDS
-# security group (owned by infra-shared-db), which already admits the
+# security group (owned by un17-infra-shared), which already admits the
 # default-VPC CIDR; egress here just needs to reach shared-db, Secrets Manager,
 # and SES via the shared NAT.
 #
