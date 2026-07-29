@@ -370,7 +370,6 @@ graph TB
             IAM_API[API Runtime Role]
             IAM_CI[CI Deploy Role]
             IAM_TF[CI Terraform Role]
-            KMS[KMS Encryption Key]
             SECRETS[Secrets Manager]
         end
 
@@ -418,6 +417,20 @@ Both environments run entirely on the shared default VPC and shared-db. The
 dedicated per-environment VPCs (`10.2.0.0/16` staging, `10.1.0.0/16` prod) and
 RDS instances were retired in #222.
 
+### Log Encryption
+
+The API log group uses CloudWatch Logs' default AWS-owned encryption. The
+per-stack customer-managed key that used to encrypt it was retired in #298 — it
+cost about $1/month per environment and logs are encrypted at rest either way.
+Log events written before that removal are unreadable, which the account owner
+accepted rather than waiting out the retention window.
+
+The alarm SNS topic has no server-side encryption, deliberately: SNS SSE is
+opt-in with no AWS-owned fallback, and the only key that would keep CloudWatch
+alarms able to publish is a customer-managed one naming `cloudwatch.amazonaws.com`
+in its policy — which is the cost this retirement exists to remove. See the
+module README for the full reasoning.
+
 ### Terraform Module Structure
 
 ```
@@ -437,7 +450,7 @@ infra/terraform/
         ├── secrets.tf         Application secrets (Secrets Manager)
         ├── dns.tf             DNS ownership notes (records live in the un17hub repo)
         ├── iam.tf             IAM roles and policies
-        ├── monitoring.tf      CloudWatch, KMS, Alarms, Dashboard, SNS
+        ├── monitoring.tf      CloudWatch, Alarms, Dashboard, SNS
         ├── networking.tf      Shared-VPC Lambda security group
         ├── outputs.tf         Module outputs
         ├── ses.tf             SES identity, DKIM, config set

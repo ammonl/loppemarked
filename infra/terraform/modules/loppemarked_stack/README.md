@@ -12,7 +12,7 @@ the staging and production environment stacks.
 | `secrets.tf`     | Application secrets (Secrets Manager, AWS-managed key)      |
 | `ses.tf`         | SES domain identity, DKIM, configuration set               |
 | `dns.tf`         | None — documents that all Route 53 records are owned by the un17hub DNS repo (see outputs) |
-| `monitoring.tf`  | CloudWatch log groups, KMS encryption key, optional dashboard / alarms / SNS topic |
+| `monitoring.tf`  | CloudWatch log groups, optional dashboard / alarms / SNS topic |
 | `api_runtime.tf` | API Lambda function, function URL, EventBridge schedules   |
 | `api_domain.tf`  | Stable API domain: us-east-1 ACM cert + CloudFront distribution fronting the Function URL (no DNS records) |
 | `amplify.tf`     | Amplify app (managed repository URL), branch, and custom domain association |
@@ -31,6 +31,42 @@ ACM certificates must live in `us-east-1`, so the stable API domain
 (`api_domain.tf`) requests its certificate through the aliased provider. Each
 environment stack declares both and passes them via the module `providers`
 map.
+
+## Log & alarm-topic encryption
+
+The API log group is encrypted at rest with CloudWatch Logs' default AWS-owned
+key. Each environment used to run a per-stack customer-managed key
+(`aws_kms_key.logs`) instead, which cost about $1/month and bought nothing this
+project needs — logs are encrypted either way. It was removed along with its
+alias, key policy, and the `logs_kms_key_arn` output (#298).
+
+Log events written *before* that removal stay encrypted under the CMK, and
+scheduling a KMS key for deletion makes it unusable immediately — so that history
+is **unreadable** from the moment the removal applies. Accepting that loss rather
+than waiting out the retention window was a deliberate call by the account owner.
+If you are chasing an incident from before the retirement, those logs are gone,
+not broken.
+
+It is recoverable for exactly one window: the key sits in `PendingDeletion` for
+30 days (the provider default), and `aws kms cancel-key-deletion` followed by
+`aws kms enable-key` within that window makes the old events readable again.
+After the 30 days the key material is destroyed and there is no way back.
+
+The alarm SNS topic has **no** server-side encryption. SNS has no AWS-owned
+fallback — SSE is opt-in — and an AWS service event source can publish to an
+encrypted topic only through a customer-managed key whose policy names that
+service principal. `alias/aws/sns` cannot be given such a policy, so encrypting
+the topic with it would silently block the CloudWatch alarms that are its only
+publisher. The topic carries alarm name, metric, and state, and no personal data.
+No compensating topic policy is needed: the default one (`AWS:SourceOwner` equal
+to the account) already lets CloudWatch alarms publish.
+
+That is not hypothetical. While the topic was encrypted, the key policy granted
+only `logs.<region>.amazonaws.com` and never `cloudwatch.amazonaws.com`, so prod
+alarm notifications were being rejected at the KMS step for as long as SSE was
+on — dropping it repairs that. Re-verify delivery end to end after any change
+here, and check the email subscription is `Confirmed` rather than
+`PendingConfirmation` while you are in there.
 
 ## Least-privilege IAM
 
