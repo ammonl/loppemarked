@@ -140,8 +140,8 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       # protocol are all in-place updates rather than replacements.
       "ec2:ModifySecurityGroupRules",
       # The group is egress-only, so no resource here authorizes ingress, and
-      # the only groups that ever carried ingress rules — the dedicated-VPC api,
-      # db, and vpc-endpoint groups — were destroyed along with that VPC. The
+      # the only groups that ever carried ingress rules — the dedicated-VPC db
+      # and vpc-endpoint groups — were destroyed along with that VPC. The
       # pair is held anyway: ruling out an apply path that still calls these
       # takes a CloudTrail lookup, and no identity this repository defines is
       # granted cloudtrail:LookupEvents, so only an operator can settle it.
