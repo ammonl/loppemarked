@@ -111,6 +111,37 @@
 - IAM policies validated by `modules/loppemarked_stack/iam.tftest.hcl`
   (`terraform test`) — asserts no wildcard resources. New provider aliases must
   be declared in the test file too (`aws.us_east_1`).
+- `bootstrap/ci_terraform_role.tftest.hcl` (added #299/PR #308) allowlists the
+  role's `ec2:`/`rds:` actions and asserts inline-policy size. CI (`infra-checks`,
+  terraform **1.7.5**) runs `init -backend=false` + `validate` + `test` on
+  bootstrap. Verified: `override_data`/`override_resource` work on 1.7.5 and the
+  suite needs no AWS credentials.
+- **Known holes in that guard** (verified empirically, still open unless fixed):
+  a bare `Action: "*"` passes everything (`startswith(action, "ec2:")` filters it
+  out); `"EC2:CreateVpc"` evades on case (IAM matches action prefixes
+  case-insensitively). `"ec2:*"`/`"rds:*"` ARE caught. An `Allow` statement using
+  `not_actions` fails closed but with an opaque "object does not have an
+  attribute named Action" error and *skips* the remaining runs — don't "fix" that
+  with `try()`/`lookup()`, which converts it to a silent pass.
+  The guard reads only `ci_terraform_resources`, not `ci_terraform_state` nor the
+  attached `ci_terraform_shared_network` managed policy.
+
+### ci-terraform inline policy size
+- IAM limit is **10,240 bytes aggregate per role, whitespace excluded**; one role
+  per env (`aws_iam_role.ci_terraform` `for_each`) with exactly two inline
+  policies (`terraform-state`, `terraform-resources`) + one attached managed
+  policy (shared-network SSM, doesn't count).
+- Measured (whitespace-stripped, prod): **main = 10183** (99.4% — genuinely at the
+  limit), **after PR #308 = 7989**. Raw/pretty-printed the resources doc is 10155
+  bytes, so never compare the un-stripped length against 10240.
+
+### Provider API-call behavior when reviewing IAM pruning
+- See [aws-provider-api-calls.md](aws-provider-api-calls.md) — verified call
+  chains for `aws_security_group` (its **delete detaches+deletes lingering Lambda
+  ENIs**, so `ec2:Detach/DeleteNetworkInterface` are required), SG create's
+  default-egress revoke, `ModifySecurityGroupRules` for the rule resources, and
+  proof that `aws_lambda_function` makes no EC2 calls at all. Includes the
+  pclntab/objdump technique for checking this against the stripped provider binary.
 
 ## Shared-DB migration (#221 cutover, #223 umbrella, #267 VPC centralization)
 
@@ -141,16 +172,17 @@
   `vpc_config` update (NOT a replacement — `replace_triggered_by` is the
   dedicated `aws_vpc.main.id`, unchanged); destroy peering conn/options/route;
   destroy the `[0]` VPC interface endpoints (SES, Secrets Manager) + their SG;
-  create `lambda_shared` egress-only SG in the shared VPC. `database.tf`
-  untouched — dedicated RDS stays dormant (retired in #222).
-- **Monitoring blind spot (prod-relevant):** the RDS alarms
-  (`rds_cpu`/`rds_freeable_memory`/`rds_connections`) and dashboard RDS widgets
-  in `monitoring.tf` are dimensioned on `aws_db_instance.main.identifier` — the
-  DEDICATED instance. After cutover, real DB load is on shared-db (not in this
-  stack), so these alarms watch an idle instance and go silently green. Staging
-  masked this (`enable_observability_alerts=false`); PROD has alerts ON, so the
-  cutover silently drops DB-tier alerting. Confirm un17-infra-shared owns
-  equivalent alarms or file a follow-up.
+  create `lambda_shared` egress-only SG in the shared VPC.
+- **OUTDATED as of #299/PR #308 — do not re-flag:** `database.tf` and the RDS
+  alarms/dashboard widgets in `monitoring.tf` are **gone**. As of that PR the
+  module contains **no `aws_db_*`/`aws_rds_*` resource or data source at all**
+  (`grep -rE '^(resource|data) "aws_(db|rds)' infra/` → nothing), and the env
+  stacks' only data sources are SSM + the OIDC provider. Consequence: nothing in
+  the configuration can emit an `rds:` call, so the surviving `RDSRead` statement
+  in `ci_terraform_role.tf` is dead.
+- **Monitoring blind spot still open (prod-relevant):** DB-tier alerting now
+  lives nowhere in this repo. Confirm un17-infra-shared owns equivalent alarms
+  for the shared instance, or file a follow-up.
 - Parity nit: the staging cutover added an `api_lambda_security_group_id`
   output; the prod cutover omitted it. Cosmetic (operator convenience), not
   functional.
