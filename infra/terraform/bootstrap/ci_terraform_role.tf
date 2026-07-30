@@ -139,10 +139,12 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       # aws_vpc_security_group_egress_rule in place: its description, CIDR, and
       # protocol are all in-place updates rather than replacements.
       "ec2:ModifySecurityGroupRules",
-      # The group is egress-only, so no resource here authorizes ingress. The
-      # pair is held until a CloudTrail lookup confirms that the calls this role
-      # made in the last 90 days all belong to security groups that no longer
-      # exist.
+      # The group is egress-only, so no resource here authorizes ingress, and
+      # the only groups that ever carried ingress rules — the dedicated-VPC api,
+      # db, and vpc-endpoint groups — were destroyed along with that VPC. The
+      # pair is held anyway: ruling out an apply path that still calls these
+      # takes a CloudTrail lookup, and no identity this repository defines is
+      # granted cloudtrail:LookupEvents, so only an operator can settle it.
       "ec2:AuthorizeSecurityGroupIngress",
       "ec2:RevokeSecurityGroupIngress",
       "ec2:DescribeVpcs",
@@ -432,10 +434,11 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
 
   # Read-only. This stack owns no database — the API runtime reaches the shared
   # RDS instance through var.db_secret_id, and un17-infra-shared owns the
-  # instance, its subnet group, and its parameter group. Nothing in the
-  # configuration is known to call these; they are kept because a read-only
-  # grant is cheap and dropping them belongs with the CloudTrail sweep that
-  # settles the ingress pair above.
+  # instance, its subnet group, and its parameter group. No RDS resource or data
+  # source appears in the configuration, and neither environment's state holds
+  # one, so no plan or apply has a path that reaches these calls. They are kept
+  # because a read-only grant is cheap and dropping them belongs with the
+  # CloudTrail sweep that settles the ingress pair above.
   #
   # ci_terraform_role.tftest.hcl asserts this list against an allowlist.
   statement {
