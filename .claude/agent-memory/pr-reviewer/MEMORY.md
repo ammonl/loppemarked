@@ -47,18 +47,17 @@
   to publish. Exception: `aws_amplify_domain_association` self-provisions its
   own cert + records.
 
-### Bootstrap drift-detect role
-- `bootstrap/bootstrap_drift_detect_role.tf` is read-only; must carry IAM read
-  perms for every data source read during `terraform plan -refresh-only`.
-  OIDC data-source lookup by URL needs `iam:ListOpenIDConnectProviders` +
-  `iam:GetOpenIDConnectProvider` + `iam:ListOpenIDConnectProviderTags` (present
-  as the `OIDCProviderRead` statement).
-- **Trust policy is OIDC-only**: `sts:AssumeRoleWithWebIdentity` from the GitHub
-  federated provider with `sub` StringEquals `repo:<repo>:ref:refs/heads/main`.
-  No operator/admin principal → a human at a terminal CANNOT assume it. Flag any
-  doc/comment that calls it a role "for manual drift checks" (#288/PR #289 did).
-- Since #288 the role is assumed by NO workflow — drift-detection.yml's matrix is
-  staging + prod only. Kept in config deliberately; see prevent_destroy note below.
+### Bootstrap drift-detect role (removed — historical)
+- `bootstrap/bootstrap_drift_detect_role.tf` no longer exists: #289 deleted the
+  role + inline policy from configuration and dropped bootstrap from the
+  `drift-detection.yml` matrix (staging + prod only since). Do not treat
+  references to that file or to `bootstrap_drift_detect_role_arn` as live config.
+- Deleting it from config could not delete it from AWS: CI never applies
+  bootstrap (`terraform.yml` covers environments/{staging,prod} only), so the
+  role sat orphaned in bootstrap state as 2 permanent pending destroys in every
+  bootstrap plan until an operator apply (#305). Review lesson: a resource
+  removal under `bootstrap/` is only half-done at merge — completion needs a
+  manual operator `terraform apply`, and no automation detects the gap.
 
 ### `prevent_destroy` does NOT survive removal from configuration
 - Verified empirically (tf 1.15.8, `terraform_data` + `prevent_destroy = true`,
