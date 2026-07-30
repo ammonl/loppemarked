@@ -119,75 +119,51 @@ resource "aws_iam_role_policy" "ci_terraform_state" {
 data "aws_iam_policy_document" "ci_terraform_resources" {
   for_each = var.ci_terraform_environments
 
+  # The only network resource this stack owns is the API Lambda's egress-only
+  # security group in the shared VPC (modules/loppemarked_stack/networking.tf).
+  # The shared VPC's own network objects — subnets, gateways, route tables, flow
+  # logs — belong to un17-infra-shared, so nothing here manages them.
+  #
+  # ci_terraform_role.tftest.hcl asserts this list against an allowlist.
   statement {
-    sid    = "VPCNetworking"
+    sid    = "SharedVpcSecurityGroup"
     effect = "Allow"
     actions = [
-      "ec2:CreateVpc",
-      "ec2:DeleteVpc",
-      "ec2:DescribeVpcs",
-      "ec2:DescribeVpcAttribute",
-      "ec2:ModifyVpcAttribute",
-      "ec2:CreateSubnet",
-      "ec2:DeleteSubnet",
-      "ec2:DescribeSubnets",
-      "ec2:ModifySubnetAttribute",
-      "ec2:CreateInternetGateway",
-      "ec2:DeleteInternetGateway",
-      "ec2:AttachInternetGateway",
-      "ec2:DetachInternetGateway",
-      "ec2:DescribeInternetGateways",
-      "ec2:CreateVpcEndpoint",
-      "ec2:DeleteVpcEndpoints",
-      "ec2:ModifyVpcEndpoint",
-      "ec2:DescribeVpcEndpoints",
-      "ec2:DescribeVpcEndpointServices",
-      "ec2:DescribePrefixLists",
-      "ec2:ReleaseAddress",
-      "ec2:DisassociateAddress",
-      "ec2:DescribeAddresses",
-      "ec2:DescribeAddressesAttribute",
-      "ec2:CreateRouteTable",
-      "ec2:DeleteRouteTable",
-      "ec2:DescribeRouteTables",
-      "ec2:CreateRoute",
-      "ec2:DeleteRoute",
-      "ec2:ReplaceRoute",
-      "ec2:AssociateRouteTable",
-      "ec2:DisassociateRouteTable",
-      "ec2:CreateVpcPeeringConnection",
-      "ec2:DeleteVpcPeeringConnection",
-      "ec2:AcceptVpcPeeringConnection",
-      "ec2:RejectVpcPeeringConnection",
-      "ec2:DescribeVpcPeeringConnections",
-      "ec2:ModifyVpcPeeringConnectionOptions",
       "ec2:CreateSecurityGroup",
       "ec2:DeleteSecurityGroup",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeSecurityGroupRules",
-      "ec2:AuthorizeSecurityGroupIngress",
-      "ec2:RevokeSecurityGroupIngress",
       "ec2:AuthorizeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupEgress",
-      "ec2:CreateFlowLogs",
-      "ec2:DeleteFlowLogs",
-      "ec2:DescribeFlowLogs",
+      # ModifySecurityGroupRules is how the provider edits an existing
+      # aws_vpc_security_group_egress_rule in place: its description, CIDR, and
+      # protocol are all in-place updates rather than replacements.
+      "ec2:ModifySecurityGroupRules",
+      # The group is egress-only, so no resource here authorizes ingress. The
+      # pair is held until a CloudTrail lookup confirms that the calls this role
+      # made in the last 90 days all belong to security groups that no longer
+      # exist.
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:RevokeSecurityGroupIngress",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeVpcAttribute",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeNetworkInterfaceAttribute",
       "ec2:CreateTags",
       "ec2:DeleteTags",
       "ec2:DescribeTags",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DescribeNetworkInterfaceAttribute",
-      # ENI management is required to tear down subnets during a VPC re-IP: the
-      # provider must detach and delete the leftover RDS and Lambda ENIs once
-      # those resources are destroyed before the old subnets can be removed.
-      "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface",
-      "ec2:AttachNetworkInterface",
+      # Destroying a security group takes these two, under this role's
+      # credentials rather than the Lambda service's: the provider's security
+      # group delete sweeps up ENIs the Lambda service has not released yet
+      # (deleteLingeringENIs), detaching and deleting each one. The group is
+      # create_before_destroy, so any replacement of it — a shared_vpc_id
+      # republished by un17-infra-shared, a description edit — destroys the old
+      # group while the Lambda's ENIs are still attached, which is exactly that
+      # path. Without these, such an apply fails midway with the new group
+      # created and the old one orphaned.
       "ec2:DetachNetworkInterface",
-      "ec2:ModifyNetworkInterfaceAttribute",
-      "ec2:CreateNetworkInterfacePermission",
-      "ec2:DeleteNetworkInterfacePermission",
-      "ec2:DescribeAvailabilityZones",
+      "ec2:DeleteNetworkInterface",
     ]
     resources = ["*"]
   }
@@ -454,6 +430,14 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
     ]
   }
 
+  # Read-only. This stack owns no database — the API runtime reaches the shared
+  # RDS instance through var.db_secret_id, and un17-infra-shared owns the
+  # instance, its subnet group, and its parameter group. Nothing in the
+  # configuration is known to call these; they are kept because a read-only
+  # grant is cheap and dropping them belongs with the CloudTrail sweep that
+  # settles the ingress pair above.
+  #
+  # ci_terraform_role.tftest.hcl asserts this list against an allowlist.
   statement {
     sid    = "RDSRead"
     effect = "Allow"
@@ -468,56 +452,6 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "rds:DescribeOrderableDBInstanceOptions",
     ]
     resources = ["*"]
-  }
-
-  statement {
-    sid    = "RDSManage"
-    effect = "Allow"
-    actions = [
-      "rds:CreateDBInstance",
-      "rds:DeleteDBInstance",
-      "rds:ModifyDBInstance",
-      "rds:RebootDBInstance",
-      "rds:CreateDBSnapshot",
-      "rds:DeleteDBSnapshot",
-      "rds:AddTagsToResource",
-      "rds:RemoveTagsFromResource",
-    ]
-    resources = [
-      "arn:aws:rds:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:db:${each.value.naming_prefix}-*",
-      "arn:aws:rds:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:snapshot:${each.value.naming_prefix}-*",
-    ]
-  }
-
-  statement {
-    sid    = "RDSSubnetGroups"
-    effect = "Allow"
-    actions = [
-      "rds:CreateDBSubnetGroup",
-      "rds:DeleteDBSubnetGroup",
-      "rds:ModifyDBSubnetGroup",
-      "rds:AddTagsToResource",
-      "rds:RemoveTagsFromResource",
-    ]
-    resources = [
-      "arn:aws:rds:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:subgrp:${each.value.naming_prefix}-*",
-    ]
-  }
-
-  statement {
-    sid    = "RDSParameterGroups"
-    effect = "Allow"
-    actions = [
-      "rds:CreateDBParameterGroup",
-      "rds:DeleteDBParameterGroup",
-      "rds:ModifyDBParameterGroup",
-      "rds:ResetDBParameterGroup",
-      "rds:AddTagsToResource",
-      "rds:RemoveTagsFromResource",
-    ]
-    resources = [
-      "arn:aws:rds:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:pg:${each.value.naming_prefix}-*",
-    ]
   }
 
   statement {
@@ -632,8 +566,9 @@ resource "aws_iam_role_policy" "ci_terraform_resources" {
 # (/shared/network/vpc-id, /shared/network/private-subnet-ids) published by
 # un17-infra-shared to attach the API Lambda to the shared subnets. This lives in
 # its own attached managed policy rather than the terraform-resources inline
-# policy: that inline policy is already at IAM's 10,240-byte aggregate limit for
-# a role's inline policies, and managed policies do not count against it.
+# policy: managed policies do not count against IAM's 10,240-byte aggregate
+# limit for a role's inline policies, so keeping it out preserves headroom
+# there.
 
 data "aws_iam_policy_document" "ci_terraform_shared_network" {
   statement {

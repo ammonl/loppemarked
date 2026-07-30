@@ -75,3 +75,10 @@ jobs:
             terraform -chdir="$ENV_DIR" init -backend=false
             terraform -chdir="$ENV_DIR" validate
           done
+
+          # The bootstrap stack owns the ci-terraform role's policies. Its
+          # tests override every AWS-calling data source, so they need no
+          # credentials.
+          terraform -chdir=infra/terraform/bootstrap init -backend=false
+          terraform -chdir=infra/terraform/bootstrap validate
+          terraform -chdir=infra/terraform/bootstrap test
