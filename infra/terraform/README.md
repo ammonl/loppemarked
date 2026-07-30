@@ -73,9 +73,36 @@ before any environment apply assumes the role.
 To grant a new permission:
 
 1. Edit `bootstrap/ci_terraform_role.tf` and add the action / resource.
-2. From `infra/terraform/bootstrap/`, run `terraform apply` with admin
+2. If the action is an `ec2:` or `rds:` one, add it to the matching
+   allowlist in `bootstrap/ci_terraform_role.tftest.hcl` as well — see
+   [Policy guard](#policy-guard) below.
+3. From `infra/terraform/bootstrap/`, run `terraform apply` with admin
    credentials.
-3. The next environment apply (CI or local) sees the new permission.
+4. The next environment apply (CI or local) sees the new permission.
+
+### Policy guard
+
+`bootstrap/ci_terraform_role.tftest.hcl` runs in CI (`infra-checks`) and
+needs no AWS credentials: it overrides the data sources that would call
+AWS and configures the provider to skip credential resolution, so the
+only thing the plan renders is the policy JSON. It asserts that
+
+- the `ec2:` actions the role grants stay within the shared-VPC security
+  group's lifecycle plus the reads the Lambda's `vpc_config` needs;
+- the `rds:` actions stay read-only, since this stack owns no database;
+- the role's aggregate inline policy stays under 90% of IAM's
+  10,240-byte limit (IAM ignores whitespace when measuring it).
+
+The action checks are allowlists rather than denylists of retired verbs,
+because a bare `ec2:*` satisfies any denylist while granting everything
+it was written to forbid.
+
+Widening an allowlist is a deliberate edit: do it when a resource under
+`modules/loppemarked_stack` needs the action, not to make the test pass.
+When the inline policy approaches the size limit, move a statement into
+an attached managed policy (those do not count against it) — the
+shared-network SSM read at the bottom of `ci_terraform_role.tf` is the
+existing example.
 
 ### Steps
 
