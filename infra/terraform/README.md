@@ -73,8 +73,9 @@ before any environment apply assumes the role.
 To grant a new permission:
 
 1. Edit `bootstrap/ci_terraform_role.tf` and add the action / resource.
-2. If the action is an `ec2:` or `rds:` one, add it to the matching
-   allowlist in `bootstrap/ci_terraform_role.tftest.hcl` as well — see
+2. Name the verb — never `service:*`. If it is an `ec2:` or `rds:`
+   action, add it to the matching allowlist in
+   `bootstrap/ci_terraform_role.tftest.hcl` as well — see
    [Policy guard](#policy-guard) below.
 3. From `infra/terraform/bootstrap/`, run `terraform apply` with admin
    credentials.
@@ -87,15 +88,22 @@ needs no AWS credentials: it overrides the data sources that would call
 AWS and configures the provider to skip credential resolution, so the
 only thing the plan renders is the policy JSON. It asserts that
 
-- the `ec2:` actions the role grants stay within the shared-VPC security
-  group's lifecycle plus the reads the Lambda's `vpc_config` needs;
+- no statement uses `NotAction`, which would grant everything it does
+  not name;
+- every granted action is a wildcard-free `service:verb` pair, so `*`,
+  `*:*`, and `iam:*` fail no matter which service they belong to;
+- the `ec2:` actions stay within the shared-VPC security group's
+  lifecycle, the reads that resolve it, and the lingering-ENI cleanup the
+  provider performs when destroying the group;
 - the `rds:` actions stay read-only, since this stack owns no database;
 - the role's aggregate inline policy stays under 90% of IAM's
   10,240-byte limit (IAM ignores whitespace when measuring it).
 
 The action checks are allowlists rather than denylists of retired verbs,
 because a bare `ec2:*` satisfies any denylist while granting everything
-it was written to forbid.
+it was written to forbid. They compare lowercased, because IAM matches
+actions case-insensitively and `EC2:CreateVpc` is a live grant that a
+case-sensitive `ec2:` filter would skip.
 
 Widening an allowlist is a deliberate edit: do it when a resource under
 `modules/loppemarked_stack` needs the action, not to make the test pass.
@@ -103,6 +111,11 @@ When the inline policy approaches the size limit, move a statement into
 an attached managed policy (those do not count against it) — the
 shared-network SSM read at the bottom of `ci_terraform_role.tf` is the
 existing example.
+
+The runs name each environment and each policy document explicitly, so
+adding an environment or a third inline policy to the role means
+extending the assertions too. The `every_environment_is_covered` run
+catches the first case; the second is on you.
 
 ### Steps
 

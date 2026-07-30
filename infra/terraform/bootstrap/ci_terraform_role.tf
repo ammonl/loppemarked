@@ -122,10 +122,7 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
   # The only network resource this stack owns is the API Lambda's egress-only
   # security group in the shared VPC (modules/loppemarked_stack/networking.tf).
   # The shared VPC's own network objects — subnets, gateways, route tables, flow
-  # logs — belong to un17-infra-shared, and the Lambda's ENI lifecycle is managed
-  # by the Lambda service under the api-runtime role's
-  # AWSLambdaVPCAccessExecutionRole, not by this role. The Describe* actions here
-  # are what the provider reads to resolve the group and the Lambda's vpc_config.
+  # logs — belong to un17-infra-shared, so nothing here manages them.
   #
   # ci_terraform_role.tftest.hcl asserts this list against an allowlist.
   statement {
@@ -138,6 +135,10 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "ec2:DescribeSecurityGroupRules",
       "ec2:AuthorizeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupEgress",
+      # ModifySecurityGroupRules is how the provider edits an existing
+      # aws_vpc_security_group_egress_rule in place: its description, CIDR, and
+      # protocol are all in-place updates rather than replacements.
+      "ec2:ModifySecurityGroupRules",
       # The group is egress-only, so no resource here authorizes ingress. The
       # pair is held until a CloudTrail lookup confirms that the calls this role
       # made in the last 90 days all belong to security groups that no longer
@@ -152,6 +153,17 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
       "ec2:CreateTags",
       "ec2:DeleteTags",
       "ec2:DescribeTags",
+      # Destroying a security group takes these two, under this role's
+      # credentials rather than the Lambda service's: the provider's security
+      # group delete sweeps up ENIs the Lambda service has not released yet
+      # (deleteLingeringENIs), detaching and deleting each one. The group is
+      # create_before_destroy, so any replacement of it — a shared_vpc_id
+      # republished by un17-infra-shared, a description edit — destroys the old
+      # group while the Lambda's ENIs are still attached, which is exactly that
+      # path. Without these, such an apply fails midway with the new group
+      # created and the old one orphaned.
+      "ec2:DetachNetworkInterface",
+      "ec2:DeleteNetworkInterface",
     ]
     resources = ["*"]
   }
@@ -420,8 +432,10 @@ data "aws_iam_policy_document" "ci_terraform_resources" {
 
   # Read-only. This stack owns no database — the API runtime reaches the shared
   # RDS instance through var.db_secret_id, and un17-infra-shared owns the
-  # instance, its subnet group, and its parameter group. The plan refresh still
-  # reads shared-RDS metadata, which is all these Describe* actions serve.
+  # instance, its subnet group, and its parameter group. Nothing in the
+  # configuration is known to call these; they are kept because a read-only
+  # grant is cheap and dropping them belongs with the CloudTrail sweep that
+  # settles the ingress pair above.
   #
   # ci_terraform_role.tftest.hcl asserts this list against an allowlist.
   statement {
