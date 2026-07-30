@@ -17,6 +17,12 @@ resource "aws_secretsmanager_secret" "app" {
   name        = "${local.naming_prefix}-app-secrets"
   description = "Application secrets for ${local.naming_prefix}"
 
+  # Named explicitly rather than left to the account default, so the
+  # configuration states the key it is encrypted with. The backup-restore
+  # runbook's re-key step writes this same value directly, and Terraform has to
+  # agree with it or it will keep proposing to clear the attribute.
+  kms_key_id = "alias/aws/secretsmanager"
+
   tags = {
     Name = "${local.naming_prefix}-app-secrets"
   }
