@@ -1,0 +1,148 @@
+name: Promotion gate rehearsal
+
+# terraform.yml applies to production only when staging applied *and* verified.
+# That promise lives entirely in apply-prod's `if:` expression — the `needs:`
+# edge does not block on its own, because `!cancelled()` is there precisely so
+# the job still runs when an upstream is skipped. A gate that names
+# verify-staging without testing its result promotes a broken staging straight
+# to prod, and reads identically in a diff to one that works.
+#
+# Demonstrating that in terraform.yml itself means deliberately breaking staging
+# and watching production not deploy. This rehearses the same job graph with
+# stubs and no AWS access instead: the gate below is copied verbatim, so GitHub
+# evaluates the real expression and the run shows what the real workflow would
+# do rather than what we believe it would do.
+#
+# For the scenarios that stop the promotion the run ends red. That is the same
+# signal the real workflow gives when it blocks one — read the Assert job, not
+# the run color.
+#
+# Dispatch-only, and deliberately so: it exists to be run on purpose, and it
+# applies nothing. scripts/check-promotion-gate.mjs keeps it honest, failing CI
+# if the copy drifts and evaluating the same expression over a wider table of
+# outcomes on every pull request.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Which staging outcome to rehearse"
+        type: choice
+        required: true
+        default: verification-fails
+        options:
+          - verification-fails
+          - verification-passes
+          - staging-apply-fails
+          - staging-has-no-changes
+
+jobs:
+  detect-staging:
+    name: "Detect changes (staging) — stub"
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
+    steps:
+      - name: Publish the rehearsed plan result
+        id: plan
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          if [ "$SCENARIO" = "staging-has-no-changes" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  detect-prod:
+    name: "Detect changes (prod) — stub"
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
+    steps:
+      # Always true. Every scenario here is about what staging did, so prod must
+      # have something to apply or apply-prod would be skipped for an unrelated
+      # reason and the rehearsal would prove nothing.
+      - name: Publish the rehearsed plan result
+        id: plan
+        run: echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+  apply-staging:
+    name: "Apply (staging) — stub"
+    needs: detect-staging
+    if: needs.detect-staging.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rehearse the staging apply
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          if [ "$SCENARIO" = "staging-apply-fails" ]; then
+            echo "::notice::Rehearsing a staging apply that failed."
+            exit 1
+          fi
+          echo "Rehearsing a staging apply that succeeded."
+
+  verify-staging:
+    name: "Verify (staging) — stub"
+    needs: apply-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rehearse the staging verification
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          if [ "$SCENARIO" = "verification-fails" ]; then
+            echo "::notice::Rehearsing staging failing to serve a database-backed request."
+            exit 1
+          fi
+          echo "Rehearsing a staging verification that passed."
+
+  apply-prod:
+    name: "Apply (prod) — stub"
+    needs: [detect-staging, detect-prod, apply-staging, verify-staging]
+    # Copied verbatim from terraform.yml. Do not edit one without the other —
+    # scripts/check-promotion-gate.mjs fails CI when they diverge.
+    if: >-
+      !cancelled() &&
+      needs.detect-prod.outputs.has_changes == 'true' &&
+      needs.detect-prod.result == 'success' &&
+      needs.detect-staging.result == 'success' &&
+      (needs.detect-staging.outputs.has_changes != 'true' ||
+      (needs.apply-staging.result == 'success' && needs.verify-staging.result == 'success'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stand in for the production apply
+        run: echo "The gate opened — terraform.yml would apply to production here."
+
+  assert:
+    name: "Assert"
+    needs: apply-prod
+    # apply-prod is skipped in most scenarios, which is the outcome under test.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare apply-prod against what the scenario requires
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+          ACTUAL: ${{ needs.apply-prod.result }}
+        run: |
+          case "$SCENARIO" in
+            verification-fails | staging-apply-fails)
+              EXPECTED=skipped
+              ;;
+            verification-passes | staging-has-no-changes)
+              EXPECTED=success
+              ;;
+            *)
+              echo "::error::Unknown scenario '$SCENARIO'."
+              exit 1
+              ;;
+          esac
+          echo "scenario:   $SCENARIO"
+          echo "apply-prod: $ACTUAL (expected $EXPECTED)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::apply-prod was '$ACTUAL' but this scenario requires '$EXPECTED'. The promotion gate in terraform.yml does not behave as documented."
+            exit 1
+          fi
+          echo "The promotion gate behaved as terraform.yml documents."
