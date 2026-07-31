@@ -185,3 +185,20 @@
 - Parity nit: the staging cutover added an `api_lambda_security_group_id`
   output; the prod cutover omitted it. Cosmetic (operator convenience), not
   functional.
+
+## CI workflows (.github/workflows)
+
+See [ci-workflows.md](ci-workflows.md) — the `terraform.yml` deploy graph and its
+`apply-prod` gate (including why un17-resources' `!cancelled()` +
+`detect-staging.outputs.has_changes` form is the corrected one and greenspace's
+`always()` + `result == 'skipped'` form is not), the `verify-staging` job's
+requirements (`environment: staging` is load-bearing for the env-level
+`API_FUNCTION_NAME`; `TF_ROLE_ARN_*` ≠ `DEPLOY_ROLE_ARN_*`), retry-budget
+review guidance for pre-prod gates, `/public/status` vs `/health`, the Function
+URL's trailing slash and `NONE` auth, `bash -e` behavior in `run:` blocks, and
+the README/AGENTS.md sections that go stale when the promotion rule changes.
+
+- **Cross-repo review note:** loppemarked, greenspace and un17-resources run
+  near-identical `terraform.yml`s. A PR that copies one sibling verbatim should
+  be checked against the *other* one too — un17-resources' version generally
+  carries later corrections, and its inline comments explain them.
