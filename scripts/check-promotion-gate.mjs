@@ -42,7 +42,10 @@ function jobBlock(source, file, jobId) {
     throw new Error(`${file} has no job "${jobId}".`);
   }
   let end = start + 1;
-  while (end < lines.length && !/^ {2}\S/.test(lines[end])) {
+  // A comment at job indentation is not the next job. Treating it as one would
+  // truncate the block, and a truncated block reads as "key absent" — which the
+  // optional lookups below would then pass off as agreement.
+  while (end < lines.length && (!/^ {2}\S/.test(lines[end]) || /^\s*#/.test(lines[end]))) {
     end += 1;
   }
   return lines.slice(start + 1, end);
@@ -79,11 +82,14 @@ function requireJobKey(block, file, jobId, key) {
   return value;
 }
 
+// Handles the scalar, flow-sequence and block-sequence spellings. Getting this
+// wrong is worse than it looks: a needs: list this cannot read comes back empty
+// and the check reports a hole in the production gate that does not exist.
 function parseNeeds(value) {
   const inner = value.startsWith("[") ? value.slice(1, -1) : value;
   return inner
-    .split(",")
-    .map((entry) => entry.trim())
+    .split(/[,\s]+/)
+    .map((entry) => entry.replace(/^-+/, "").replace(/["']/g, "").trim())
     .filter(Boolean);
 }
 
@@ -126,6 +132,12 @@ function tokenize(source) {
         throw new Error(`Unexpected character ${JSON.stringify(char)} in gate expression.`);
       }
       i += word[0].length;
+      if (["true", "false", "null"].includes(word[0])) {
+        // Literals, not context lookups. Without this a plausible bad edit
+        // (`... == true`) would be reported as an unreadable context path.
+        tokens.push({ type: "literal", value: word[0] === "null" ? null : word[0] === "true" });
+        continue;
+      }
       if (source[i] === "(") {
         if (source[i + 1] !== ")") {
           throw new Error(`Gate expression calls ${word[0]}() with arguments, which this check does not model.`);
@@ -191,7 +203,7 @@ function parse(tokens) {
       pos += 1;
       return node;
     }
-    if (token.type === "string") return { op: "literal", value: token.value };
+    if (token.type === "string" || token.type === "literal") return { op: "literal", value: token.value };
     if (token.type === "call") return { op: "call", name: token.name };
     if (token.type === "path") return { op: "path", name: token.name };
     throw new Error(`Unexpected "${token.type}" in gate expression.`);
@@ -230,6 +242,10 @@ function equals(left, right) {
   if (typeof left !== typeof right) {
     throw new Error("Gate expression compares mixed types, which this check does not model.");
   }
+  // GitHub's == ignores case when comparing strings.
+  if (typeof left === "string") {
+    return left.toLowerCase() === right.toLowerCase();
+  }
   return left === right;
 }
 
@@ -239,6 +255,9 @@ function evaluate(node, run) {
       return node.value;
     case "path":
       return resolve(node.name, run);
+    // GitHub prepends an implicit success() to a job `if:` that names no status
+    // function at all. Not modeled, because dropping !cancelled() from this gate
+    // is caught by the cancellation scenarios before that could matter.
     case "call":
       if (node.name === "cancelled") return run.cancelled === true;
       // Modeled rather than rejected so that swapping !cancelled() for always()
@@ -319,6 +338,17 @@ const SCENARIOS = [
     },
   },
   {
+    name: "detect-staging published has_changes=false and then failed",
+    note: "its artifact upload runs if: always(), so the job can fail with the output already published — only the result guard blocks here",
+    expect: SKIPPED,
+    jobs: {
+      "detect-staging": { result: "failure", outputs: { has_changes: "false" } },
+      "detect-prod": ok("true"),
+      "apply-staging": { result: "skipped" },
+      "verify-staging": { result: "skipped" },
+    },
+  },
+  {
     name: "staging had changes but the apply was skipped",
     note: "the reason the promote-without-staging branch keys off has_changes: a skipped apply means both 'nothing to apply' and 'never ran', and only one of those may promote",
     expect: SKIPPED,
@@ -375,7 +405,7 @@ const SCENARIOS = [
   },
   {
     name: "detect-staging failed, publishing no has_changes",
-    note: "an unset output reads as '', which satisfies has_changes != 'true' — the result guard is what closes that",
+    note: "a failed job's output reads as '', so the result guard is the one that has to hold here",
     expect: SKIPPED,
     jobs: {
       "detect-staging": { result: "failure" },
@@ -403,6 +433,28 @@ const SCENARIOS = [
       "detect-prod": { result: "failure" },
       "apply-staging": { result: "success" },
       "verify-staging": { result: "success" },
+    },
+  },
+  {
+    name: "detect-prod failed after publishing has_changes",
+    note: "without this row the detect-prod result guard decides nothing — the row above is already blocked by the missing output",
+    expect: SKIPPED,
+    jobs: {
+      "detect-staging": ok("true"),
+      "detect-prod": { result: "failure", outputs: { has_changes: "true" } },
+      "apply-staging": { result: "success" },
+      "verify-staging": { result: "success" },
+    },
+  },
+  {
+    name: "detect-staging succeeded but published no has_changes",
+    note: "unreachable while the plan step always writes one; the gate still has to hold if it ever stops, so it tests has_changes == 'false' rather than != 'true'",
+    expect: SKIPPED,
+    jobs: {
+      "detect-staging": { result: "success" },
+      "detect-prod": ok("true"),
+      "apply-staging": { result: "skipped" },
+      "verify-staging": { result: "skipped" },
     },
   },
 ];
@@ -435,6 +487,14 @@ const ast = parse(tokenize(gate));
 for (const job of gateNeeds) {
   if (!gate.includes(`needs.${job}.`)) {
     fail(`${TERRAFORM}: apply-prod lists "${job}" in needs: but never reads it in if:, so that edge does not gate the promotion.`);
+  }
+}
+
+// And the converse: the needs context holds only direct dependencies, so a read
+// of a job that is not declared silently evaluates to null rather than erroring.
+for (const [, job] of gate.matchAll(/needs\.([\w-]+)\./g)) {
+  if (!gateNeeds.includes(job)) {
+    fail(`${TERRAFORM}: apply-prod reads "needs.${job}" but does not declare it in needs:, so that clause evaluates to null on GitHub.`);
   }
 }
 

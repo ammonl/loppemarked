@@ -36,6 +36,9 @@ on:
           - staging-apply-fails
           - staging-has-no-changes
 
+# Every job here is a stub that reads nothing and applies nothing.
+permissions: {}
+
 jobs:
   detect-staging:
     name: "Detect changes (staging) — stub"
@@ -108,9 +111,12 @@ jobs:
       needs.detect-prod.outputs.has_changes == 'true' &&
       needs.detect-prod.result == 'success' &&
       needs.detect-staging.result == 'success' &&
-      (needs.detect-staging.outputs.has_changes != 'true' ||
+      (needs.detect-staging.outputs.has_changes == 'false' ||
       (needs.apply-staging.result == 'success' && needs.verify-staging.result == 'success'))
     runs-on: ubuntu-latest
+    # No `environment: production` — this stub applies nothing. If a protection
+    # rule is ever added to that environment the real job would wait for it and
+    # this one would not, so the rehearsal covers the gate, not the approval.
     steps:
       - name: Stand in for the production apply
         run: echo "The gate opened — terraform.yml would apply to production here."
