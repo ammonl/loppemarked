@@ -116,9 +116,25 @@ A false failure here blocks production, so review retry budgets adversarially.
 ## Docs that go stale with pipeline changes
 
 - `README.md` → "CI / Terraform Pipeline" → **"Merge to main"** states the
-  promotion rule verbatim ("Staging is applied first. Production applies after
-  staging succeeds, gated by the `production` environment protection rule").
-  Any change to `apply-prod`'s gate must update it (CLAUDE.md Phase 2).
-- `AGENTS.md` "Deployment Topology" carries a one-line version of the same claim.
+  promotion rule verbatim, naming `apply-prod`'s `needs:` list. Any change to
+  that gate must update it (CLAUDE.md Phase 2). `README.md` "Operational
+  safeguards" repeats the gate in one line and goes stale with it.
+- `AGENTS.md` "Deployment Topology" carries a one-line version per path, plus a
+  bullet on what the `production` environment does and does not do.
+- `infra/README.md` describes the same ordering twice — under "GitHub
+  Environments" and "Workflow Behavior".
+- `docs/architecture.md` has the CI/CD mermaid graph and a matching bullet list;
+  the graph edges encode the job ordering, so they go stale with `needs:` too.
 - The `API_FUNCTION_NAME` / `*_ROLE_ARN_*` variable table sits just above that
   README section and records repo-level vs environment-level scope.
+
+**Promotion is automatic — never review as if an approval gate existed.** No
+environment here has required reviewers, and none is wanted; `environment:` only
+scopes variables and records deployment history. The human checkpoint is the
+approving review branch protection requires on `main`. The three paths differ,
+so check the one the diff touches rather than generalizing: `deploy.yml`'s
+`deploy-prod` needs `deploy-staging` (ends in a `/health` check);
+`terraform.yml`'s `apply-prod` needs `apply-staging` **and** `verify-staging`
+(`GET /public/status`, a database-backed read); `deploy-web.yml` is a single
+`deploy-web-prod` job with no `needs:` and no staging job, so nothing precedes
+prod there (#314). Docs that flatten these into one rule were the bug in #312.

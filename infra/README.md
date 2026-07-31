@@ -34,13 +34,15 @@ that, so do not remove them.
 - `production` - No protection rules either. Prod promotion is deliberately
   unattended, and the human checkpoint is the approving review branch protection
   requires on `main`. If an approval step in front of prod is ever wanted,
-  required reviewers here is where it goes — and the deploy-flow descriptions in
-  `README.md` and `AGENTS.md` need updating with it, since they currently state
-  the opposite.
+  required reviewers here is where it goes — and every deploy-flow description
+  needs updating with it, since they all currently state the opposite:
+  `README.md`, `AGENTS.md`, `docs/architecture.md`,
+  `infra/terraform/README.md`, `docs/runbooks/launch-checklist.md`, and the
+  "Workflow Behavior" section below.
 
 ### Workflow Behavior
 
 - **PRs**: `terraform fmt` + per-environment `terraform plan` (no apply); fork PRs run `validate` only.
-- **Main branch**: `terraform plan -detailed-exitcode` per environment, then `terraform apply` for staging followed by production.
+- **Main branch**: `terraform plan -detailed-exitcode` per environment, then `terraform apply` for staging, `verify-staging`, and finally `terraform apply` for production. Production applies on its own once the staging apply and its verification have both succeeded — nothing waits for a human.
 - **Concurrency**: Guards prevent parallel applies to the same environment.
 - **Artifacts**: Plan output is saved for review.

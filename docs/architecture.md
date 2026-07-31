@@ -468,16 +468,22 @@ graph LR
 
     MERGE[Merge to main] -->|trigger| CI_MAIN[CI Check]
     MERGE -->|infra changes| TF_STAGING[Apply Staging]
-    TF_STAGING -->|success| TF_PROD[Apply Prod]
+    TF_STAGING -->|success| TF_VERIFY[Verify Staging<br/>GET /public/status]
+    TF_VERIFY -->|success| TF_PROD[Apply Prod]
+
+    MERGE -->|api changes| API_STAGING[Deploy API Staging<br/>+ health check]
+    API_STAGING -->|success| API_PROD[Deploy API Prod]
+
+    MERGE -->|web changes| WEB_PROD[Deploy Web Prod<br/>no staging step]
 ```
 
 - **CI** runs on every PR: lint, test, build for all workspaces; `terraform fmt` + `terraform validate`.
 - **Terraform** runs when `infra/terraform/**` changes: format check + plan on PRs, apply on merge to main. The `Format Check` job enforces `terraform fmt -check -recursive` and blocks merge when formatting is invalid.
 - **Deploy API** (`deploy.yml`) runs on push to `main` when `apps/api/**` or `packages/shared/**` change: builds the Lambda bundle, deploys to staging with a health smoke test, then promotes to production.
-- **Deploy Web** (`deploy-web.yml`) runs on push to `main` when `apps/web/**` or `packages/shared/**` change: triggers an Amplify production release job and waits for build completion.
+- **Deploy Web** (`deploy-web.yml`) runs on push to `main` when `apps/web/**` or `packages/shared/**` change: triggers an Amplify production release job and waits for build completion. This is a single job with no `needs:` and no staging counterpart, so web changes reach production without anything running first (#314).
 - **Drift detection** runs daily via `drift-detection.yml`; creates a GitHub issue if drift is found.
 - **Session cleanup** runs hourly via an EventBridge scheduled rule that invokes the API Lambda. The handler detects the scheduled event and deletes expired sessions (8-hour TTL) from the database.
-- **Production apply** runs automatically after staging succeeds.
+- **Promotion to production is automatic on every path** — no environment carries required reviewers, and `environment: production` only scopes that environment's variables and records deployment history. What precedes prod differs per path: the API waits for a staging deploy whose health check passed, Terraform waits for a staging apply *and* `verify-staging`, and the web release waits for nothing. The human checkpoint is the approving review branch protection requires on `main`.
 - **AWS auth** uses GitHub OIDC role assumption (no long-lived keys).
 
 ## Shared Package
