@@ -149,7 +149,9 @@ Fork PRs receive no AWS credentials. The workflow falls back to backend-disabled
 
 ### Merge to main
 
-Staging is applied first, and production applies once the staging apply succeeds — `apply-prod` declares `needs: [detect-staging, detect-prod, apply-staging]`. Note what "succeeds" means here: that the staging apply returned without error, not that staging still serves traffic afterwards. There is no verification job between the two applies, so an apply that Terraform reports as clean but that breaks staging is promoted to prod regardless. The sibling repos run such a check; this one does not yet.
+Staging is applied first, then verified, and production applies only if both succeeded — `apply-prod` declares `needs: [detect-staging, detect-prod, apply-staging, verify-staging]`. The verification matters because a clean `terraform apply` means the API calls succeeded, not that the stack still works: `verify-staging` requests `GET /public/status`, which reads the database, so an apply that leaves the Lambda unable to reach RDS fails there instead of being promoted.
+
+When staging has no changes of its own the apply is skipped and there is nothing to verify, so prod still proceeds — that path keys off `detect-staging`'s `has_changes` output rather than the skipped result.
 
 There is no approval step either. The `production` environment scopes variables and records deployment history, but carries no required reviewers; the human checkpoint is the pull request, since branch protection means a change reaches prod only through an approved PR.
 
@@ -182,7 +184,7 @@ The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Conf
 
 - Fork PRs never receive privileged credentials.
 - `concurrency` groups prevent parallel applies per environment.
-- Prod apply is gated behind the staging apply succeeding — not behind an approval, and not behind a check that staging still works afterwards.
+- Prod apply is gated behind the staging apply succeeding **and** `verify-staging` confirming staging still serves a database-backed request. Not behind an approval — there is none.
 - Plan output is saved as an artifact for audit.
 
 ## Monitoring & Alerting
