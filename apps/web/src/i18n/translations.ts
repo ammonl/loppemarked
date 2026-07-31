@@ -73,7 +73,8 @@ const da = {
   "table.notes.shareTable":
     "Hvis du ikke har brug for hele bordet, opfordrer vi dig til at dele det med en nabo.",
   "table.ariaTile": "Bord {number} – {state}",
-  "table.allBookedTitle": "Hov! Alle loppeborde er allerede booket af dine naboer!",
+  "table.allBookedTitle":
+    "Hov! Alle loppeborde er allerede booket af dine naboer!",
   "table.allBookedBody":
     "Tilmeld dig ventelisten så vi kan give dig besked, hvis en plads åbner sig.",
   "table.joinWaitlistCta": "Tilmeld Venteliste",
@@ -87,7 +88,8 @@ const da = {
   "address.searchPlaceholder": "Søg din adresse...",
   "address.searchHint":
     "Skriv dit husnummer for at finde din adresse (Else Alfelts Vej 122–202)",
-  "address.noResults": "Ingen adresser fundet. Kontrollér at husnummeret er korrekt.",
+  "address.noResults":
+    "Ingen adresser fundet. Kontrollér at husnummeret er korrekt.",
   "address.selectedAddress": "Valgt adresse",
   "address.changeAddress": "Skift adresse",
   "address.ineligible": "Denne adresse er ikke berettiget til tilmelding.",
@@ -104,8 +106,7 @@ const da = {
   "waitlist.emailFollowUp":
     "Hvis et bord bliver ledigt, kontakter arrangørerne dig pr. e-mail.",
   "waitlist.success": "Du er nu på ventelisten!",
-  "waitlist.alreadyHasTableTitle":
-    "Din lejlighed har allerede et bord",
+  "waitlist.alreadyHasTableTitle": "Din lejlighed har allerede et bord",
   "waitlist.alreadyHasTableBody":
     "Du er ikke skrevet op på ventelisten, fordi din lejlighed allerede har booket et bord. Hver lejlighed kan kun have ét bord.",
 
@@ -182,7 +183,8 @@ const da = {
   "cancel.effectEmail": "Din bordbooking bliver straks gjort inaktiv.",
   "cancel.effectHold":
     "Bordet frigives IKKE automatisk til andre beboere — det holdes reserveret, indtil en arrangør gennemgår det.",
-  "cancel.effectAdmins": "Arrangørerne bliver adviseret og afgør herefter, om bordet kan frigives igen.",
+  "cancel.effectAdmins":
+    "Arrangørerne bliver adviseret og afgør herefter, om bordet kan frigives igen.",
   "cancel.effectIrreversible": "Afmeldingen kan ikke fortrydes via dette link.",
   "cancel.confirmCta": "Afmeld min booking",
   "cancel.confirmingCta": "Afmelder...",
@@ -241,9 +243,12 @@ const da = {
   "admin.settingsSaved": "Indstilling gemt",
 
   "admin.notifications.title": "E-mailnotifikationer",
-  "admin.notifications.description": "Vælg hvilke begivenheder du vil modtage e-mailnotifikationer om.",
-  "admin.notifications.userRegistration": "Bruger booker eller skifter loppebord",
-  "admin.notifications.adminTableAction": "Anden administrator udfører bordhandlinger",
+  "admin.notifications.description":
+    "Vælg hvilke begivenheder du vil modtage e-mailnotifikationer om.",
+  "admin.notifications.userRegistration":
+    "Bruger booker eller skifter loppebord",
+  "admin.notifications.adminTableAction":
+    "Anden administrator udfører bordhandlinger",
 
   "admin.tab.registrations": "Bookinger",
   "admin.tab.waitlist": "Venteliste",
@@ -311,14 +316,17 @@ const da = {
   "admin.messaging.source": "Kilde",
   "admin.messaging.send": "Send e-mail",
   "admin.messaging.sending": "Sender...",
-  "admin.messaging.confirmSend": "Er du sikker på, at du vil sende denne e-mail til",
+  "admin.messaging.confirmSend":
+    "Er du sikker på, at du vil sende denne e-mail til",
   "admin.messaging.sent": "E-mail sendt",
   "admin.messaging.failed": "Afsendelse mislykkedes",
-  "admin.messaging.noRecipients": "Ingen modtagere fundet for det valgte publikum",
+  "admin.messaging.noRecipients":
+    "Ingen modtagere fundet for det valgte publikum",
   "admin.messaging.subjectRequired": "Emne er påkrævet",
   "admin.messaging.bodyRequired": "Brødtekst er påkrævet",
   "admin.messaging.bilingual": "Tosproget",
-  "admin.messaging.bilingualHint": "Send separate versioner på dansk og engelsk baseret på modtagerens sprogpræference",
+  "admin.messaging.bilingualHint":
+    "Send separate versioner på dansk og engelsk baseret på modtagerens sprogpræference",
   "admin.messaging.danishVersion": "Dansk version",
   "admin.messaging.englishVersion": "Engelsk version",
   "admin.messaging.subjectDaRequired": "Dansk emne er påkrævet",
@@ -326,7 +334,8 @@ const da = {
   "admin.messaging.bodyDaRequired": "Dansk brødtekst er påkrævet",
   "admin.messaging.bodyEnRequired": "Engelsk brødtekst er påkrævet",
   "admin.messaging.resetTemplate": "Nulstil til skabelon",
-  "admin.messaging.templateHint": "Sidehoved og sidefod tilføjes automatisk, når e-mailen sendes.",
+  "admin.messaging.templateHint":
+    "Sidehoved og sidefod tilføjes automatisk, når e-mailen sendes.",
 
   "admin.waitlist.title": "Venteliste",
   "admin.waitlist.queuePosition": "#",
@@ -413,7 +422,8 @@ const da = {
   "admin.account.actions": "Handlinger",
   "admin.account.delete": "Slet",
   "admin.account.noAdmins": "Ingen administratorer fundet",
-  "admin.account.confirmDelete": "Er du sikker på, at du vil slette denne administrator?",
+  "admin.account.confirmDelete":
+    "Er du sikker på, at du vil slette denne administrator?",
   "admin.account.deleted": "Administrator slettet",
   "admin.account.selfDeleteError": "Du kan ikke slette din egen konto",
   "admin.account.createTitle": "Opret administrator",
@@ -438,6 +448,9 @@ const da = {
   "about.description":
     "UN17 Village Loppemarked er et nabofællesskabets loppemarked i Fælledhuset. Vi mødes om loppeborde, gode fund og hyggelige stunder på tværs af UN17 Village.",
   "about.contact": "Spørgsmål? Kontakt os:",
+  "about.sharedAbout": "Om",
+  "about.sharedPrivacy": "Privatlivspolitik",
+  "about.sharedTerms": "Servicevilkår",
 };
 
 export type TranslationKey = keyof typeof da;
@@ -515,7 +528,8 @@ const en: Record<TranslationKey, string> = {
   "table.notes.shareTable":
     "If you don't need the whole table, consider sharing it with a neighbor.",
   "table.ariaTile": "Table {number} – {state}",
-  "table.allBookedTitle": "Oh no! Every table has already been booked by your neighbors!",
+  "table.allBookedTitle":
+    "Oh no! Every table has already been booked by your neighbors!",
   "table.allBookedBody":
     "Join the waitlist and we'll let you know if a table opens up.",
   "table.joinWaitlistCta": "Join Waitlist",
@@ -529,7 +543,8 @@ const en: Record<TranslationKey, string> = {
   "address.searchPlaceholder": "Search your address...",
   "address.searchHint":
     "Type your house number to find your address (Else Alfelts Vej 122–202)",
-  "address.noResults": "No addresses found. Check that the house number is correct.",
+  "address.noResults":
+    "No addresses found. Check that the house number is correct.",
   "address.selectedAddress": "Selected address",
   "address.changeAddress": "Change address",
   "address.ineligible": "This address is not eligible for registration.",
@@ -546,8 +561,7 @@ const en: Record<TranslationKey, string> = {
   "waitlist.emailFollowUp":
     "If a table becomes available, the organizers will reach out to you by email.",
   "waitlist.success": "You are now on the waitlist!",
-  "waitlist.alreadyHasTableTitle":
-    "Your apartment already has a table",
+  "waitlist.alreadyHasTableTitle": "Your apartment already has a table",
   "waitlist.alreadyHasTableBody":
     "You were not added to the waitlist because your apartment already has a booked table. Only one table per apartment is allowed.",
 
@@ -624,8 +638,10 @@ const en: Record<TranslationKey, string> = {
   "cancel.effectEmail": "Your table booking is immediately deactivated.",
   "cancel.effectHold":
     "The table is NOT automatically returned to the public pool — it is held as reserved until an organizer reviews it.",
-  "cancel.effectAdmins": "Organizers are notified and will decide whether to release the table again.",
-  "cancel.effectIrreversible": "The cancellation cannot be undone through this link.",
+  "cancel.effectAdmins":
+    "Organizers are notified and will decide whether to release the table again.",
+  "cancel.effectIrreversible":
+    "The cancellation cannot be undone through this link.",
   "cancel.confirmCta": "Cancel my booking",
   "cancel.confirmingCta": "Cancelling...",
   "cancel.keepCta": "No, keep my booking",
@@ -659,8 +675,7 @@ const en: Record<TranslationKey, string> = {
     "If you have questions about your data, please contact the organizer:",
   "consent.acknowledgment":
     "I have read and accept the above terms for data collection and use.",
-  "consent.required":
-    "You must accept the data protection terms to continue.",
+  "consent.required": "You must accept the data protection terms to continue.",
 
   "policy.oneApartmentRule":
     "Each apartment may only book one table. If your apartment already has a booking, a new booking will replace the existing one.",
@@ -683,7 +698,8 @@ const en: Record<TranslationKey, string> = {
   "admin.settingsSaved": "Setting saved",
 
   "admin.notifications.title": "Email notifications",
-  "admin.notifications.description": "Choose which events you want to receive email notifications about.",
+  "admin.notifications.description":
+    "Choose which events you want to receive email notifications about.",
   "admin.notifications.userRegistration": "User books or switches table",
   "admin.notifications.adminTableAction": "Another admin takes table actions",
 
@@ -738,7 +754,8 @@ const en: Record<TranslationKey, string> = {
   "admin.notification.source": "Source",
   "admin.notification.previewLoading": "Loading preview...",
   "admin.notification.previewError": "Could not load preview",
-  "admin.notification.sourceError": "Invalid HTML — fix the error before sending",
+  "admin.notification.sourceError":
+    "Invalid HTML — fix the error before sending",
   "admin.notification.reset": "Reset to default",
 
   "admin.messaging.title": "Send Email",
@@ -756,11 +773,13 @@ const en: Record<TranslationKey, string> = {
   "admin.messaging.confirmSend": "Are you sure you want to send this email to",
   "admin.messaging.sent": "Email sent",
   "admin.messaging.failed": "Sending failed",
-  "admin.messaging.noRecipients": "No recipients found for the selected audience",
+  "admin.messaging.noRecipients":
+    "No recipients found for the selected audience",
   "admin.messaging.subjectRequired": "Subject is required",
   "admin.messaging.bodyRequired": "Body is required",
   "admin.messaging.bilingual": "Bilingual",
-  "admin.messaging.bilingualHint": "Send separate Danish and English versions based on each recipient's language preference",
+  "admin.messaging.bilingualHint":
+    "Send separate Danish and English versions based on each recipient's language preference",
   "admin.messaging.danishVersion": "Danish version",
   "admin.messaging.englishVersion": "English version",
   "admin.messaging.subjectDaRequired": "Danish subject is required",
@@ -768,7 +787,8 @@ const en: Record<TranslationKey, string> = {
   "admin.messaging.bodyDaRequired": "Danish body is required",
   "admin.messaging.bodyEnRequired": "English body is required",
   "admin.messaging.resetTemplate": "Reset to template",
-  "admin.messaging.templateHint": "Header and footer are automatically added when the email is sent.",
+  "admin.messaging.templateHint":
+    "Header and footer are automatically added when the email is sent.",
 
   "admin.waitlist.title": "Waitlist",
   "admin.waitlist.queuePosition": "#",
@@ -855,7 +875,8 @@ const en: Record<TranslationKey, string> = {
   "admin.account.actions": "Actions",
   "admin.account.delete": "Delete",
   "admin.account.noAdmins": "No administrators found",
-  "admin.account.confirmDelete": "Are you sure you want to delete this administrator?",
+  "admin.account.confirmDelete":
+    "Are you sure you want to delete this administrator?",
   "admin.account.deleted": "Administrator deleted",
   "admin.account.selfDeleteError": "You cannot delete your own account",
   "admin.account.createTitle": "Create Administrator",
@@ -880,6 +901,9 @@ const en: Record<TranslationKey, string> = {
   "about.description":
     "UN17 Village Loppemarked is a neighborly flea market hosted in Fælledhuset. We gather around shared tables, good finds, and cozy moments throughout the village.",
   "about.contact": "Questions? Get in touch:",
+  "about.sharedAbout": "About",
+  "about.sharedPrivacy": "Privacy Policy",
+  "about.sharedTerms": "Terms of Service",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
