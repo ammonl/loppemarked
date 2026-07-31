@@ -49,9 +49,10 @@ Local Postgres expected on `localhost:5433` (host-mapped from container port 543
 
 ## Deployment Topology
 
-- **API** (`deploy.yml`) triggers on changes to `apps/api/**` or `packages/shared/**`. Bundles → deploys to staging Lambda → health check → promotes to production (gated by GitHub `production` environment).
-- **Web** (`deploy-web.yml`) triggers on `apps/web/**` or `packages/shared/**`. Kicks off an AWS Amplify production release.
-- **Terraform** (`terraform.yml`) per-environment plan/apply via GitHub OIDC; staging applies before prod. Drift detection runs daily and opens an issue on drift.
+- **API** (`deploy.yml`) triggers on changes to `apps/api/**` or `packages/shared/**`. Bundles → deploys to staging Lambda → health check → promotes to production. `deploy-prod` declares `needs: deploy-staging`, so a failed staging health check stops the promotion.
+- **Web** (`deploy-web.yml`) triggers on `apps/web/**` or `packages/shared/**`. Kicks off an AWS Amplify production release **directly** — a single job with no `needs:`, so nothing checks staging first.
+- **Terraform** (`terraform.yml`) per-environment plan/apply via GitHub OIDC; staging applies before prod, but nothing verifies staging in between, so "before" is ordering rather than assurance. Drift detection runs daily and opens an issue on drift.
+- **Prod promotion is automatic, not approved.** The `production` environment on the prod jobs scopes that environment's variables and records deployment history; it carries no required reviewers, so do not read `environment: production` as an approval step — and do not remove the key either, since the variables need it. The human checkpoint is the approving review branch protection requires on `main`. Of the three paths above, only the API one gates prod on a *verified* staging.
 - The shared module has one source of truth — do not introduce per-environment Terraform forks.
 
 ## Conventions
