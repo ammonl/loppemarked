@@ -116,7 +116,7 @@ The Next.js dev server starts on `http://localhost:3000` and proxies API routes 
 The API runs as an AWS Lambda function with a public Function URL.
 
 - **Build**: `npm run bundle --workspace=@loppemarked/api` produces a single-file ESM bundle via esbuild.
-- **Deploy workflow** (`deploy.yml`): Triggers on push to `main` when `apps/api/**` or `packages/shared/**` change. Builds the bundle, deploys to staging Lambda, runs a health check, then promotes to production (gated by the `production` environment protection rule).
+- **Deploy workflow** (`deploy.yml`): Triggers on push to `main` when `apps/api/**` or `packages/shared/**` change. Builds the bundle, deploys to staging Lambda, runs a health check, then promotes to production. Promotion is automatic — `deploy-prod` declares `needs: deploy-staging`, so a failed staging health check stops it, but nothing waits for a human. The `production` environment scopes that environment's variables and records deployment history; it is not an approval gate, and no required reviewers are configured.
 - **Lambda Function URL**: Terraform provisions the Lambda function and Function URL. The `api_base_url` output contains the public endpoint for each environment.
 
 ### GitHub environment variables (deploy)
@@ -149,7 +149,9 @@ Fork PRs receive no AWS credentials. The workflow falls back to backend-disabled
 
 ### Merge to main
 
-Staging is applied first. Production applies after staging succeeds, gated by the `production` environment protection rule.
+Staging is applied first, and production applies once the staging apply succeeds — `apply-prod` declares `needs: [detect-staging, detect-prod, apply-staging]`. Note what "succeeds" means here: that the staging apply returned without error, not that staging still serves traffic afterwards. There is no verification job between the two applies, so an apply that Terraform reports as clean but that breaks staging is promoted to prod regardless. The sibling repos run such a check; this one does not yet.
+
+There is no approval step either. The `production` environment scopes variables and records deployment history, but carries no required reviewers; the human checkpoint is the pull request, since branch protection means a change reaches prod only through an approved PR.
 
 Concurrency guards prevent simultaneous applies to the same environment.
 
@@ -180,7 +182,7 @@ The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Conf
 
 - Fork PRs never receive privileged credentials.
 - `concurrency` groups prevent parallel applies per environment.
-- Prod apply is gated behind staging success and the `production` environment protection rule.
+- Prod apply is gated behind the staging apply succeeding — not behind an approval, and not behind a check that staging still works afterwards.
 - Plan output is saved as an artifact for audit.
 
 ## Monitoring & Alerting
