@@ -233,8 +233,14 @@ On push to `main` (or manual dispatch from `main`), the deploy pipeline runs:
    changes are detected, downstream apply jobs are skipped.
 2. **Apply staging** (`apply-staging`) — auto-applies when staging has changes.
    Uses the `staging` GitHub environment.
-3. **Apply production** (`apply-prod`) — runs automatically after staging
-   succeeds (or is skipped). Uses the `production` GitHub environment.
+3. **Verify staging** (`verify-staging`) — requests `GET /public/status` against
+   the staging Function URL. A clean apply only proves the API calls succeeded,
+   so this confirms the stack still serves a database-backed read.
+4. **Apply production** (`apply-prod`) — runs automatically once the staging
+   apply and its verification have both succeeded, or when staging had no
+   changes to apply. Uses the `production` GitHub environment, which scopes that
+   environment's variables and records deployment history; it carries no
+   required reviewers, so nothing pauses for a human here.
 
 Concurrency guards (`terraform-deploy-staging`, `terraform-deploy-prod`)
 prevent parallel applies to the same environment.
@@ -325,10 +331,17 @@ re-apply. An environment whose cert is already issued applies in one pass.
 
 ### Deployment Modes
 
-| Environment | Auto-build | Trigger                                    |
-| ----------- | ---------- | ------------------------------------------ |
-| staging     | enabled    | Push to `main` triggers automatic build    |
-| production  | disabled   | Manual deployment via Amplify console / CI |
+| Environment | Amplify auto-build | Trigger                                                |
+| ----------- | ------------------ | ------------------------------------------------------ |
+| staging     | enabled            | Amplify builds on push to `main`                       |
+| production  | disabled           | `deploy-web.yml` starts a release job on push to `main` |
+
+"Auto-build disabled" means Amplify does not build production off its own branch
+webhook — not that a human releases it. `deploy-web.yml` runs `aws amplify
+start-job` on every push to `main` touching `apps/web/**` or
+`packages/shared/**`, in a single job with no `needs:`, so production web ships
+without a staging step or an approval in front of it (#314). The Amplify console
+remains available for a one-off manual release.
 
 #### Required PR status checks
 
@@ -356,7 +369,9 @@ with "Do not require this check to have run" so non-infra PRs are not blocked.
   artifacts from the workflow run to review what will be applied.
 - **Apply runs**: check the `Apply (staging)` and `Apply (prod)` job logs
   under the Actions tab for the merge commit on `main`.
-- **Prod apply**: the `Apply (prod)` job runs automatically after staging
-  succeeds (or is skipped when staging has no changes).
+- **Prod apply**: the `Apply (prod)` job runs automatically once `Apply
+  (staging)` and `Verify (staging)` have both succeeded (or when staging has no
+  changes to apply). There is no approval prompt — if prod applied something you
+  did not expect, the checkpoint that should have caught it is the pull request.
 - **No-change plans**: when `terraform plan` detects no changes, the detect
   job outputs `has_changes=false` and the apply job is skipped entirely.
