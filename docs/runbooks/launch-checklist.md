@@ -119,8 +119,9 @@ Production infrastructure is deployed via the Terraform workflow on merge to `ma
 2. Merge — that is the decision point. Prod applies on its own once the staging
    apply succeeds; the `production` environment carries no required reviewers,
    so there is no approval prompt to wait for
-3. Wait for apply to complete successfully, then check staging and prod by hand
-   — no job verifies staging between the two applies
+3. Wait for apply to complete successfully. `verify-staging` checks staging
+   between the two applies, so prod does not proceed on a staging apply that
+   broke the stack; prod itself still wants a manual look
 
 **Completed:** [Terraform run #22752401895](https://github.com/ammonl/loppemarked/actions/runs/22752401895) — all resources applied to prod including EventBridge session cleanup (2026-03-06)
 
