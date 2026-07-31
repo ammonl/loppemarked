@@ -307,7 +307,13 @@ jobs:
     name: "Verify (staging)"
     needs: apply-staging
     runs-on: ubuntu-latest
+    # Resolves the environment-scoped API_FUNCTION_NAME. Deliberately no
+    # `terraform-staging` concurrency group: this job takes no Terraform lock,
+    # and that group only holds one pending entrant, so an unrelated
+    # `infra/terraform/**` PR opening mid-deploy would cancel a queued verify
+    # and block the promotion for no reason.
     environment: staging
+    timeout-minutes: 10
     steps:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -317,51 +323,78 @@ jobs:
 
       - name: Get Function URL
         id: url
+        env:
+          API_FUNCTION_NAME: ${{ vars.API_FUNCTION_NAME }}
         run: |
+          if [ -z "$API_FUNCTION_NAME" ]; then
+            echo "::error::API_FUNCTION_NAME is unset for the staging environment, so staging cannot be verified."
+            exit 1
+          fi
           URL=$(aws lambda get-function-url-config \
-            --function-name "${{ vars.API_FUNCTION_NAME }}" \
+            --function-name "$API_FUNCTION_NAME" \
             --query 'FunctionUrl' --output text)
+          # `--output text` prints "None" rather than failing when the query
+          # matches nothing. Catch that here: left to the smoke test it would
+          # burn the whole retry budget and then blame the database.
+          if [ -z "$URL" ] || [ "$URL" = "None" ]; then
+            echo "::error::$API_FUNCTION_NAME has no Function URL config, so staging cannot be verified."
+            exit 1
+          fi
           echo "api_url=$URL" >> "$GITHUB_OUTPUT"
 
-      # /public/status reads system_settings and counts tables, so a 200 with a
-      # parseable body proves Lambda -> VPC -> RDS end to end rather than just
-      # that the function answers. /health would not: it does not touch the
-      # database, which is where a networking or IAM regression shows up.
-      # Retries cover ENI and DNS settling right after a networking apply.
-      - name: Check staging /public/status
+      # /public/status is unauthenticated, reads system_settings and counts
+      # tables, so a 200 proves Lambda -> VPC/networking -> RDS end to end.
+      # /health would not: it returns a static body without touching the
+      # database, so it keeps answering through exactly the failures this job
+      # exists to catch.
+      - name: Smoke-test staging
+        env:
+          API_URL: ${{ steps.url.outputs.api_url }}
         run: |
-          ATTEMPTS=6
-          for i in $(seq 1 "$ATTEMPTS"); do
-            STATUS=$(curl -s -o /tmp/status-response.json -w '%{http_code}' \
-              "${{ steps.url.outputs.api_url }}public/status" || true)
-            STATUS=${STATUS:-000}
-            echo "Attempt $i/$ATTEMPTS: HTTP $STATUS"
+          # A false negative here blocks the production deploy, so allow real
+          # convergence time: a fresh apply can leave security-group and route
+          # changes propagating for minutes, the security group is
+          # create_before_destroy, and the first request pays a VPC cold start
+          # on top. Failing requests return fast, so a short budget would be
+          # spent long before the stack has settled.
+          ATTEMPTS=10
+          for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
+            # curl already reports 000 via -w when it fails; `|| STATUS=000`
+            # (not `|| echo`, which would append a second 000 to the log) keeps
+            # its non-zero exit from tripping `bash -e`.
+            STATUS=$(curl -s -o /tmp/status-response.json -w '%{http_code}' --max-time 20 "${API_URL%/}/public/status") || STATUS=000
+            echo "Attempt $ATTEMPT/$ATTEMPTS: HTTP $STATUS"
             if [ "$STATUS" = "200" ] && jq -e '.serverTime' /tmp/status-response.json > /dev/null 2>&1; then
-              echo "Staging is healthy:"
+              echo "Staging served a database-backed request:"
               cat /tmp/status-response.json
               exit 0
             fi
-            if [ "$i" -lt "$ATTEMPTS" ]; then
+            rm -f /tmp/status-response.json
+            if [ "$ATTEMPT" -lt "$ATTEMPTS" ]; then
               sleep 10
             fi
           done
-          echo "::error::Staging /public/status check failed after $ATTEMPTS attempts (last HTTP $STATUS)"
-          cat /tmp/status-response.json || true
+          echo "::error::Staging did not serve a database-backed request after $ATTEMPTS attempts (last HTTP $STATUS); not promoting to prod."
           exit 1
 
   apply-prod:
     name: "Apply (prod)"
     needs: [detect-staging, detect-prod, apply-staging, verify-staging]
-    # `apply-staging` is skipped when staging has no changes of its own, and a
-    # skipped apply leaves nothing to verify — so prod proceeds on skipped, but
-    # when staging *did* apply, both the apply and its verification must have
-    # succeeded.
+    # `!cancelled()` rather than `always()`: this gate has to keep holding when
+    # an upstream job is skipped, but `always()` would also run it on a
+    # deliberately cancelled run.
+    #
+    # The promote-without-staging path keys off detect-staging's own
+    # `has_changes` rather than `apply-staging.result == 'skipped'`. A skipped
+    # result means both "staging had nothing to apply" (promote) and "staging
+    # never started" (do not promote); the output distinguishes them, and
+    # detect-staging is already required to have succeeded.
     if: >-
-      always() &&
+      !cancelled() &&
       needs.detect-prod.outputs.has_changes == 'true' &&
       needs.detect-prod.result == 'success' &&
       needs.detect-staging.result == 'success' &&
-      (needs.apply-staging.result == 'skipped' ||
+      (needs.detect-staging.outputs.has_changes != 'true' ||
       (needs.apply-staging.result == 'success' && needs.verify-staging.result == 'success'))
     runs-on: ubuntu-latest
     environment: production
