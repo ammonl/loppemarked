@@ -331,10 +331,10 @@ re-apply. An environment whose cert is already issued applies in one pass.
 
 ### Deployment Modes
 
-| Environment | Amplify auto-build | Trigger                                                      |
-| ----------- | ------------------ | ------------------------------------------------------------ |
-| staging     | enabled            | Amplify builds on push to `main`                              |
-| production  | disabled           | `deploy-web.yml` starts a release job on push to `main`       |
+| Environment | Amplify auto-build | Trigger                                                |
+| ----------- | ------------------ | ------------------------------------------------------ |
+| staging     | enabled            | Amplify builds on push to `main`                       |
+| production  | disabled           | `deploy-web.yml` starts a release job on push to `main` |
 
 "Auto-build disabled" means Amplify does not build production off its own branch
 webhook — not that a human releases it. `deploy-web.yml` runs `aws amplify
