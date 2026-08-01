@@ -22,8 +22,14 @@ URL's trailing slash and `NONE` auth, `bash -e` behavior in `run:` blocks, and
 the README/AGENTS.md sections that go stale when the promotion rule changes.
 It also carries the exhaustive promote/block truth table for the current gate
 (including the `has_changes`-unset fail-open) and the verified capabilities and
-gaps of `scripts/check-promotion-gate.mjs` / `promotion-gate-rehearsal.yml`
-(#313, PR #321) — read that before re-deriving GitHub expression semantics.
+gaps of `scripts/check-promotion-gate.mjs` (#313, PR #321) — read that before
+re-deriving GitHub expression semantics. It now also carries the verified gaps of
+`scripts/check-ci-role-permissions.mjs` (PR #322): what its workflow-scan regex
+misses and misfires on, and which IAM constructs (`NotAction`, `NotResource`,
+`Condition`, the `?` wildcard) `checkLivePolicy` silently ignores. Plus the
+`ci-deploy` vs `ci-terraform` role split behind the same `aws` call, why
+`lambda wait function-updated-v2` needs `lambda:GetFunction`, and why a
+hard-failing step in a drift job files no issue at all.
 
 - **loppemarked's `terraform.yml` now matches un17-resources**, not greenspace:
   #316 (7bb7f75) brought over `!cancelled()`, the `has_changes` promote branch,

@@ -64,6 +64,26 @@ jobs:
       - name: Check the staging-to-prod promotion gate
         run: node scripts/check-promotion-gate.mjs
 
+  ci-permissions:
+    runs-on: ubuntu-latest
+    needs: guardrails
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # Static half only — no credentials here. It proves every AWS call a
+      # workflow makes is mapped to an IAM action that bootstrap declares, so a
+      # new call cannot be added without deciding which permission it needs.
+      # Whether the *live* role still grants them is checked daily by
+      # drift-detection, which is the half that needs AWS.
+      - name: Check the workflows' AWS calls are declared
+        run: node scripts/check-ci-role-permissions.mjs
+
   infra-checks:
     runs-on: ubuntu-latest
     needs: guardrails
