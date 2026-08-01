@@ -132,6 +132,7 @@ jobs:
   ci-role-permissions:
     name: "Check CI role permissions (${{ matrix.scope }})"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -160,92 +161,129 @@ jobs:
       - name: Resolve the assumed role
         id: role
         run: |
-          ARN=$(aws sts get-caller-identity --query 'Arn' --output text)
-          ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
+          IDENTITY=$(aws sts get-caller-identity --query '[Arn,Account]' --output text)
           # arn:aws:sts::<account>:assumed-role/<role>/<session>
-          ROLE=$(echo "$ARN" | cut -d/ -f2)
+          ROLE=$(echo "$IDENTITY" | cut -f1 | cut -d/ -f2)
+          ACCOUNT=$(echo "$IDENTITY" | cut -f2)
           if [ -z "$ROLE" ] || [ -z "$ACCOUNT" ]; then
-            echo "::error::Could not resolve a role name and account from the assumed identity '$ARN'."
+            echo "::error::Could not resolve a role and account from the assumed identity '$IDENTITY'."
             exit 1
           fi
-          echo "Assumed $ARN"
+          echo "Assumed $IDENTITY"
           echo "name=$ROLE" >> "$GITHUB_OUTPUT"
           echo "account=$ACCOUNT" >> "$GITHUB_OUTPUT"
 
+      # Deliberately does not exit non-zero: a role that cannot read its own
+      # policy is the drift this job exists to report, so it has to reach the
+      # issue step rather than abort the job before it.
       - name: Fetch the live inline policy
         id: policy
         env:
           ROLE_NAME: ${{ steps.role.outputs.name }}
         run: |
-          # A failure here is itself the finding: iam:GetRolePolicy is one of the
-          # permissions under test, so a role that cannot read itself has already
-          # lagged the configuration.
-          if ! aws iam get-role-policy \
-            --role-name "$ROLE_NAME" \
-            --policy-name terraform-resources \
-            --output json > live-policy.json; then
-            echo "::error::Could not read the terraform-resources policy on $ROLE_NAME. Either the policy is absent or the role lacks iam:GetRolePolicy on itself — both mean the live role lags infra/terraform/bootstrap."
-            exit 1
+          if aws iam get-role-policy --role-name "$ROLE_NAME" \
+               --policy-name terraform-resources --output json > live-policy.json 2> fetch-error.txt; then
+            echo "readable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "readable=false" >> "$GITHUB_OUTPUT"
+            cat fetch-error.txt
           fi
 
       - name: Check the workflows' AWS calls against it
         id: check
+        if: steps.policy.outputs.readable == 'true'
         env:
           ROLE_NAME: ${{ steps.role.outputs.name }}
           ACCOUNT_ID: ${{ steps.role.outputs.account }}
         run: |
           set +e
           node scripts/check-ci-role-permissions.mjs \
-            --policy live-policy.json --role "$ROLE_NAME" --account "$ACCOUNT_ID" 2>&1 | tee check-output.txt
+            --policy live-policy.json --role "$ROLE_NAME" \
+            --account "$ACCOUNT_ID" --region "$AWS_REGION" 2>&1 | tee check-output.txt
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
+          # 2 is a usage error — the job invoked the script wrongly, which is a
+          # bug here rather than drift in the role. Do not file it as drift.
+          if [ "$EXIT_CODE" -eq 2 ]; then
+            echo "::error::check-ci-role-permissions.mjs rejected its arguments; this is a bug in this workflow, not role drift."
+            exit 1
+          fi
           if [ "$EXIT_CODE" -eq 0 ]; then
             echo "has_gap=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_gap=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create permissions-drift issue
-        if: steps.check.outputs.has_gap == 'true'
+      - name: Report a permissions gap
+        if: steps.policy.outputs.readable == 'false' || steps.check.outputs.has_gap == 'true'
         uses: actions/github-script@v7
         env:
-          CHECK_OUTPUT_PATH: check-output.txt
           DRIFT_SCOPE: ${{ matrix.scope }}
           ROLE_NAME: ${{ steps.role.outputs.name }}
+          POLICY_READABLE: ${{ steps.policy.outputs.readable }}
         with:
           script: |
             const fs = require('fs');
-            const output = fs.readFileSync(process.env.CHECK_OUTPUT_PATH, 'utf8');
-            const truncated = output.length > 60000
-              ? output.slice(0, 60000) + '\n\n... (truncated)'
-              : output;
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const scope = process.env.DRIFT_SCOPE;
             const role = process.env.ROLE_NAME;
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `CI role permissions lag bootstrap in ${scope}`,
-              labels: ['ops', 'drift'],
-              body: [
-                `## The live CI role is missing a permission the workflows use`,
-                '',
-                `**Scope:** ${scope}`,
-                `**Role:** \`${role}\``,
-                `**Detected at:** ${new Date().toISOString()}`,
-                `**Workflow run:** [View run](${runUrl})`,
-                '',
-                'CI never applies `infra/terraform/bootstrap`, so this role is not reconciled by any pipeline. Fix by applying it with operator credentials:',
-                '',
-                '```',
-                'terraform -chdir=infra/terraform/bootstrap init',
-                'terraform -chdir=infra/terraform/bootstrap apply',
-                '```',
-                '',
-                '### Check output',
-                '',
-                '```',
-                truncated,
-                '```',
-              ].join('\n'),
+            const readable = process.env.POLICY_READABLE === 'true';
+            const readFile = (p) => { try { return fs.readFileSync(p, 'utf8'); } catch { return '(no output)'; } };
+            const detail = readable ? readFile('check-output.txt') : readFile('fetch-error.txt');
+            const truncated = detail.length > 60000 ? detail.slice(0, 60000) + '\n\n... (truncated)' : detail;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `CI role permissions lag bootstrap in ${scope}`;
+
+            const body = [
+              readable
+                ? `## The live CI role is missing a permission the workflows use`
+                : `## The live CI role could not be read`,
+              '',
+              `**Scope:** ${scope}`,
+              `**Role:** \`${role}\``,
+              `**Detected at:** ${new Date().toISOString()}`,
+              `**Workflow run:** [View run](${runUrl})`,
+              '',
+              readable
+                ? 'CI never applies `infra/terraform/bootstrap`, so this role is not reconciled by any pipeline.'
+                : 'Reading `terraform-resources` on this role failed. If the cause is AccessDenied then `iam:GetRolePolicy` itself has lagged, which is the same drift one step earlier; a throttle or a transient IAM error would also land here, so check the message below before applying.',
+              '',
+              'Fix by applying bootstrap with operator credentials — CI cannot:',
+              '',
+              '```',
+              'terraform -chdir=infra/terraform/bootstrap init',
+              'terraform -chdir=infra/terraform/bootstrap apply',
+              '```',
+              '',
+              readable ? '### Check output' : '### Error',
+              '',
+              '```',
+              truncated,
+              '```',
+            ].join('\n');
+
+            // This condition is sticky — it stays true until an operator runs a
+            // manual apply — so a new issue every morning would be noise.
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'drift', per_page: 100,
             });
+            const open = existing.data.find((issue) => issue.title === title);
+            if (open) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: open.number, body,
+              });
+              core.notice(`Still failing; commented on #${open.number}.`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, labels: ['ops', 'drift'], body,
+              });
+            }
+
+      # After the issue exists, so a red job never costs the report.
+      - name: Fail if the role could not be verified
+        if: steps.policy.outputs.readable == 'false' || steps.check.outputs.has_gap == 'true'
+        run: |
+          echo "::error::The ${{ matrix.scope }} ci-terraform role does not match what the workflows need. See the issue filed by this run."
+          exit 1

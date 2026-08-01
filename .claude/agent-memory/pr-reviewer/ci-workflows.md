@@ -183,10 +183,11 @@ Known gaps in the *checker*, verified by mutating both workflows and re-running:
   dependencies, so those reads become null. Fails closed for the current
   expression (every job is also read via a positive `== 'success'`), but the
   script only checks the converse (needs entry never read).
-- `parseNeeds` mis-reads a YAML block-sequence `needs:` (`- a`/`- b`) as one
-  entry and then reports "apply-prod does not declare verify-staging in needs:,
-  so prod can apply before staging is verified" — a false accusation. Same for
-  quoted entries.
+- ~~`parseNeeds` mis-reads a YAML block-sequence `needs:`~~ **OUTDATED — do not
+  re-flag.** Re-verified directly against the current implementation: it strips
+  leading `-` and quotes and splits on `[,\s]+`, so scalar, flow-sequence
+  (`[a, b]`), block-sequence (`- a`/`- b`) and quoted entries all parse
+  correctly. `jobKey`'s folded branch collects the `      - x` lines too.
 - `equals` is strict + case-sensitive; GitHub's `==` is loose and **ignores case
   when comparing strings**. No constructible green-yet-promotes case today
   (every block-expected row is paired with a promote-expected row), but it is a
@@ -210,3 +211,77 @@ Keep in mind when reviewing gate changes: the evaluator is now the only thing
 checking the gate, and it is a reimplementation of GitHub's semantics, not
 GitHub. Its mutation tests all run through that same evaluator, so they cannot
 catch a misreading they share with it.
+
+**Coverage lost when the rehearsal parity block went (verified by mutation on
+both sides of the commit):** the old parity list carried non-optional
+`apply-staging.if` / `apply-staging.needs` entries, so deleting
+`if: needs.detect-staging.outputs.has_changes == 'true'` from `apply-staging`
+failed the check (`job "apply-staging" has no "if:"`). The replacement block only
+inspects `verify-staging`, so that mutation is now **green**. It matters because
+the gate's `has_changes == 'false'` branch promotes without reading
+`apply-staging.result` — sound only while apply-staging is skipped in that case.
+The new `verify-staging` checks are otherwise strictly stronger than the parity
+entries they replaced (semantic, not copy-equality; a *new* `if:` on
+verify-staging now fails instead of passing when both copies gained it).
+
+## `scripts/check-ci-role-permissions.mjs` (PR #322) — verified gaps
+
+Static half (`checkWorkflowCoverage`), regex
+`/\baws\s+([a-z0-9-]+)\s+([a-z0-9-]+)(?:\s+([a-z0-9-]+))?/` per non-comment line.
+Probed directly — **misses** (silently unchecked permission): a second call on
+the same line (`exec` has no `/g`, so `aws lambda invoke && aws iam delete-role`
+records only the first), and a backslash-continued `aws \` with the service on
+the next line. **Misfires** (spurious CI failure): `aws --region x lambda invoke`
+captures `--region eu-north-1` as the call because `-` is inside `[a-z0-9-]`;
+`echo hi # aws s3 cp …` (only *full-line* comments are skipped); the words in
+`echo "run aws logs tail"`. Correctly ignores `aws2`, `aws-cdk`, uppercase `AWS`,
+and `arn:aws:sts::…`. Only `.github/workflows/*.y?ml` is scanned — nothing in
+`scripts/`.
+
+Live half (`checkLivePolicy`) — verified by feeding it mutated policy JSON:
+- `NotAction` / `NotResource` are **silently ignored** (`asList(undefined)` →
+  `[]` → `.some()` false). A `Deny`/`NotAction:[sts:GetCallerIdentity]`/
+  `Resource:"*"` statement that locks the role out of everything still prints
+  "Every AWS call the workflows make is mapped, declared, and granted."
+- `Condition` is **silently ignored** both ways: a conditional Deny reports a
+  healthy role as broken (files the issue); a conditional Allow reports a broken
+  role as healthy.
+- `globMatches` handles `*` only. IAM also supports `?`; `escape` escapes it, so
+  `?` in an Allow resource is a false alarm and `?` in a Deny action is a missed
+  deny.
+- The `i` flag is applied to resources as well as actions. Right for actions
+  (IAM action names are case-insensitive), not generally right for ARNs.
+- Allow/Deny are otherwise modeled correctly: action **and** resource must match
+  within the same statement, and any Deny beats any Allow.
+- Malformed policy JSON → unhandled `JSON.parse` throw, exit 1; the workflow maps
+  any non-zero exit to `has_gap=true`, so a stack trace ships inside an issue
+  titled "CI role permissions lag bootstrap".
+- The static "declared in bootstrap" test is `declared.includes('"action"')` over
+  the whole `.tf` file — it also matches actions in `terraform-state`, in the
+  shared-network managed policy, and inside the `DenySelfModify` Deny, while the
+  live half only ever fetches the `terraform-resources` inline policy.
+
+**Structural gotcha:** the manifest is keyed on the call string with a single
+`role` field, so one call made by two roles cannot be represented.
+`aws lambda get-function-url-config` runs in `deploy.yml` (ci-**deploy**,
+`DEPLOY_ROLE_ARN_*`) and `terraform.yml` (ci-**terraform**, `TF_ROLE_ARN_*`);
+the manifest labels it `ci-terraform` and the table prints deploy.yml in that
+column. The code comment right above claims the opposite property.
+
+## `aws lambda wait function-updated-v2` needs `lambda:GetFunction`
+
+Not `lambda:GetFunctionConfiguration`. The `*-v2` waiters exist precisely
+because they poll `GetFunction` (`Configuration.LastUpdateStatus`) rather than
+`GetFunctionConfiguration`. Corroborated in-repo: `ci_deploy_permissions`
+(`modules/loppemarked_stack/iam.tf`) grants `lambda:GetFunction` and **not**
+`GetFunctionConfiguration`, and `deploy.yml` is green in production.
+
+## Drift-job pattern: a hard-failing step files no issue
+
+Both `detect-drift` and `ci-role-permissions` gate issue creation on
+`if: steps.<x>.outputs.has_* == 'true'`. That contains no status-check function,
+so the step is skipped once any earlier step in the job has failed. Any
+`exit 1` before it (OIDC assume fails, `aws iam get-role-policy` denied) yields a
+red scheduled run and **no issue** — the least visible outcome for the most
+severe condition. Neither job dedupes, either: the same issue is opened every day
+at 06:00 UTC until a human fixes it.

@@ -509,10 +509,25 @@ for (const scenario of SCENARIOS) {
 }
 
 // --------------------------------------------------------------------------
-// The scenario table above assumes a shape verify-staging has to keep.
+// The scenario table above assumes a shape the upstream jobs have to keep.
 // --------------------------------------------------------------------------
 
-console.log(`\nverify-staging structure:\n`);
+console.log(`\nUpstream job structure:\n`);
+
+// The gate's promote-without-staging branch is satisfied by has_changes alone —
+// it never reads apply-staging.result. That is only sound while apply-staging is
+// itself skipped on 'false'. Remove this condition and a *failed* staging apply
+// on a no-change run promotes to prod, and the scenario table above would not
+// notice, because it states job results rather than deriving them.
+const applyStagingIf = requireJobKey(jobBlock(terraform, TERRAFORM, "apply-staging"), TERRAFORM, "apply-staging", "if");
+if (!applyStagingIf.includes("needs.detect-staging.outputs.has_changes")) {
+  fail(
+    `${TERRAFORM}: apply-staging's if: no longer keys off detect-staging's has_changes output (it is "${applyStagingIf}"). ` +
+      `The gate promotes on has_changes == 'false' without reading apply-staging.result, which is only safe while that if: skips the apply.`,
+  );
+} else {
+  console.log("  ok    apply-staging still skips on detect-staging's has_changes");
+}
 
 const verifyBlock = jobBlock(terraform, TERRAFORM, "verify-staging");
 const verifyNeeds = parseNeeds(requireJobKey(verifyBlock, TERRAFORM, "verify-staging", "needs"));
