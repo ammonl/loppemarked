@@ -389,12 +389,19 @@ jobs:
     # result means both "staging had nothing to apply" (promote) and "staging
     # never started" (do not promote); the output distinguishes them, and
     # detect-staging is already required to have succeeded.
+    #
+    # It tests `== 'false'` rather than `!= 'true'` so that an *unset* output
+    # holds the promotion instead of opening it. detect-staging always publishes
+    # one of the two values today, but if it ever succeeds without doing so —
+    # a renamed step id, a broken `outputs:` mapping — `!= 'true'` would promote
+    # a change staging never applied, which is the failure this gate exists to
+    # stop. The siblings still carry the `!= 'true'` form; deliberate difference.
     if: >-
       !cancelled() &&
       needs.detect-prod.outputs.has_changes == 'true' &&
       needs.detect-prod.result == 'success' &&
       needs.detect-staging.result == 'success' &&
-      (needs.detect-staging.outputs.has_changes != 'true' ||
+      (needs.detect-staging.outputs.has_changes == 'false' ||
       (needs.apply-staging.result == 'success' && needs.verify-staging.result == 'success'))
     runs-on: ubuntu-latest
     environment: production

@@ -18,10 +18,11 @@ anything that would otherwise fail every run.
 "staging had no changes of its own" promotion path), which is why it can't use
 the default `success()`. Two forms exist across the repos:
 
-- greenspace + loppemarked: `always() && ... && (needs.apply-staging.result ==
+- greenspace: `always() && ... && (needs.apply-staging.result ==
   'skipped' || (apply-staging == 'success' && verify-staging == 'success'))`
-- un17-resources: `!cancelled() && ... && (needs.detect-staging.outputs.has_changes
-  != 'true' || (apply-staging == 'success' && verify-staging == 'success'))`
+- un17-resources **and loppemarked (adopted in #316, commit 7bb7f75)**: `!cancelled() && ... &&
+  (needs.detect-staging.outputs.has_changes != 'true' || (apply-staging ==
+  'success' && verify-staging == 'success'))`
 
 un17-resources' form is the corrected one, for two documented reasons:
 
@@ -37,9 +38,23 @@ un17-resources' form is the corrected one, for two documented reasons:
    second reading, but the output form survives future edits to
    `apply-staging`'s `if:`.
 
-Non-cancellation truth table (verified by reading the graph): verify failure,
-verify cancellation, apply-staging failure and detect-staging failure all block
-prod correctly. The gate does gate — cancellation is the only hole.
+**Exhaustive truth table for the current (`!cancelled()` + `has_changes`) form**
+— brute-forced over cancelled × 4 results × 3 has_changes values per detect job
+× 4 results per apply/verify job. The gate promotes in exactly two shapes:
+
+1. `detect-staging` success + `has_changes == 'false'` (nothing applied to
+   staging, nothing to verify — the intended promote-without-staging path), or
+2. `detect-staging` success + `has_changes == 'true'` **and** apply-staging
+   success **and** verify-staging success.
+
+plus one fail-open: `detect-staging` success with `has_changes` **unset (`''`)**
+promotes regardless of apply/verify, because the branch is written
+`has_changes != 'true'` rather than `== 'false'`. Not reachable at runtime (the
+plan step always writes one of the two), but reachable by an edit that breaks
+the `outputs:` wiring — rename the `id: plan` step and the job still succeeds
+publishing nothing, staging is never applied, and prod applies anyway. `==
+'false'` fails closed there and changes no other row. Worth flagging on any PR
+that touches detect-staging's `outputs:` or step ids.
 
 ### `verify-staging` job facts
 
@@ -65,9 +80,9 @@ prod correctly. The gate does gate — cancellation is the only hole.
 
 A false failure here blocks production, so review retry budgets adversarially.
 
-- greenspace/loppemarked: 6 attempts, 10s sleeps ≈ **50s** of wall clock if the
-  requests fail fast. un17-resources deliberately uses 10 attempts + `--max-time
-  20` + `timeout-minutes: 10` and records why.
+- greenspace: 6 attempts, 10s sleeps ≈ **50s** of wall clock if the requests
+  fail fast. un17-resources **and loppemarked (#316)** use 10 attempts +
+  `--max-time 20` + `timeout-minutes: 10` and record why.
 - The dangerous window is right after an apply that touches `vpc_config` or the
   Lambda security group: the function re-provisions ENIs and returns **fast**
   502s meanwhile, so a fast-failing loop burns its whole budget in under a
@@ -138,3 +153,60 @@ so check the one the diff touches rather than generalizing: `deploy.yml`'s
 (`GET /public/status`, a database-backed read); `deploy-web.yml` is a single
 `deploy-web-prod` job with no `needs:` and no staging job, so nothing precedes
 prod there (#314). Docs that flatten these into one rule were the bug in #312.
+
+## `scripts/check-promotion-gate.mjs` (#313 / PR #321)
+
+CI job `promotion-gate` (in `ci.yml`, `needs: guardrails`, no path filter so it
+runs on every PR — deliberate, since `terraform.yml` only triggers on
+`infra/terraform/**`). Reads `apply-prod`'s `if:`/`needs:` out of
+`terraform.yml` with a hand-rolled reader, evaluates the expression over a
+12-row scenario table, and holds `promotion-gate-rehearsal.yml` to a verbatim
+copy of the gate (whitespace-normalized, so reflowing a `>-` block is fine).
+
+Verified about the evaluator (all correct, don't re-litigate):
+`!` > `==`/`!=` > `&&` > `||` matches GitHub's documented precedence table;
+`&&`/`||` return an operand rather than a boolean; string truthiness is
+`'' → false` and everything else true (so `'false'`/`'0'` are truthy); absent
+`needs.x.outputs.y` modeled as `''`, behaviorally identical to GitHub's null
+under `==`/`!=` against a string literal and under truthiness; the `''`
+string-escape loop is correct (traced `''`, `'it''s'`, `'a'''`, and unterminated
+`'a''` → throws).
+
+Known gaps in the *checker*, verified by mutating both workflows and re-running:
+
+- Deleting `needs.detect-prod.result == 'success'` from the gate leaves the
+  check **green** — the "detect-prod failed" row gives detect-prod no
+  `has_changes`, so `'' == 'true'` blocks first and the result clause never
+  decides anything. detect-staging has the mirror row; detect-prod does not.
+- Dropping a job from `needs:` while still reading `needs.<job>.*` in the `if:`
+  leaves the check **green**. GitHub's `needs` context holds only *direct*
+  dependencies, so those reads become null. Fails closed for the current
+  expression (every job is also read via a positive `== 'success'`), but the
+  script only checks the converse (needs entry never read).
+- `parseNeeds` mis-reads a YAML block-sequence `needs:` (`- a`/`- b`) as one
+  entry and then reports "apply-prod does not declare verify-staging in needs:,
+  so prod can apply before staging is verified" — a false accusation. Same for
+  quoted entries.
+- `equals` is strict + case-sensitive; GitHub's `==` is loose and **ignores case
+  when comparing strings**. No constructible green-yet-promotes case today
+  (every block-expected row is paired with a promote-expected row), but it is a
+  real divergence.
+- The implicit `success()` GitHub adds to a job `if:` with no status-check
+  function is not modeled. Not reachable while the cancellation rows force
+  `!cancelled()`/`always()` to stay present.
+- `jobBlock` treats any 2-space-indented **comment** as the end of a job.
+  Throws (unhandled, stack trace) for required keys; silently reports "absent in
+  both" for the `optional: true` `verify-staging.if` parity entry.
+- A folded `>-` continuation re-indented deeper than 6 spaces silently truncates
+  the expression; the run still fails, but the message blames the gate's logic.
+
+`promotion-gate-rehearsal.yml`: `workflow_dispatch`-only, 4 scenarios. Verified
+by reading the graph that `apply-prod` is genuinely `skipped` (not
+`failure`/`cancelled`) in both blocking scenarios, that `verify-staging` is
+skipped rather than run when `apply-staging` fails (its default `success()`),
+and that `assert` still runs when `apply-prod` is skipped because `!cancelled()`
+is a status-check function and lifts the needs-succeeded requirement. Caveats:
+dispatch needs the file on the default branch, so it cannot be exercised
+pre-merge; no `permissions:`; the stub `apply-prod` omits `environment:
+production`; nothing lints these workflows (no actionlint job), so a YAML error
+outside the 3 jobs/2 keys the parity check reads would ship silently.

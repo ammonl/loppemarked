@@ -151,7 +151,9 @@ Fork PRs receive no AWS credentials. The workflow falls back to backend-disabled
 
 Staging is applied first, then verified, and production applies only if both succeeded — `apply-prod` declares `needs: [detect-staging, detect-prod, apply-staging, verify-staging]`. The verification matters because a clean `terraform apply` means the API calls succeeded, not that the stack still works: `verify-staging` requests `GET /public/status`, which reads the database, so an apply that leaves the Lambda unable to reach RDS fails there instead of being promoted.
 
-When staging has no changes of its own the apply is skipped and there is nothing to verify, so prod still proceeds — that path keys off `detect-staging`'s `has_changes` output rather than the skipped result.
+When staging has no changes of its own the apply is skipped and there is nothing to verify, so prod still proceeds — that path keys off `detect-staging`'s `has_changes` output rather than the skipped result, and requires it to be an explicit `'false'`, so a detect job that succeeds without publishing the output holds the promotion instead of opening it.
+
+The blocking is done by `apply-prod`'s `if:` expression, not by the `needs:` list: `!cancelled()` is there so the job still runs when an upstream is skipped, which means a gate that lists `verify-staging` without testing its result would promote a broken staging and look no different in a diff. CI's `promotion-gate` job (`npm run check:promotion-gate`) reads that expression out of `terraform.yml` and evaluates it over a table of staging outcomes — verification failed, verification skipped, apply failed or skipped, no changes, run cancelled, either detect job failed before or after publishing its output — so a change to the gate that would let a failed verification through fails the pull request. `promotion-gate-rehearsal.yml` covers the same ground the other way: a `workflow_dispatch`-only stub graph carrying the gate verbatim, so the promotion can be exercised on GitHub without applying anything or breaking staging to do it.
 
 There is no approval step either. The `production` environment scopes variables and records deployment history, but carries no required reviewers; the human checkpoint is the pull request, since branch protection means a change reaches prod only through an approved PR.
 
@@ -176,6 +178,7 @@ These checks should be required in the `main` branch protection rule:
 | --------- | ----------------- | ----------------------------------------------- |
 | CI        | `app-checks`      | Lint, test, build for application code          |
 | CI        | `infra-checks`    | `terraform fmt` + `validate` (backend-disabled) |
+| CI        | `promotion-gate`  | Prod applies only after staging verifies        |
 | Terraform | `Format Check`    | `terraform fmt -check -recursive` on infra changes |
 
 The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Configure it in branch protection with "Do not require this check to have run" so non-infra PRs are not blocked.
@@ -185,6 +188,7 @@ The Terraform `Format Check` only triggers on `infra/terraform/**` changes. Conf
 - Fork PRs never receive privileged credentials.
 - `concurrency` groups prevent parallel applies per environment.
 - Prod apply is gated behind the staging apply succeeding **and** `verify-staging` confirming staging still serves a database-backed request. Not behind an approval — there is none.
+- That gate is checked rather than assumed: CI's `promotion-gate` job evaluates the real `apply-prod` condition against each staging outcome on every PR.
 - Plan output is saved as an artifact for audit.
 
 ## Monitoring & Alerting

@@ -11,7 +11,8 @@
     "test": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check:promotion-gate": "node scripts/check-promotion-gate.mjs"
   },
   "engines": {
     "node": ">=24"
