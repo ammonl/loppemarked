@@ -13,9 +13,6 @@
 // table of upstream outcomes. Anything the evaluator cannot model faithfully is
 // an error rather than a pass, because a check that quietly stops covering the
 // gate is the same failure dressed differently.
-//
-// It also holds promotion-gate-rehearsal.yml to a verbatim copy of the gate, so
-// that rehearsal keeps demonstrating this workflow rather than its own.
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -23,7 +20,6 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TERRAFORM = ".github/workflows/terraform.yml";
-const REHEARSAL = ".github/workflows/promotion-gate-rehearsal.yml";
 
 // --------------------------------------------------------------------------
 // Reading jobs out of the workflow
@@ -467,7 +463,6 @@ const fail = (message) => failures.push(message);
 const read = (file) => readFileSync(path.join(repoRoot, file), "utf8");
 
 const terraform = read(TERRAFORM);
-const rehearsal = read(REHEARSAL);
 
 const applyProd = jobBlock(terraform, TERRAFORM, "apply-prod");
 const gate = requireJobKey(applyProd, TERRAFORM, "apply-prod", "if");
@@ -514,39 +509,32 @@ for (const scenario of SCENARIOS) {
 }
 
 // --------------------------------------------------------------------------
-// The rehearsal has to stay a copy of this workflow, not a fork of it.
+// The scenario table above assumes a shape verify-staging has to keep.
 // --------------------------------------------------------------------------
 
-console.log(`\nRehearsal parity with ${REHEARSAL}:\n`);
+console.log(`\nverify-staging structure:\n`);
 
-const parity = [
-  { job: "apply-prod", key: "if" },
-  { job: "apply-prod", key: "needs" },
-  { job: "apply-staging", key: "if" },
-  { job: "apply-staging", key: "needs" },
-  // verify-staging carries no `if:` on purpose: the default success() is what
-  // makes a failed staging apply skip the verification rather than run it.
-  { job: "verify-staging", key: "if", optional: true },
-  { job: "verify-staging", key: "needs" },
-];
+const verifyBlock = jobBlock(terraform, TERRAFORM, "verify-staging");
+const verifyNeeds = parseNeeds(requireJobKey(verifyBlock, TERRAFORM, "verify-staging", "needs"));
+const verifyIf = jobKey(verifyBlock, TERRAFORM, "verify-staging", "if");
 
-for (const { job, key, optional } of parity) {
-  const inTerraform = jobKey(jobBlock(terraform, TERRAFORM, job), TERRAFORM, job, key);
-  const inRehearsal = jobKey(jobBlock(rehearsal, REHEARSAL, job), REHEARSAL, job, key);
-  if (!optional && inTerraform === null) {
-    fail(`${TERRAFORM}: job "${job}" has no "${key}:".`);
-    continue;
-  }
-  if (inTerraform === inRehearsal) {
-    console.log(`  ok    ${job}.${key}${inTerraform === null ? " (absent in both)" : ""}`);
-  } else {
-    console.log(`  FAIL  ${job}.${key}`);
-    fail(
-      `${REHEARSAL} has drifted from ${TERRAFORM} at ${job}.${key}, so the rehearsal no longer demonstrates the real gate.\n` +
-        `    ${TERRAFORM}: ${inTerraform ?? "(absent)"}\n` +
-        `    ${REHEARSAL}: ${inRehearsal ?? "(absent)"}`,
-    );
-  }
+// "staging apply fails, so verification never runs" is only true while these
+// hold: the default success() is what skips the verification after a failed
+// apply, and an `if:` naming any status function would run it instead — turning
+// a scenario the table asserts is reachable into one that never happens.
+if (!verifyNeeds.includes("apply-staging")) {
+  fail(`${TERRAFORM}: verify-staging does not declare apply-staging in needs:, so it no longer verifies what was applied.`);
+} else {
+  console.log("  ok    needs: apply-staging");
+}
+
+if (verifyIf !== null) {
+  fail(
+    `${TERRAFORM}: verify-staging has gained "if: ${verifyIf}". Its default success() is what makes a failed staging apply ` +
+      `skip the verification; an explicit condition can run it instead, and the gate reads a skipped and a failed verification differently.`,
+  );
+} else {
+  console.log("  ok    no if: — the default success() still gates it on the apply");
 }
 
 if (failures.length > 0) {

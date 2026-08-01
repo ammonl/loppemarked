@@ -22,8 +22,8 @@ URL's trailing slash and `NONE` auth, `bash -e` behavior in `run:` blocks, and
 the README/AGENTS.md sections that go stale when the promotion rule changes.
 It also carries the exhaustive promote/block truth table for the current gate
 (including the `has_changes`-unset fail-open) and the verified capabilities and
-gaps of `scripts/check-promotion-gate.mjs` / `promotion-gate-rehearsal.yml`
-(#313, PR #321) — read that before re-deriving GitHub expression semantics.
+gaps of `scripts/check-promotion-gate.mjs` (#313, PR #321) — read that before
+re-deriving GitHub expression semantics.
 
 - **loppemarked's `terraform.yml` now matches un17-resources**, not greenspace:
   #316 (7bb7f75) brought over `!cancelled()`, the `has_changes` promote branch,

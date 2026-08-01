@@ -160,8 +160,8 @@ CI job `promotion-gate` (in `ci.yml`, `needs: guardrails`, no path filter so it
 runs on every PR — deliberate, since `terraform.yml` only triggers on
 `infra/terraform/**`). Reads `apply-prod`'s `if:`/`needs:` out of
 `terraform.yml` with a hand-rolled reader, evaluates the expression over a
-12-row scenario table, and holds `promotion-gate-rehearsal.yml` to a verbatim
-copy of the gate (whitespace-normalized, so reflowing a `>-` block is fine).
+15-row scenario table, and pins `verify-staging`'s shape (`needs: apply-staging`
+and no `if:` — its default `success()` is what skips it after a failed apply).
 
 Verified about the evaluator (all correct, don't re-litigate):
 `!` > `==`/`!=` > `&&` > `||` matches GitHub's documented precedence table;
@@ -195,18 +195,18 @@ Known gaps in the *checker*, verified by mutating both workflows and re-running:
   function is not modeled. Not reachable while the cancellation rows force
   `!cancelled()`/`always()` to stay present.
 - `jobBlock` treats any 2-space-indented **comment** as the end of a job.
-  Throws (unhandled, stack trace) for required keys; silently reports "absent in
-  both" for the `optional: true` `verify-staging.if` parity entry.
+  Throws (unhandled, stack trace) for required keys. `jobBlock` no longer ends a
+  job at a comment at job indentation, which previously caused that.
 - A folded `>-` continuation re-indented deeper than 6 spaces silently truncates
   the expression; the run still fails, but the message blames the gate's logic.
 
-`promotion-gate-rehearsal.yml`: `workflow_dispatch`-only, 4 scenarios. Verified
-by reading the graph that `apply-prod` is genuinely `skipped` (not
-`failure`/`cancelled`) in both blocking scenarios, that `verify-staging` is
-skipped rather than run when `apply-staging` fails (its default `success()`),
-and that `assert` still runs when `apply-prod` is skipped because `!cancelled()`
-is a status-check function and lifts the needs-succeeded requirement. Caveats:
-dispatch needs the file on the default branch, so it cannot be exercised
-pre-merge; no `permissions:`; the stub `apply-prod` omits `environment:
-production`; nothing lints these workflows (no actionlint job), so a YAML error
-outside the 3 jobs/2 keys the parity check reads would ship silently.
+`promotion-gate-rehearsal.yml` was **removed** in the PR that added the
+ci-terraform permissions check. It had been a `workflow_dispatch`-only stub
+graph carrying the gate verbatim; it ran once on `main` across all four
+scenarios, and those runs are linked from #313 — the surviving record that
+GitHub's own evaluator agreed with `check-promotion-gate.mjs`.
+
+Keep in mind when reviewing gate changes: the evaluator is now the only thing
+checking the gate, and it is a reimplementation of GitHub's semantics, not
+GitHub. Its mutation tests all run through that same evaluator, so they cannot
+catch a misreading they share with it.
